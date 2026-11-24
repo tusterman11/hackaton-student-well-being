@@ -8,7 +8,7 @@ Record the team's important decisions here. Each entry should be short and state
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
   1. **Daily Check-in:** Single mood/energy check-in per day (1–5 scale with careful wording) + optional short note, no scores or comparisons.
   2. **Break & Habit Logging:** One-click buttons ("Drank water", "Stretched", "Took a short break") saving type and timestamp.
-  3. **AI-Generated Tips:** Back-end calls the Claude API to return a short, optional suggestion based on the check-in, with hand-written fallback tips if the API fails.
+  3. **AI-Generated Tips:** Back-end calls `@anthropic-ai/sdk` (Claude API) to return a short, optional suggestion based on the check-in, with hand-written fallback tips if the API fails.
   4. **Weekly History:** Simple 7-day list/chart of check-ins and breaks visible only to the user.
   5. **Gentle In-App Reminder:** Non-intrusive on-screen prompt after 45–60 minutes of usage with a dismiss button (no push notifications).
   6. **Support Resources Section:** Always-visible directory with Brazilian support contacts (CVV 188, SAMU 192, and campus student support) and clear non-clinical disclaimers.
@@ -20,18 +20,18 @@ Record the team's important decisions here. Each entry should be short and state
 - **Alternatives considered:** Including a 1-minute breathing timer and silent mode in the initial sprint.
 - **Rationale:** Avoiding scores and clinical claims respects ethical boundaries and prevents user anxiety. Cutting optional extras and external integrations protects the 5-day timeline (if extra time remains on Saturday, silent mode is the lowest-cost addition).
 
-## 24/11/2026 — Unified TypeScript Stack & Interface Language
-- **Decision:** Build a mobile-first web app in **Portuguese** using **React + Vite + TypeScript + Tailwind CSS** on the front-end and **Node.js + Express + TypeScript** on the back-end, while keeping repository documentation bilingual (English and pt-BR).
-- **Alternatives considered:** Python (FastAPI) or Java (Spring Boot) on the back-end; native Android/iOS apps.
-- **Rationale:** Using TypeScript across both layers allows all 4 members to contribute and review PRs across the whole codebase. A Portuguese UI matches the target campus audience, while bilingual docs fulfill the hackathon rules.
+## 24/11/2026 — Unified JavaScript Stack, Testing & CI
+- **Decision:** Build a mobile-first web app in **Portuguese** using **React + Vite 5 (JavaScript, HTML, and CSS)** on the front-end and **Node.js + Express (JavaScript)** on the back-end. Use **Vitest 2** for front-end tests, Node's built-in **`node --test`** runner for back-end tests, and **GitHub Actions (`node-version: 20`)** for CI, while keeping repository documentation bilingual (English and pt-BR).
+- **Alternatives considered:** TypeScript across both layers; Tailwind CSS; Python (FastAPI) or Java (Spring Boot) on the back-end; Jest for testing; native Android/iOS apps.
+- **Rationale:** Using plain JavaScript with standard HTML/CSS across the entire stack eliminates build/type-checking overhead and allows all 4 members to contribute and review PRs quickly during the hackathon. Native `node --test` and Vitest 2 keep dependencies minimal and run fast in GitHub Actions on Node 20, while a Portuguese UI matches the target campus audience.
 
-## 24/11/2026 — Database, Privacy, and Anonymous Device ID
-- **Decision:** Use **SQLite via Prisma ORM** and identify users via an **anonymous per-device ID** stored in the browser, rather than full user accounts.
-- **Alternatives considered:** Email/password authentication with JWT; OAuth social login; PostgreSQL on cloud servers.
-- **Rationale:** An anonymous per-device ID protects student privacy (zero personal or sensitive health data stored), removes login friction during the live demo, and ensures each user only sees their own 7-day history. SQLite requires zero server setup and runs reliably in CI.
+## 24/11/2026 — Database (`better-sqlite3`), Privacy, and Anonymous Device ID
+- **Decision:** Use **SQLite via `better-sqlite3` with plain SQL** and identify users via an **anonymous per-device ID** stored in the browser, rather than full user accounts.
+- **Alternatives considered:** Prisma ORM; email/password authentication with JWT; OAuth social login; PostgreSQL on cloud servers.
+- **Rationale:** `better-sqlite3` with plain SQL avoids ORM migration issues, requires zero server setup, and executes synchronously with high reliability in CI. An anonymous per-device ID protects student privacy (zero personal or sensitive health data stored), removes login friction during the live demo, and ensures each user only sees their own 7-day history.
 
 ## 24/11/2026 — AI Safety Rules and Fallback Strategy
-- **Decision:** Call the **Claude API (Anthropic SDK)** strictly from the back-end with a warm, non-directive system prompt. If the check-in indicates intense distress (lowest mood levels), bypass free-form AI generation and highlight the Support Resources section. Include static hand-written fallback tips in case of API failure.
+- **Decision:** Call the **Claude API (`@anthropic-ai/sdk`)** strictly from the back-end with a warm, non-directive system prompt. If the check-in indicates intense distress (lowest mood levels), bypass free-form AI generation and highlight the Support Resources section. Include static hand-written fallback tips in case of API failure.
 - **Alternatives considered:** Letting the LLM generate open-ended emotional advice for low mood states.
 - **Rationale:** Deterministic routing to human help (CVV 188 / SAMU 192) guarantees safety during distress, while static fallbacks prevent demo failures due to network or quota issues.
 

@@ -8,7 +8,7 @@ Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e 
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
   1. **Check-in diário:** Uma pergunta simples de humor e energia por dia (escala de 1 a 5 com linguagem cuidadosa) + nota opcional, sem notas ou comparações.
   2. **Registro de pausas e hábitos:** Botões rápidos ("Bebi água", "Alonguei", "Fiz uma pausa curta") salvando tipo e horário.
-  3. **Dicas geradas por IA:** O back-end chama a API do Claude e retorna uma sugestão curta e opcional baseada no check-in, com fallback de dicas escritas à mão caso a API falhe.
+  3. **Dicas geradas por IA:** O back-end chama o `@anthropic-ai/sdk` (API do Claude) e retorna uma sugestão curta e opcional baseada no check-in, com fallback de dicas escritas à mão caso a API falhe.
   4. **Histórico semanal:** Tela simples com check-ins e pausas dos últimos 7 dias (lista ou gráfico básico), visível apenas para a própria pessoa.
   5. **Lembrete gentil dentro do app:** Aviso discreto na tela após 45 a 60 minutos de uso com botão para dispensar (sem notificações push).
   6. **Seção de recursos de apoio:** Sempre visível, com contatos reais do Brasil (CVV 188, SAMU 192 e acolhimento do campus) e aviso explícito de que o app não substitui atendimento profissional.
@@ -20,18 +20,18 @@ Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e 
 - **Alternativas consideradas:** Incluir timer de respiração de 1 minuto e modo silencioso já na primeira sprint.
 - **Justificativa:** Evitar notas e promessas clínicas respeita os limites éticos do briefing e evita pressionar o estudante. Cortar extras protege o prazo de 5 dias (caso sobre tempo no sábado, o modo silencioso será a primeira adição por ter menor custo).
 
-## 24/11/2026 — Stack Unificada em TypeScript e Idioma da Interface
-- **Decisão:** Construir uma aplicação web mobile-first com interface em **português** usando **React + Vite + TypeScript + Tailwind CSS** no front-end e **Node.js + Express + TypeScript** no back-end, mantendo a documentação do repositório bilíngue (Inglês e pt-BR).
-- **Alternativas consideradas:** Python (FastAPI) ou Java (Spring Boot) no back-end; aplicativos mobile nativos.
-- **Justificativa:** Usar TypeScript nas duas pontas permite que os 4 integrantes contribuam e revisem PRs em todo o código. A interface em português atende diretamente os estudantes do campus, enquanto os docs bilíngues cumprem a regra do evento.
+## 24/11/2026 — Stack Unificada em JavaScript, Testes e CI
+- **Decisão:** Construir uma aplicação web mobile-first com interface em **português** usando **React + Vite 5 (JavaScript, HTML e CSS)** no front-end e **Node.js + Express (JavaScript)** no back-end. Utilizar **Vitest 2** para testes no front-end, o executor nativo **`node --test`** para testes no back-end e **GitHub Actions (`node-version: 20`)** para CI, mantendo a documentação do repositório bilíngue (Inglês e pt-BR).
+- **Alternativas consideradas:** TypeScript nas duas pontas; Tailwind CSS; Python (FastAPI) ou Java (Spring Boot) no back-end; Jest para testes; aplicativos mobile nativos.
+- **Justificativa:** Usar JavaScript puro com HTML e CSS padrão em toda a stack elimina a sobrecarga de compilação e tipagem, permitindo que os 4 integrantes contribuam e revisem PRs rapidamente durante o hackathon. O `node --test` nativo e o Vitest 2 mantêm as dependências mínimas e rodam rápido no GitHub Actions com Node 20, enquanto a interface em português atende diretamente os estudantes do campus.
 
-## 24/11/2026 — Banco de Dados, Privacidade e Identificador Anônimo por Dispositivo
-- **Decisão:** Utilizar **SQLite via Prisma ORM** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
-- **Alternativas consideradas:** Cadastro com e-mail e senha (JWT); login social OAuth; PostgreSQL em nuvem.
-- **Justificativa:** O identificador anônimo por dispositivo é mais rápido de implementar, protege a privacidade (nenhum dado pessoal ou médico é coletado), elimina atrito na apresentação ao vivo e garante que cada pessoa veja apenas o próprio histórico de 7 dias. O SQLite dispensa configuração de servidor e roda de forma estável no CI.
+## 24/11/2026 — Banco de Dados (`better-sqlite3`), Privacidade e Identificador Anônimo por Dispositivo
+- **Decisão:** Utilizar **SQLite via `better-sqlite3` com SQL puro** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
+- **Alternativas consideradas:** Prisma ORM; cadastro com e-mail e senha (JWT); login social OAuth; PostgreSQL em nuvem.
+- **Justificativa:** O `better-sqlite3` com SQL puro evita problemas de migração de ORM, dispensa configuração de servidor e executa de forma síncrona com alta estabilidade no CI. O identificador anônimo por dispositivo protege a privacidade (nenhum dado pessoal ou médico é coletado), elimina atrito na apresentação ao vivo e garante que cada pessoa veja apenas o próprio histórico de 7 dias.
 
 ## 24/11/2026 — Regras de Segurança da IA e Estratégia de Fallback
-- **Decisão:** Chamar a **API do Claude (Anthropic SDK)** exclusivamente pelo back-end com prompt de sistema acolhedor e não diretivo. Se o check-in indicar um momento mais difícil (níveis mais baixos de humor), o app **não** gera texto livre e destaca imediatamente a seção de Recursos de Apoio. Inclui dicas estáticas escritas à mão como fallback caso a API falhe.
+- **Decisão:** Chamar a **API do Claude (`@anthropic-ai/sdk`)** exclusivamente pelo back-end com prompt de sistema acolhedor e não diretivo. Se o check-in indicar um momento mais difícil (níveis mais baixos de humor), o app **não** gera texto livre e destaca imediatamente a seção de Recursos de Apoio. Inclui dicas estáticas escritas à mão como fallback caso a API falhe.
 - **Alternativas consideradas:** Deixar a IA gerar conselhos livres em momentos de mal-estar intenso.
 - **Justificativa:** O encaminhamento fixo para ajuda humana (CVV 188 / SAMU 192) garante segurança emocional, enquanto o fallback evita falhas na apresentação por rede ou cota da API.
 
