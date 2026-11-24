@@ -1,45 +1,49 @@
-# [Nome do projeto]
+# Pausa Leve
 
 [English](README.md) · **Português (Brasil)**
 
-Preencham este README e mantenham-no atualizado. Ele faz parte da entrega e deve permanecer na **raiz** do repositório, junto com `DECISIONS.md` e `AI_LOG.md` (e as versões em português: `README.pt-BR.md`, `DECISIONS.pt-BR.md` e `AI_LOG.pt-BR.md`).
-
-A documentação do projeto deve ser escrita **em inglês** (a versão principal é o [`README.md`](README.md)), com uma **versão em português** ao lado. Mantenham as duas versões alinhadas.
-
-Criem, dentro do repositório, as **pastas de cada parte do projeto** que forem desenvolver (por exemplo, `/backend`, `/frontend`, `/docs`). A organização é escolha do time — descrevam-na na seção [Estrutura de pastas](#estrutura-de-pastas).
-
-No primeiro dia, adicionem o professor como colaborador do repositório, com o e-mail **adrianoanschau@gmail.com**.
+> Aplicação web de bem-estar estudantil focada em micro-pausas, registro leve de hábitos e sugestões de autocuidado geradas por IA, sem cobranças.
 
 ## Equipe
 
-- **Turma:** TDS — turmas mistas 6570, 6756 e 6863
-- **Tech Lead:**
-- **Responsável pela apresentação:**
+- **Turma:** TDS — grupos mistos 6570, 6756 e 6863
+- **Tech Lead:** Guilherme Ferreira
+- **Líder de Apresentação:** Matheus Epifanio de Souza
 - **Integrantes:**
-  - Guilherme (6570) — GitHub
-  - Guilherme (6756) — GitHub
-  - Matheus Souza — GitHub
-  - João Queiróz — GitHub
+  - Guilherme Ferreira (6570) — [GitHub](https://github.com)
+  - Guilherme (6756) — [GitHub](https://github.com)
+  - Matheus Epifanio de Souza — [GitHub](https://github.com)
+  - João Queiróz — [GitHub](https://github.com)
 
-## Tema / área
+## Tema / Área
 
-Bem-estar estudantil — vida no campus e comunidade
+Bem-estar estudantil — vida no campus e comunidade.
 
 ## Problema
 
-(qual problema vocês estão resolvendo, e para quem)
+Estudantes em rotinas intensas de estudo, prazos e semanas de projeto frequentemente negligenciam o sono, a hidratação e pequenas pausas. Aplicativos tradicionais de hábitos costumam usar cobranças rígidas, gamificação excessiva ou promessas clínicas, o que pode aumentar a ansiedade em vez de acolher.
 
 ## Solução
 
-(o que a aplicação faz e qual é o recorte do MVP)
+O **Pausa Leve** é uma aplicação web leve e respeitosa pensada para estudantes no campus. Ele oferece um espaço livre de pressão para fazer pausas e check-ins diários, sem qualquer pretensão de atendimento clínico.
+
+**O que o MVP cobre:**
+- **Check-in Diário Rápido:** Registro simples de ânimo e energia com linguagem acolhedora e sem julgamentos.
+- **Registro de Micro-pausas e Hábitos:** Marcação em um clique de pequenas ações (beber água, alongar, fazer uma pausa de 5 minutos).
+- **Dicas Contextuais por IA:** Sugestões curtas e práticas adaptadas ao momento do estudante (sempre como convite gentil, nunca diagnóstico).
+- **Resumo Semanal:** Visualização leve dos check-ins e pausas dos últimos 7 dias, sem notas ou rankings comparativos.
+- **Lembrete Gentil na Tela:** Aviso discreto incentivando uma pausa curta durante os estudos.
+- **Recursos de Apoio Profissional:** Seção sempre visível com canais reais de ajuda (ex: CVV - 188, atendimento psicopedagógico do campus), destacada automaticamente caso o estudante relate mal-estar intenso.
 
 ## Stack
 
-(linguagens, frameworks e bibliotecas; o back-end pode ser Java, Python ou Node.js, isolados ou combinados, desde que integrados; o front-end é obrigatório — web, desktop ou mobile)
+- **Front-end:** React (Vite), TypeScript, Tailwind CSS
+- **Back-end:** Node.js, Express, TypeScript
+- **Banco de Dados:** SQLite (via Prisma ou driver nativo)
+- **Integração com IA:** Google Gemini API (`gemini-2.5-flash`) com prompts de sistema restritos para segurança
+- **Testes e Qualidade:** Vitest / Jest, ESLint, Prettier
 
 ## Estrutura de pastas
-
-Descrevam a organização do repositório. Ajustem o exemplo abaixo à escolha do time.
 
 ```text
 /
@@ -49,39 +53,59 @@ Descrevam a organização do repositório. Ajustem o exemplo abaixo à escolha d
 ├── DECISIONS.pt-BR.md
 ├── AI_LOG.md
 ├── AI_LOG.pt-BR.md
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── backend/
+│   ├── src/
+│   └── tests/
 ├── frontend/
+│   ├── src/
+│   └── tests/
 └── docs/
 ```
 
-## Como rodar
+## Como executar
 
 ### Pré-requisitos
 
-(versões de linguagem, gerenciadores de pacote, banco de dados etc.)
+- Node.js (v20 ou superior)
+- npm (v10 ou superior)
+- Uma chave de API de IA válida (configurada em `backend/.env` com base no `.env.example`)
 
 ### Back-end
 
 ```bash
-# comandos para instalar dependências e subir o back-end
+cd backend
+cp .env.example .env
+# Adicione sua AI_API_KEY dentro do .env
+npm install
+npm run dev
 ```
 
 ### Front-end
 
 ```bash
-# comandos para instalar dependências e subir o front-end
+cd frontend
+npm install
+npm run dev
 ```
 
 ## CI/CD
 
-(descrevam a pipeline de GitHub Actions: o que roda em cada PR e em cada push na `main` — no mínimo build, lint e testes)
+O repositório utiliza **GitHub Actions** (`.github/workflows/ci.yml`) disparado automaticamente a cada Pull Request e push na `main`. A pipeline valida:
+1. **Lint:** Padrão de código e análise estática (`npm run lint`).
+2. **Build:** Compilação TypeScript e geração do pacote (`npm run build`).
+3. **Testes:** Testes automatizados unitários e de integração (`npm test`).
+
+Pushes diretos na `main` são bloqueados; toda alteração exige Pull Request aprovado e pipeline verde.
 
 ## Deploy
 
-(onde a aplicação está publicada, se houver; ou indique que o deploy automático ainda não foi configurado)
+Configuração de desenvolvimento local para demonstração ao vivo. O deploy automático em nuvem ainda não foi configurado.
 
 ## Links
 
-- **Repositório:**
-- **Deploy (se houver):**
-- **Board / projeto no GitHub (se houver):**
+- **Repositório:** [Adicionar URL do Repositório GitHub]
+- **Deploy (se houver):** Demonstração local
+- **Board / GitHub project (se houver):** [Adicionar URL do GitHub Projects]

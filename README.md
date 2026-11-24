@@ -1,45 +1,49 @@
-# [Project name]
+# Pausa Leve
 
 **English** · [Português (Brasil)](README.pt-BR.md)
 
-Fill in this README and keep it up to date. It is part of the delivery and must remain at the **root** of the repository, together with `DECISIONS.md` and `AI_LOG.md` (and their Portuguese versions: `README.pt-BR.md`, `DECISIONS.pt-BR.md` and `AI_LOG.pt-BR.md`).
-
-Project documentation must be written in **English** (this file is the main version), with a **Portuguese version** alongside. Keep both versions in sync.
-
-Create, inside the repository, the **folders for each part of the project** you will develop (for example, `/backend`, `/frontend`, `/docs`). How you organize them is the team's choice — describe it in [Folder structure](#folder-structure).
-
-On the first day, add the instructor as a repository collaborator, using the email **adrianoanschau@gmail.com**.
+> Student well-being web app focused on micro-breaks, gentle habit tracking, and AI-powered self-care suggestions without pressure.
 
 ## Team
 
 - **Class:** TDS — mixed groups 6570, 6756, and 6863
-- **Tech Lead:**
-- **Presentation lead:**
+- **Tech Lead:** Guilherme Ferreira
+- **Presentation Lead:** Matheus Epifanio de Souza
 - **Members:**
-  - Guilherme (6570) — GitHub
-  - Guilherme (6756) — GitHub
-  - Matheus Souza — GitHub
-  - João Queiróz — GitHub
+  - Guilherme Ferreira (6570) — [GitHub](https://github.com)
+  - Guilherme (6756) — [GitHub](https://github.com)
+  - Matheus Epifanio de Souza — [GitHub](https://github.com)
+  - João Queiróz — [GitHub](https://github.com)
 
-## Theme / area
+## Theme / Area
 
-Student well-being (Bem-estar estudantil) — campus life and community
+Student well-being (Bem-estar estudantil) — campus life and community.
 
 ## Problem
 
-(what problem you are solving, and for whom)
+Students facing intense study routines, deadlines, and project weeks often neglect sleep, hydration, and short breaks. Existing habit-tracking apps frequently rely on strict streaks, gamification pressure, or clinical promises, which can increase anxiety instead of offering genuine support.
 
 ## Solution
 
-(what the application does and what the MVP covers)
+**Pausa Leve** is a lightweight, respectful web application designed for campus students. It provides a pressure-free space to pause and check in without clinical claims.
+
+**What the MVP covers:**
+- **Quick Daily Check-in:** Simple mood and energy rating using welcoming, non-judgmental language.
+- **Micro-Breaks & Habit Log:** One-click tracking for small daily actions (drinking water, stretching, taking a 5-minute break).
+- **AI Contextual Tips:** Short, actionable break suggestions tailored to the student's current check-in state (strictly framed as gentle invitations, never medical advice).
+- **Weekly Overview:** A calm visual summary of check-ins and completed breaks over the last 7 days without comparative scores.
+- **Gentle On-Screen Reminder:** Non-intrusive prompt encouraging a short pause during study sessions.
+- **Professional Support Directory:** Always-visible section with real support contacts (e.g., CVV - 188, campus counseling services), automatically highlighted if a student reports high distress.
 
 ## Stack
 
-(languages, frameworks and libraries; the back-end may be Java, Python or Node.js, alone or combined, as long as they are integrated; the front-end is required — web, desktop or mobile)
+- **Front-end:** React (Vite), TypeScript, Tailwind CSS
+- **Back-end:** Python, Node.js
+- **Database:** SQLite (via Prisma or native driver)
+- **AI Integration:** Google Gemini API (`gemini-2.5-flash`) with strict safety system prompts
+- **Testing & Quality:** Vitest / Jest, ESLint, Prettier
 
 ## Folder structure
-
-Describe how the repository is organized. Adjust the example below to the team's choice.
 
 ```text
 /
@@ -49,8 +53,15 @@ Describe how the repository is organized. Adjust the example below to the team's
 ├── DECISIONS.pt-BR.md
 ├── AI_LOG.md
 ├── AI_LOG.pt-BR.md
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── backend/
+│   ├── src/
+│   └── tests/
 ├── frontend/
+│   ├── src/
+│   └── tests/
 └── docs/
 ```
 
@@ -58,30 +69,43 @@ Describe how the repository is organized. Adjust the example below to the team's
 
 ### Prerequisites
 
-(language versions, package managers, databases, etc.)
+- Node.js (v20 or higher)
+- npm (v10 or higher)
+- A valid AI API Key (configured in `backend/.env` based on `.env.example`)
 
 ### Back-end
 
 ```bash
-# commands to install dependencies and start the back-end
+cd backend
+cp .env.example .env
+# Add your AI_API_KEY inside .env
+npm install
+npm run dev
 ```
 
 ### Front-end
 
 ```bash
-# commands to install dependencies and start the front-end
+cd frontend
+npm install
+npm run dev
 ```
 
 ## CI/CD
 
-(describe the GitHub Actions pipeline: what runs on each PR and on each push to `main` — at a minimum, build, lint and tests)
+The repository uses **GitHub Actions** (`.github/workflows/ci.yml`) triggered automatically on every Pull Request and push to `main`. The pipeline validates:
+1. **Linting:** Code style and static analysis (`npm run lint`).
+2. **Build:** TypeScript compilation and bundle generation (`npm run build`).
+3. **Tests:** Automated unit and integration tests (`npm test`).
+
+Direct pushes to `main` are blocked; all changes require an approved Pull Request and a passing CI check.
 
 ## Deploy
 
-(where the application is published, if applicable; or note that automatic deploy has not been set up yet)
+Local development setup for live demonstration. Automatic cloud deploy has not been configured yet.
 
 ## Links
 
-- **Repository:**
-- **Deploy (if any):**
-- **Board / GitHub project (if any):**
+- **Repository:** [Add GitHub Repo URL]
+- **Deploy (if any):** Localhost demo
+- **Board / GitHub project (if any):** [Add GitHub Projects URL]
