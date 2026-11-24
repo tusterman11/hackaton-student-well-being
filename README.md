@@ -10,10 +10,10 @@
 - **Tech Lead:** Guilherme Ferreira
 - **Presentation Lead:** Matheus Epifanio de Souza
 - **Members:**
-  - Guilherme Ferreira (6570) — [GitHub](https://github.com)
+  - Guilherme Ferreira (6570) — [GitHub](https://github.com/tusterman11)
   - Guilherme (6756) — [GitHub](https://github.com)
-  - Matheus Epifanio de Souza — [GitHub](https://github.com)
-  - João Queiróz — [GitHub](https://github.com)
+  - Matheus Epifanio de Souza — [GitHub](https://github.com/MatheusEpifanio017)
+  - João Queiróz — [GitHub](https://github.com/joao-queiros)
 
 ## Theme / Area
 
