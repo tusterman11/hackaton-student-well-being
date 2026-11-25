@@ -13,19 +13,79 @@ Se a pessoa disser que está se sentindo mal, responda com empatia e sugira conv
 
 const URGENT_SUPPORT_REPLY = 'Sinto muito que você esteja passando por isso. Você não precisa enfrentar isso sozinho. Procure agora um adulto de confiança ou alguém que esteja perto de você e conte o que está acontecendo. Para conversar e receber apoio emocional, ligue 188 (CVV). Se houver perigo imediato ou risco de alguém se machucar, ligue 192 (SAMU) ou vá a um pronto atendimento. Você está com alguém de confiança agora?';
 
-const db = new Database(path.join(__dirname, 'app.db'));
-db.exec(`CREATE TABLE IF NOT EXISTS checkins (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  mood INTEGER NOT NULL,
-  energy INTEGER NOT NULL,
-  note TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)`);
+function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
+  database.exec(`CREATE TABLE IF NOT EXISTS checkins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mood INTEGER NOT NULL,
+    energy INTEGER NOT NULL,
+    note TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+  database.exec(`CREATE TABLE IF NOT EXISTS pauses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
 
-const app = express();
-app.use(express.json());
+  const app = express();
+  app.use(express.json());
 
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+  app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+  app.get('/api/checkins', (_req, res) => {
+    const checkins = database.prepare(
+      "SELECT id, mood, energy, note, created_at FROM checkins WHERE created_at >= datetime('now', '-7 days') ORDER BY created_at DESC"
+    ).all();
+    return res.json(checkins);
+  });
+
+  app.post('/api/checkins', (req, res) => {
+    const { mood, energy, note } = req.body || {};
+    if (
+      !Number.isInteger(mood) || mood < 1 || mood > 5
+      || !Number.isInteger(energy) || energy < 1 || energy > 5
+      || (note !== undefined && note !== null && (typeof note !== 'string' || note.length > 500))
+    ) {
+      return res.status(400).json({ error: 'INVALID_CHECKIN', message: 'Informe humor e energia de 1 a 5 e uma anotação de até 500 caracteres.' });
+    }
+
+    const result = database.prepare(
+      'INSERT INTO checkins (mood, energy, note) VALUES (?, ?, ?)'
+    ).run(mood, energy, note || null);
+    const checkin = database.prepare(
+      'SELECT id, mood, energy, note, created_at FROM checkins WHERE id = ?'
+    ).get(result.lastInsertRowid);
+    return res.status(201).json({
+      checkin,
+      tip: null,
+      showSupportAlert: mood <= 1
+    });
+  });
+
+  app.get(['/api/pauses', '/api/breaks'], (_req, res) => {
+    const pauses = database.prepare(
+      "SELECT id, type, created_at FROM pauses WHERE created_at >= datetime('now', '-7 days') ORDER BY created_at DESC"
+    ).all();
+    return res.json(pauses);
+  });
+
+  const createPause = (req, res) => {
+    const { type } = req.body || {};
+    if (!['water', 'stretch', 'walk'].includes(type)) {
+      return res.status(400).json({ error: 'INVALID_PAUSE', message: 'Tipo de pausa inválido.' });
+    }
+
+    const result = database.prepare('INSERT INTO pauses (type) VALUES (?)').run(type);
+    const pause = database.prepare(
+      'SELECT id, type, created_at FROM pauses WHERE id = ?'
+    ).get(result.lastInsertRowid);
+    return res.status(201).json({
+      ...pause,
+      createdAt: pause.created_at
+    });
+  };
+
+  app.post(['/api/pauses', '/api/breaks'], createPause);
 
 app.post('/api/chat', async (req, res) => {
   const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
@@ -116,10 +176,15 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
+  app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
+  return app;
+}
+
+const app = createApp();
 
 if (require.main === module) {
   app.listen(3000, () => console.log('http://localhost:3000'));
 }
 
 module.exports = app;
+module.exports.createApp = createApp;
