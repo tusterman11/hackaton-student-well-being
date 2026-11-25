@@ -1,34 +1,137 @@
-# Registro de uso de IA (AI_LOG)
+# Registro de uso de IA (AI Log)
 
 [English](AI_LOG.md) · **Português (Brasil)**
 
-Registrem aqui como o time usou inteligência artificial no projeto. O uso de IA é liberado e incentivado, desde que documentado: este arquivo é entregável obrigatório e serve de roteiro para o bloco “IA na prática” da apresentação.
+Este registro documenta como a equipe usou IA no processo: o que pedimos, o que a IA gerou, o que revisamos e o que mantivemos ou alteramos. Adicione uma nova entrada sempre que a IA for usada.
 
-## Ferramentas
+**Legenda de status:** Adotado (usado como sugerido) · Adaptado (usado com mudanças) · Rejeitado (não usado) · Pendente (ainda em revisão pela equipe)
 
-- **Google Gemini:** utilizado para ideação do projeto, estruturação inicial da documentação (`README.md`, `DECISIONS.md`) e rascunho das travas de segurança do back-end.
-- **Claude (Anthropic):** utilizado para planejamento do cronograma de 5 dias, refinamento da stack unificada em TypeScript e geração das dicas de micro-pausas dentro do aplicativo via API.
+Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação contrária: Claude (Claude Sonnet 5.5, chat do claude.ai), 24/11/2026, pedidas pelo Tech Lead.
 
-## Modelo de registro
+## Entradas
 
-```markdown
-### [data] — [tarefa ou trecho]
-- **Prompt principal:**
-- **O que a IA gerou:**
-- **O que o time aproveitou:**
-- **O que o time corrigiu ou rejeitou, and por quê:**
-```
+### 001: Escolha da stack tecnológica
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Contexto:** O briefing do projeto e o modelo de README (tema Bem-estar estudantil) foram compartilhados com a IA.
+- **Prompt / objetivo:** Pedimos orientação sobre as melhores tecnologias para o projeto e como começar.
+- **O que a IA gerou:** Uma stack recomendada (back-end Node.js + TypeScript com Fastify ou Express, front-end React + Vite + TypeScript com Tailwind, SQLite com Prisma, API do Claude chamada apenas pelo back-end com fallback de dicas escritas à mão e uma camada de segurança para check-ins muito baixos, Vitest, ESLint/Prettier, GitHub Actions), uma sugestão de divisão de trabalho para 4 pessoas e um plano dia a dia até o code freeze.
+- **O que a equipe revisou / alterou:** A stack sugerida não coube nas nossas máquinas (veja as entradas 006 a 009). Abandonamos TypeScript, Fastify, Prisma e Tailwind e mantivemos React, Vite (fixado na versão 5), Node.js com Express e SQLite.
+- **Status:** Adaptado. A justificativa vai no `DECISIONS.md`.
 
-## Registro
+### 002: Plano de início para o Tech Lead
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Informamos à IA que a stack estava escolhida e que o usuário é o Tech Lead; perguntamos como começar.
+- **O que a IA gerou:** Um checklist ordenado de início: adicionar colaboradores (incluindo o instrutor), proteger a `main`, criar o esqueleto do monorepo e comandos de instalação, um workflow de CI (lint, testes e build em PRs e na `main`), `DECISIONS.md` e `AI_LOG.md` iniciais, convenções de contribuição (branches, Conventional Commits, ninguém aprova o próprio PR), um contrato de API a combinar antes de codar e hábitos de equipe para a semana.
+- **O que a equipe revisou / alterou:** Os comandos de instalação dependiam da stack original e foram substituídos pela entrada 010. As partes de processo (colaboradores, proteção da `main`, CI em PRs e na `main`, Conventional Commits, PRs revisados) foram mantidas. A versão do Node no CI mudou de 22 para 20, para combinar com as nossas máquinas. _A equipe deve confirmar._
+- **Status:** Adaptado
 
-### 24/11/2026 — Recorte do MVP, refinamento da stack e documentação inicial (Gemini & Claude)
-- **Prompt principal:** "Ajude a estruturar um MVP de 5 dias para um aplicativo web de bem-estar estudantil seguindo o briefing do hackathon, definindo a stack técnica, estrutura de pastas e documentação bilíngue (`README.md` e `DECISIONS.md`)."
-- **O que a IA gerou:** Propostas de conceito ("Pausa Leve"), plano de execução dia a dia, recomendação de stack unificada em TypeScript (React + Vite + Node.js + SQLite/Prisma) e rascunhos iniciais para `README.md` e `DECISIONS.md`.
-- **O que o time aproveitou:** O conceito do "Pausa Leve" focado em micro-pausas sem cobrança, a stack unificada em TypeScript para que os 4 integrantes possam revisar PRs nas duas camadas e a estrutura bilíngue dos documentos.
-- **O que o time corrigiu ou rejeitou, e por quê:** Rejeitamos os extras opcionais (como timer de respiração guiada e campo de reflexão semanal) e um rascunho inicial em Python/FastAPI para evitar mistura de linguagens e garantir a entrega antes do congelamento de código no domingo às 23h59.
+### 003: Geração deste AI Log
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Perguntamos se o uso de IA deve ser documentado no AI Log e pedimos que a IA gerasse as entradas a partir da conversa.
+- **O que a IA gerou:** A primeira versão deste arquivo e da versão em inglês, com as entradas da conversa até aquele momento. Depois atualizado para incluir as entradas 004 a 013.
+- **O que a equipe revisou / alterou:** _A ser preenchido pela equipe. Confirme se as entradas estão corretas e complete o que a IA não podia saber._
+- **Status:** Pendente
 
-### 24/11/2026 — Prompt de sistema da IA do produto e travas de segurança (Gemini & Claude)
-- **Prompt principal:** "Crie um prompt de sistema rígido e uma arquitetura de segurança para gerar dicas curtas e acolhedoras de pausa para estudantes sem aconselhamento clínico, incluindo encaminhamento em momentos difíceis."
-- **O que a IA gerou:** Um prompt de sistema limitando as respostas a 2 frases em tom de convite opcional, combinado com uma verificação determinística no back-end para check-ins críticos e dicas de fallback escritas à mão.
-- **O que o time aproveitou:** O limite de 2 frases, o tom acolhedor sem cobrança, as dicas estáticas de fallback (garantindo que a demo ao vivo não falhe por rede ou cota) e o isolamento da chave de API no servidor.
-- **O que o time corrigiu ou rejeitou, e por quê:** Rejeitamos uma ideia inicial de chat conversacional de múltiplas perguntas porque investigar sentimentos abertamente poderia se aproximar de atendimento clínico, o que é proibido pelo briefing. Em vez disso, adotamos um fluxo direto de dica única com exibição imediata de canais reais de apoio humano (CVV 188 e acolhimento do campus) em check-ins de mal-estar intenso.
+### 004: Perguntas de conceito (Fastify vs React, GitHub Actions)
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Perguntamos se o Fastify é parecido com o React e se o GitHub Actions é obrigatório.
+- **O que a IA gerou:** Uma explicação de que o React constrói a interface no navegador, enquanto o Fastify (como o Express) é um framework de servidor que expõe uma API. A confirmação de que o briefing exige um pipeline do GitHub Actions verde (build, lint e testes) nos PRs e na `main`, com o conselho de criá-lo no primeiro dia.
+- **O que a equipe revisou / alterou:** A exigência de CI confere com o briefing. _A equipe deve confirmar._
+- **Status:** Adotado
+
+### 005: Sugestão de escopo do MVP
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Perguntamos o que colocar no escopo do MVP.
+- **O que a IA gerou:** Os seis itens mínimos do MVP do briefing reduzidos ao menor tamanho funcional, regras de segurança (check-in muito baixo não gera texto livre de IA e mostra recursos de apoio, aviso visível sobre os limites do app, revisão humana do tom da IA antes da demo), uma lista explícita do que fica de fora e decisões em aberto (login ou identificador anônimo por dispositivo, um check-in por dia, idioma da interface).
+- **O que a equipe revisou / alterou:** _A ser preenchido pela equipe. Os contatos de apoio sugeridos pela IA precisam ser conferidos antes de publicar. O escopo final vai no `DECISIONS.md`._
+- **Status:** Pendente
+
+### 006: Erros do Prisma e requisito de versão do Node
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Informamos o erro do comando `prisma init --datasource-provider sqlite` e depois o erro na instalação do Prisma 7.
+- **O que a IA gerou:** O primeiro comando (da entrada 001) era para o Prisma 7, mas a CLI já estava na versão 8, então falhou. Depois de uma busca na documentação do Prisma, a IA recomendou fixar o Prisma 7. Essa instalação falhou porque o Prisma exige Node.js 20.19+, 22.12+ ou 24+, e nossas máquinas têm o Node 20.12.2.
+- **O que a equipe revisou / alterou:** Descobrimos os dois problemas pelas mensagens de erro reais da CLI e do npm, que mostraram que o primeiro comando da IA estava desatualizado. Abandonamos o Prisma e usamos SQL puro com SQLite.
+- **Status:** Rejeitado
+
+### 007: Alternativas para a restrição do Node
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Informamos que não conseguimos instalar o Node nos PCs do laboratório (administrador bloqueia) e perguntamos sobre usar o Node pelo VS Code e sobre alternativas ao Prisma.
+- **O que a IA gerou:** Opções: Node portátil em zip, configuração do PATH no terminal do VS Code, GitHub Codespaces, Drizzle ORM com SQLite e Python com Flask como alternativa mais simples.
+- **O que a equipe revisou / alterou:** A tentativa com o Node portátil não funcionou no nosso PC. Decidimos continuar com o Node 20.12.2 já instalado e escolher versões de pacotes compatíveis, em vez de trocar de ferramentas.
+- **Status:** Rejeitado
+
+### 008: Simplificação da stack para o que a equipe conhece
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Pedimos a versão mais simples possível, em qualquer linguagem, usando o que já conhecemos (JavaScript e um pouco de SQLite), e perguntamos se TypeScript era possível.
+- **O que a IA gerou:** Uma configuração simples com JavaScript puro, Express, `better-sqlite3`, o executor de testes embutido do Node e uma configuração do ESLint, além da observação de que o TypeScript só precisa de um Node funcionando.
+- **O que a equipe revisou / alterou:** Escolhemos JavaScript (sem TypeScript), Express e SQLite com SQL puro.
+- **Status:** Adotado
+
+### 009: Requisitos de versão do React e do Vite
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai), com busca na documentação do Vite
+- **Prompt / objetivo:** Perguntamos qual versão o React exige.
+- **O que a IA gerou:** Uma explicação de que o React não tem requisito de Node, mas o Vite tem: o Vite 7 exige Node 20.19+ ou 22.12+, enquanto o Vite 5 funciona no Node 18 e 20+. Recomendou criar o projeto com o Vite 5.
+- **O que a equipe revisou / alterou:** Decidimos usar React com Vite 5, JavaScript, HTML, CSS e SQLite. _A equipe deve verificar a versão do Vite instalada no `package.json`._
+- **Status:** Adotado
+
+### 010: Passo a passo de configuração
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Pedimos um guia de configuração do zero para a stack final.
+- **O que a IA gerou:** Passos para começar do zero, arquivos da raiz, o esqueleto do back-end em Express com um endpoint de saúde e um teste, o front-end React com Vite 5 e um proxy para `/api`, um workflow do GitHub Actions para as duas pastas, o primeiro PR com proteção da `main` e passos para a equipe começar.
+- **O que a equipe revisou / alterou:** O back-end foi configurado como descrito. O teste do back-end falhou na primeira execução (entrada 011). _A equipe deve completar depois de verificar o front-end e o CI._
+- **Status:** Pendente
+
+### 011: Depuração do teste do back-end que falhou
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Informamos que o teste do back-end falhou depois de seguir a entrada 010.
+- **O que a IA gerou:** Uma lista de causas prováveis (o módulo nativo `better-sqlite3` não carregar, o `localhost` se comportar diferente no Windows, o teste não terminar, nome de arquivo errado) e uma versão mais robusta do teste, que usa `127.0.0.1` e sempre fecha o servidor. A IA não teve acesso ao erro exato.
+- **O que a equipe revisou / alterou:** A equipe encontrou a causa real: a versão instalada do `better-sqlite3` não era suportada pelo Node 20.12.2, então o teste falhava ao carregar o banco de dados (a primeira causa que a IA listou). A equipe fez o downgrade do `better-sqlite3` para a 12.4.1 e o teste agora passa. A versão deve ser fixada sem `^` e registrada no `DECISIONS.md`.
+- **Status:** Adaptado (a IA listou a causa entre várias possibilidades; a equipe confirmou e escolheu a correção)
+
+### 012: Fixação da versão do pacote SQLite
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Informamos que o teste falhava por causa de uma versão do `better-sqlite3` não suportada pelo Node 20.12.2, e que o downgrade para a 12.4.1 resolveu.
+- **O que a IA gerou:** O conselho de fixar a versão exata sem `^`, versionar o `package-lock.json`, usar `npm ci` entre os colegas, conferir se o CI instala o pacote e registrar o motivo no `DECISIONS.md`. Também atualizou a entrada 011 deste registro com a causa real e a correção.
+- **O que a equipe revisou / alterou:** _A ser preenchido pela equipe. Confirme que o `package.json` fixa o `better-sqlite3` na 12.4.1 e que o CI o instala corretamente._
+- **Status:** Pendente
+
+### 013: Mensagens de commit das fases de configuração
+- **Data:** 24/11/2026
+- **Quem:** Tech Lead
+- **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
+- **Prompt / objetivo:** Perguntamos qual mensagem de commit usar depois de concluir os arquivos da raiz e a configuração do back-end.
+- **O que a IA gerou:** Duas mensagens no padrão Conventional Commits (`chore: add gitignore and nvmrc` e `feat(backend): scaffold express server with health endpoint and sqlite`), uma verificação com `git status` para não versionar `node_modules` nem o arquivo do banco, e um pequeno guia do formato das mensagens.
+- **O que a equipe revisou / alterou:** _A ser preenchido pela equipe._
+- **Status:** Pendente
+
+## Notas de revisão
+
+_Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_
+
+- A primeira sugestão de stack da IA assumia versões de ferramentas mais novas do que as máquinas do laboratório suportam. As mensagens de erro reais (CLI do Prisma, verificação de versão do Node) mostraram isso.
+- Um comando que a IA deu para o Prisma era de uma versão desatualizada, então comandos vindos da IA devem ser conferidos com a documentação atual e com a nossa versão real do Node.
+- A equipe ainda não revisou o tom e a segurança das dicas geradas por IA; essa revisão precisa de uma entrada própria antes da demo.
