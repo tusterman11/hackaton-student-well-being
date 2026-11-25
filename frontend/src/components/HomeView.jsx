@@ -223,11 +223,11 @@ export function HomeView({
               fontWeight: 600,
               marginBottom: '6px'
             }}>
-              Como foi seu dia? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(opcional)</span>
+              Anotação do check-in <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(opcional)</span>
             </label>
             <textarea
               id="daily-reflection"
-              placeholder="Escreva o que está passando pela sua cabeça, algo bom que aconteceu ou o que gostaria de lembrar."
+              placeholder="Quer registrar algo sobre como foi seu dia?"
               value={note}
               onChange={(e) => onNoteChange(e.target.value)}
               maxLength={1000}
@@ -237,7 +237,7 @@ export function HomeView({
             />
             <div className="reflection-meta">
               <p id="daily-reflection-hint">
-                Sua anotação fica neste app por enquanto; a integração com IA pode ser adicionada depois.
+                Para conversar com a Pausa Leve, abra a aba Conversa.
               </p>
               <span aria-live="polite">{note.length}/1000</span>
             </div>
@@ -262,7 +262,7 @@ export function HomeView({
             textTransform: 'uppercase',
             letterSpacing: '0.04em'
           }}>
-            Sugestão gentil para agora
+            Sugestão para agora
           </span>
 
           <p style={{
@@ -278,8 +278,25 @@ export function HomeView({
             color: 'var(--text-secondary)',
             marginTop: '8px'
           }}>
-            Sugestão opcional gerada por IA. Você decide o que faz sentido no seu ritmo.
+            Uma ideia simples para sua pausa. Você decide o que faz sentido no seu ritmo.
           </p>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('chat')}
+            style={{
+              marginTop: '12px',
+              padding: '9px 14px',
+              border: 'none',
+              borderRadius: '999px',
+              backgroundColor: 'var(--bg-sage-dark)',
+              color: 'var(--text-on-dark)',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Conversar com a Pausa Leve
+          </button>
         </section>
 
         {/* Card 3: Pausas Rápidas */}

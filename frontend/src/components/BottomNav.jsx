@@ -1,10 +1,11 @@
-import { Home, Sprout, CalendarDays, Heart } from 'lucide-react';
+import { Home, Sprout, CalendarDays, Heart, MessageCircle } from 'lucide-react';
 
 export function BottomNav({ activeTab, onChangeTab }) {
   const navItems = [
     { id: 'home', label: 'Início', icon: Home },
     { id: 'breaks', label: 'Pausas', icon: Sprout },
     { id: 'garden', label: 'Semana', icon: CalendarDays },
+    { id: 'chat', label: 'Conversa', icon: MessageCircle },
     { id: 'support', label: 'Apoio', icon: Heart }
   ];
 

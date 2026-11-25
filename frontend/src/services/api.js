@@ -1,6 +1,6 @@
 import { getDeviceId } from '../utils/deviceId';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const FALLBACK_TIPS = [
   'Que tal olhar para longe por 20 segundos? Procure algo verde ou um pedaço de céu.',
@@ -63,4 +63,19 @@ export async function fetchWeeklyHistory() {
   } catch {
     return null;
   }
+}
+
+export async function sendChatMessage(payload) {
+  const res = await fetch(`${API_BASE_URL}/chat`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  });
+
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(result.message || 'Não foi possível enviar sua mensagem agora.');
+  }
+
+  return result;
 }
