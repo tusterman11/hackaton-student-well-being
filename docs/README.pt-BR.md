@@ -30,19 +30,27 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 **O que o MVP cobre:**
 - **Check-in Diário Rápido:** Avaliação simples de humor e energia com linguagem acolhedora e sem julgamentos.
 - **Registro de Micro-Pausas e Hábitos:** Registro em um clique para pequenas ações (beber água, alongar, fazer uma pausa de 5 minutos).
-- **Dicas Contextuais com IA:** Convites curtos e opcionais para pausas gerados via API do Claude com base no check-in, apoiados por dicas estáticas de fallback e regras rígidas de segurança.
+- **Conversa com IA:** Chat na aba “Conversa”, atendido pelo back-end via API do Claude com um prompt fixo e acolhedor. A IA sugere pausas opcionais, não faz diagnósticos e indica apoio humano quando necessário.
 - **Histórico Privado de 7 Dias:** Visualização isolada por dispositivo dos check-ins e pausas recentes, sem pontuações comparativas.
 - **Lembrete Gentil na Tela:** Aviso discreto incentivando uma pausa curta durante sessões de estudo.
-- **Seção de Apoio Profissional:** Diretório sempre visível com canais reais de apoio (como CVV - 188, SAMU 192 e acolhimento estudantil do campus), destacado automaticamente quando há relato de sofrimento intenso.
+- **Seção de Apoio Profissional:** Tela dedicada com canais reais de apoio (como CVV - 188, SAMU 192 e acolhimento estudantil do campus), acessível pela navegação principal.
+
+## Status atual da implementação
+
+- As telas de check-in e pausas funcionam no front, mas o servidor ainda não oferece `/api/checkins`, `/api/breaks` ou `/api/history`; essas ações usam o estado de fallback do front e não são persistidas pelo servidor.
+- O chat usa `POST /api/chat` e chama o Claude quando `ANTHROPIC_API_KEY` está configurada no back-end. A chave deve ficar em `backend/.env`, arquivo ignorado pelo Git; nunca coloque a chave no código do front nem a envie ao repositório. As mensagens são enviadas à Anthropic para gerar respostas, então evite compartilhar dados que identifiquem alguém.
+- O servidor cria uma tabela SQLite `checkins`, mas a API atual ainda não conecta essa tabela aos check-ins nem ao histórico do chat.
+- `GardenView` ainda exibe dados de exemplo. O lembrete é aberto manualmente pelo botão de teste.
+- A tela de apoio e os links de contato estão implementados. A IA não é terapeuta nem serviço de emergência.
 
 ## Stack
 
 - **Front-end:** React + Vite 5 (JavaScript, HTML e CSS)
 - **Back-end:** Node.js + Express (JavaScript)
 - **Banco de Dados:** SQLite via `better-sqlite3` (SQL puro)
-- **Integração com IA:** API do Claude da Anthropic (`@anthropic-ai/sdk`) chamada exclusivamente no servidor, com travas de segurança e dicas estáticas de fallback
-- **Testes:** Vitest 2 (front-end) e `node --test` nativo do Node (back-end)
-- **CI:** GitHub Actions com `node-version: 20`
+- **Integração com IA:** O back-end usa Claude (`@anthropic-ai/sdk`) na rota do chat. A chave é lida pelo servidor a partir do ambiente.
+- **Testes:** O back-end tem script `node --test` e arquivo de teste. O Vitest está instalado no front, mas ainda não há script nem suíte de testes configurados.
+- **CI:** Não há workflow do GitHub Actions na branch de front atual.
 
 ## Estrutura de pastas
 
@@ -51,6 +59,7 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 ├── .gitignore
 ├── .nvmrc
 ├── backend/
+│   ├── .env.example
 │   ├── eslint.config.js
 │   ├── package.json
 │   ├── package-lock.json
@@ -80,6 +89,7 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 │   │   ├── components/
 │   │   │   ├── BottomNav.jsx
 │   │   │   ├── BreaksView.jsx
+│   │   │   ├── ChatView.jsx
 │   │   │   ├── GardenView.jsx
 │   │   │   ├── GentleReminder.jsx
 │   │   │   ├── HomeView.jsx
@@ -127,13 +137,7 @@ npm run dev
 
 ## CI/CD
 
-O repositório executa um pipeline no **GitHub Actions** (`.github/workflows/ci.yml`) a cada Pull Request e push na `main` utilizando `node-version: 20`, rodando:
-1. **Instalação:** Instalação das dependências (`npm ci`).
-2. **Testes (Back-end):** Testes automatizados com o executor nativo do Node (`node --test`).
-3. **Testes (Front-end):** Testes unitários automatizados com Vitest 2 (`npm test`).
-4. **Build:** Verificação do pacote de produção do front-end (`npm run build`).
-
-A proteção de branch está ativada na `main`: pushes diretos são bloqueados, exigindo um Pull Request com pelo menos 1 aprovação de revisor e status verde no CI.
+Na branch atual não há workflow do GitHub Actions. Os comandos de verificação disponíveis são `npm test` no back-end e `npm run lint` / `npm run build` no front. Configure um workflow e testes do front antes de descrevê-los como verificações de CI ativas.
 
 ## Deploy
 
@@ -141,6 +145,6 @@ Configurado para execução local durante a demonstração ao vivo (opções de 
 
 ## Links
 
-- **Repository:** [[Add GitHub Repo URL](https://github.com/tusterman11/hackaton-student-well-being)]
-- **Deploy (if any):** Localhost demo
-- **Board / GitHub project (if any):** [[Add GitHub Projects URL](https://github.com/users/tusterman11/projects/2)] 
+- **Repositório:** [GitHub](https://github.com/tusterman11/hackaton-student-well-being)
+- **Deploy:** Demonstração local
+- **Quadro / projeto:** [GitHub Projects](https://github.com/users/tusterman11/projects/2)

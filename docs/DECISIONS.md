@@ -10,11 +10,11 @@ The decisions below describe the intended product; they are not a statement that
 
 - **Daily check-in:** The form is implemented in React. It calls `/api/checkins`, but the current server does not provide that route. The front-end fallback keeps the result in memory; once-per-day enforcement and server persistence are not implemented.
 - **Break logging:** The buttons and list are implemented in the front end. `/api/breaks` is not available on the server, so entries only remain in the current app session.
-- **AI tips:** Claude is not called by the current server. The interface currently uses a static tip and front-end fallback tips.
+- **AI chat:** `POST /api/chat` calls Claude through the Anthropic SDK when `ANTHROPIC_API_KEY` is configured in `backend/.env`. The server prompt defines a supportive, non-clinical role; urgent risk phrases receive a fixed response with support contacts. The key is not committed, and a real API call still requires a team member's local key.
 - **Weekly history:** `GardenView` currently renders mock data; it is not connected to saved check-ins or breaks.
 - **Gentle reminder:** The reminder can be opened with the “Test reminder” button. The planned 45–60 minute timer is not implemented.
-- **Support resources:** The support screen, contact links, and distress redirect in the front-end fallback are implemented.
-- **Storage and privacy:** The server creates a SQLite `checkins` table, but no current API route reads or writes it. The anonymous device ID is generated in the browser and is not yet connected to server records.
+- **Support resources:** The support screen and contact links are implemented. The chat can show CVV 188 and SAMU 192 links for urgent risk; the assistant is not a professional or an emergency service.
+- **Storage and privacy:** The server creates a SQLite `checkins` table, but no current API route reads or writes check-ins. The anonymous device ID is generated in the browser and is not connected to server records. Chat history remains in front-end memory and is sent to Anthropic to generate replies; it is not stored in SQLite.
 - **Tests and CI:** The back end has a `node --test` script and test file. The front end has Vitest as a dependency but no test script or test suite. No GitHub Actions workflow is present in this branch.
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)

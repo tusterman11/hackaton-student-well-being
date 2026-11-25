@@ -137,6 +137,15 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** Matheus confirmou que a versão para celular ficou boa e pediu que o desktop ocupasse a tela toda sem rolagem. O layout desktop foi ajustado para atender a esse pedido. O build de produção concluiu com sucesso após as mudanças; a equipe ainda deve conferir a aparência do desktop nos tamanhos de tela que pretende usar.
 - **Status:** Adaptado
 
+### 015: Integração do chat com Claude para apoio estudantil
+- **Data:** 25/11/2026
+- **Quem:** Matheus Epifanio de Souza (Presentation Lead)
+- **Ferramenta:** OpenAI Codex (assistente de programação)
+- **Prompt / objetivo:** Perguntamos como configurar com segurança uma chave da API do Claude e conectar um chat acolhedor em português, no front, a um prompt no servidor. A companhia deve sugerir ações pequenas e opcionais para a rotina no campus e indicar os contatos profissionais da seção Apoio quando a pessoa estiver passando por um momento difícil.
+- **O que a IA gerou:** Criou a tela “Conversa” e a rota `POST /api/chat` usando a dependência existente do SDK da Anthropic. O prompt fixo fica no servidor; o tamanho das mensagens e do histórico é limitado; a chave não vai para o navegador; e o back retorna orientações de apoio em mensagens de sofrimento ou risco urgente. Também adicionou `backend/.env.example`, carregamento local do `.env` pelo Node e proxy `/api` do Vite. A interface avisa que as mensagens são enviadas à Anthropic e pede que a pessoa não compartilhe dados que a identifiquem.
+- **O que a equipe revisou / alterou:** Matheus explicou o tom e deu exemplos para a companhia (como perguntar se há um bebedouro por perto), além de pedir a indicação de contatos profissionais em momentos de sofrimento. O prompt foi limitado para evitar diagnósticos, não presumir que a IA conhece o campus e distinguir apoio emocional de emergências. Nenhuma chave real foi compartilhada ou versionada. Os builds do front e do back passaram; uma chamada real ao Claude ainda depende de uma chave local da equipe.
+- **Status:** Adaptado (código implementado; chamada real pendente de chave local e revisão da equipe)
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_

@@ -10,11 +10,11 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 
 - **Check-in diário:** O formulário está implementado em React. Ele chama `/api/checkins`, mas o servidor atual não possui essa rota. O fallback do front mantém o resultado em memória; limite de um check-in por dia e persistência no servidor ainda não foram implementados.
 - **Registro de pausas:** Os botões e a lista existem no front. A rota `/api/breaks` não existe no servidor, então os registros ficam apenas durante a sessão atual do app.
-- **Dicas com IA:** O servidor atual não chama o Claude. A interface usa uma dica estática e dicas de fallback no front.
+- **Chat com IA:** `POST /api/chat` chama o Claude pelo SDK da Anthropic quando `ANTHROPIC_API_KEY` está configurada em `backend/.env`. O prompt no servidor define um papel acolhedor e não clínico; frases de risco urgente recebem uma resposta fixa com contatos de apoio. A chave não é versionada, e uma chamada real ainda depende da chave local de alguém da equipe.
 - **Histórico semanal:** `GardenView` ainda exibe dados de exemplo; não consulta check-ins ou pausas salvos.
 - **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
-- **Recursos de apoio:** A tela de apoio, os links de contato e o redirecionamento por sofrimento intenso no fallback do front estão implementados.
-- **Armazenamento e privacidade:** O servidor cria uma tabela SQLite `checkins`, mas nenhuma rota atual da API lê ou grava nela. O ID anônimo é gerado no navegador e ainda não está associado a registros no servidor.
+- **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
+- **Armazenamento e privacidade:** O servidor cria uma tabela SQLite `checkins`, mas nenhuma rota atual da API lê ou grava check-ins nela. O ID anônimo é gerado no navegador e não está associado a registros no servidor. O histórico do chat fica na memória do front e é enviado à Anthropic para gerar respostas; não é salvo no SQLite.
 - **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front tem Vitest como dependência, mas não possui script nem suíte de testes. Não há workflow do GitHub Actions nesta branch.
 
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)

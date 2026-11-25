@@ -137,6 +137,15 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** Matheus confirmed the mobile layout looked good and asked for the desktop layout to use the full screen without scrolling. The desktop layout was adjusted to match that feedback. The production build completed successfully after the changes; the team should still review the desktop appearance at its target screen sizes.
 - **Status:** Adapted
 
+### 015: Claude chat integration for the student support companion
+- **Date:** 2026-11-25
+- **Who:** Matheus Epifanio de Souza (Presentation Lead)
+- **Tool:** OpenAI Codex (coding assistant)
+- **Prompt / purpose:** Asked how to configure a Claude API key safely and connect a supportive Portuguese chat in the front end to a server-side prompt. The desired companion should suggest small, optional campus-friendly actions and point students to the professional contacts in the Support section when they feel distressed.
+- **What the AI generated:** Added a “Conversa” screen and `POST /api/chat` using the existing Anthropic SDK dependency. The server owns the fixed system prompt, limits message/history sizes, keeps the API key out of the browser, and returns support guidance for distress or urgent-risk messages. Added `backend/.env.example`, Node's `.env` loading for local development, and a Vite `/api` proxy. The interface explains that messages are sent to Anthropic and should not contain identifying details.
+- **What the team reviewed / changed:** Matheus described the companion's tone and examples (such as asking whether a water fountain is nearby), and asked for professional contacts to be recommended during distress. The prompt was constrained to avoid diagnoses, avoid assuming local campus knowledge, and distinguish emotional support from emergencies. No real API key was shared or committed. Front-end and back-end builds passed; a live Claude request still needs a team member's local key.
+- **Status:** Adapted (code implemented; live API call pending local key and team review)
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_
