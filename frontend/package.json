@@ -9,8 +9,6 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest"
-
-    
   },
   "dependencies": {
     "lucide-react": "^1.80.0",
@@ -29,9 +27,9 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.11.0",
+    "jest": "*",
     "jsdom": "^29.1.1",
-    "vite": "^5.4.10",
-    "vitest": "^2.1.9",
-    "jest": "*"
+    "vite": "^7.3.8",
+    "vitest": "^5.1.2"
   }
 }
