@@ -23,12 +23,12 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
         <div className="chat-title-row">
           <span className="chat-avatar" aria-hidden="true"><MessageCircle size={21} /></span>
           <div>
-            <h1>Conversa com a Pausa Leve</h1>
+            <h1>Conversa com a EntrePausas</h1>
             <p>Um espaço para falar do seu dia e pensar em pequenas pausas.</p>
           </div>
         </div>
         <p className="chat-privacy-note">
-          Suas mensagens são enviadas ao servidor e à API do Claude para gerar respostas. Evite incluir nome completo, endereço ou outros dados pessoais.
+          Suas mensagens são enviadas ao servidor da EntrePausas para gerar respostas com apoio de IA. Evite incluir nome completo, endereço ou outros dados pessoais.
         </p>
       </header>
 
@@ -52,7 +52,7 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
             )}
           </article>
         ))}
-        {isSending && <p className="chat-typing" role="status">A Pausa Leve está respondendo…</p>}
+        {isSending && <p className="chat-typing" role="status">A EntrePausas está respondendo…</p>}
         <div ref={messagesEndRef} />
       </section>
 
@@ -77,7 +77,7 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
       </form>
 
       <p className="chat-disclaimer">
-        A Pausa Leve não é profissional de saúde e não substitui atendimento médico ou psicológico. Em risco imediato, procure uma pessoa de confiança e um serviço de emergência.
+        A EntrePausas não é profissional de saúde e não substitui atendimento médico ou psicológico. Em risco imediato, procure uma pessoa de confiança e um serviço de emergência.
       </p>
     </main>
   );

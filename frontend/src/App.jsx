@@ -16,7 +16,7 @@ export default function App() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Oi! Posso ouvir como foi seu dia e pensar com você em uma pausa pequena. Não substituo apoio profissional. O que está passando pela sua cabeça?'
+      content: 'Oi! Sou a EntrePausas. Posso ouvir como foi seu dia e pensar com você em uma pausa pequena. Não substituo apoio profissional. O que está passando pela sua cabeça?'
     }
   ]);
   const [isChatSending, setIsChatSending] = useState(false);

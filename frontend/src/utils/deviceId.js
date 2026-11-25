@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'pausa_anonymous_device_id';
+const STORAGE_KEY = 'entrepausas_anonymous_device_id';
 
 export function getDeviceId() {
   let id = localStorage.getItem(STORAGE_KEY);

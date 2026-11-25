@@ -75,7 +75,7 @@ export function HomeView({
           alignItems: 'center'
         }}>
           <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-            pausa · bem-estar no campus
+            EntrePausas · bem-estar no campus
           </span>
 
           <button
@@ -237,7 +237,7 @@ export function HomeView({
             />
             <div className="reflection-meta">
               <p id="daily-reflection-hint">
-                Para conversar com a Pausa Leve, abra a aba Conversa.
+                Para conversar com a EntrePausas, abra a aba Conversa.
               </p>
               <span aria-live="polite">{note.length}/1000</span>
             </div>
@@ -250,7 +250,7 @@ export function HomeView({
           </form>
         </section>
 
-        {/* Card 2: Dica da IA */}
+        {/* Card 2: Sugestão da EntrePausas */}
         <section
           className="card"
           style={{ backgroundColor: 'var(--bg-amber-soft)' }}
@@ -295,7 +295,7 @@ export function HomeView({
               cursor: 'pointer'
             }}
           >
-            Conversar com a Pausa Leve
+            Conversar com a EntrePausas
           </button>
         </section>
 
@@ -394,7 +394,7 @@ export function HomeView({
                 fontSize: '0.75rem',
                 color: 'var(--text-secondary)'
               }}>
-                Este app apoia pausas e hábitos. Não substitui atendimento médico ou psicológico.
+                EntrePausas apoia pausas e hábitos. Não substitui atendimento médico ou psicológico.
               </span>
             </div>
           </div>

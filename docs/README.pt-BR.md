@@ -1,4 +1,4 @@
-# Pausa Leve
+# EntrePausas
 
 [English](README.md) · **Português (Brasil)**
 
@@ -25,12 +25,16 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 
 ## Solução
 
-**Pausa Leve** é uma aplicação web leve, respeitosa e mobile-first criada para estudantes. Ela oferece um espaço livre de pressão para pausar e fazer check-in, deixando explícito o tempo todo que não substitui atendimento profissional.
+**EntrePausas** é uma aplicação web leve, respeitosa e mobile-first criada para estudantes. Ela oferece um espaço livre de pressão para pausar e fazer check-in, deixando explícito o tempo todo que não substitui atendimento profissional.
 
 **O que o MVP cobre:**
 - **Check-in Diário Rápido:** Avaliação simples de humor e energia com linguagem acolhedora e sem julgamentos.
 - **Registro de Micro-Pausas e Hábitos:** Registro em um clique para pequenas ações (beber água, alongar, fazer uma pausa de 5 minutos).
+<<<<<<< HEAD
 - **Conversa com IA:** Chat na aba “Conversa”, atendido pelo back-end via API do Google Gemini com um prompt fixo e acolhedor. A IA sugere pausas opcionais, não faz diagnósticos e indica apoio humano quando necessário.
+=======
+- **Conversa com a IA da EntrePausas:** Chat na aba “Conversa”, atendido pelo back-end com um prompt fixo e acolhedor. A IA sugere pausas opcionais, não faz diagnósticos e indica apoio humano quando necessário.
+>>>>>>> 29eff0be (feat: rebrand app as EntrePausas)
 - **Histórico Privado de 7 Dias:** Visualização isolada por dispositivo dos check-ins e pausas recentes, sem pontuações comparativas.
 - **Lembrete Gentil na Tela:** Aviso discreto incentivando uma pausa curta durante sessões de estudo.
 - **Seção de Apoio Profissional:** Tela dedicada com canais reais de apoio (como CVV - 188, SAMU 192 e acolhimento estudantil do campus), acessível pela navegação principal.

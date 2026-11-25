@@ -1,4 +1,4 @@
-# Pausa Leve
+# EntrePausas
 
 **English** · [Português (Brasil)](README.pt-BR.md)
 
@@ -25,12 +25,16 @@ Students facing intense study routines, deadlines, and project weeks often negle
 
 ## Solution
 
-**Pausa Leve** is a lightweight, respectful, mobile-first web application built for campus students. It provides a pressure-free space to pause and check in while explicitly stating that it does not replace professional care.
+**EntrePausas** is a lightweight, respectful, mobile-first web application built for campus students. It provides a pressure-free space to pause and check in while explicitly stating that it does not replace professional care.
 
 **What the MVP covers:**
 - **Quick Daily Check-in:** Simple mood and energy rating with welcoming, non-judgmental wording.
 - **Micro-Breaks & Habit Log:** One-click logging for small actions (drinking water, stretching, taking a 5-minute break).
+<<<<<<< HEAD
 - **AI Companion Chat:** A conversation on the “Conversa” tab, handled by the back-end through the Google Gemini API with a fixed, supportive system prompt. It offers optional small breaks, does not diagnose, and points users to human support when appropriate.
+=======
+- **EntrePausas AI Chat:** A conversation on the “Conversa” tab, handled by the back-end with a fixed, supportive system prompt. It offers optional small breaks, does not diagnose, and points users to human support when appropriate.
+>>>>>>> 29eff0be (feat: rebrand app as EntrePausas)
 - **Private 7-Day History:** Per-device isolated view of recent check-ins and breaks without comparative scores.
 - **Gentle On-Screen Reminder:** Non-intrusive prompt encouraging a short pause during study sessions.
 - **Professional Support Section:** A dedicated screen with real support channels (e.g., CVV - 188, SAMU 192, and campus student support), accessible from the main navigation.

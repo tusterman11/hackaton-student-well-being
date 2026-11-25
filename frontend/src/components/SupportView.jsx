@@ -21,7 +21,7 @@ export function SupportView() {
       >
         <ShieldAlert size={22} color="var(--accent-orange-hover)" style={{ flexShrink: 0 }} />
         <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>
-          <strong>Importante:</strong> Este aplicativo apoia pausas e hábitos diários. Ele{' '}
+          <strong>Importante:</strong> EntrePausas apoia pausas e hábitos diários. Ela{' '}
           <strong>não</strong> realiza diagnóstico, terapia, aconselhamento médico ou atendimento de
           emergência.
         </p>
