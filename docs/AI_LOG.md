@@ -146,6 +146,15 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** Matheus described the companion's tone and examples (such as asking whether a water fountain is nearby), and asked for professional contacts to be recommended during distress. The prompt was constrained to avoid diagnoses, avoid assuming local campus knowledge, and distinguish emotional support from emergencies. No real API key was shared or committed. Front-end and back-end builds passed; a live Claude request still needs a team member's local key.
 - **Status:** Adapted (code implemented; live API call pending local key and team review)
 
+### 016: Vitest setup and essential front-end tests
+- **Date:** 2026-11-25
+- **Who:** Team
+- **Tool:** GitHub Copilot in VS Code
+- **Prompt / purpose:** Asked for a test analysis and then requested only the most necessary Vitest tests for the front end.
+- **What the AI generated:** A focused test plan, Vitest configuration for the Vite project, Testing Library setup, five integration tests in `src/App.test.jsx`, and package-script and dependency adjustments. The tests cover main-view navigation, check-in submission and feedback, automatic support navigation for low mood, break registration, and chat API error handling.
+- **What the team reviewed / changed:** The team kept Vitest instead of Jest because the project uses Vite and kept the suite limited to high-value MVP behaviors. Vitest 5 and jsdom 29 were replaced with Node 20-compatible versions (Vitest 3.2.4 and jsdom 26.1.0). The test setup includes DOM cleanup and a browser `scrollIntoView` shim. Assertions and navigation selectors were adjusted to avoid duplicate text matches and ambiguous queries. The final suite has five passing tests.
+- **Status:** Adapted
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_

@@ -146,6 +146,15 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** Matheus explicou o tom e deu exemplos para a companhia (como perguntar se há um bebedouro por perto), além de pedir a indicação de contatos profissionais em momentos de sofrimento. O prompt foi limitado para evitar diagnósticos, não presumir que a IA conhece o campus e distinguir apoio emocional de emergências. Nenhuma chave real foi compartilhada ou versionada. Os builds do front e do back passaram; uma chamada real ao Claude ainda depende de uma chave local da equipe.
 - **Status:** Adaptado (código implementado; chamada real pendente de chave local e revisão da equipe)
 
+### 016: Configuração do Vitest e testes essenciais do front-end
+- **Data:** 25/11/2026
+- **Quem:** Equipe
+- **Ferramenta:** GitHub Copilot no VS Code
+- **Prompt / objetivo:** Pedimos uma análise dos testes e, depois, solicitamos apenas os testes Vitest mais necessários para o front-end.
+- **O que a IA gerou:** Um plano de testes focado, a configuração do Vitest para o projeto Vite, a configuração do Testing Library, cinco testes de integração em `src/App.test.jsx` e ajustes no script e nas dependências do projeto. Os testes cobrem navegação entre telas, envio e feedback do check-in, navegação automática para apoio em humor baixo, registro de pausas e tratamento de erro da API de conversa.
+- **O que a equipe revisou / alterou:** A equipe manteve o Vitest em vez do Jest porque o projeto usa Vite e limitou a suíte aos comportamentos de maior valor do MVP. Vitest 5 e jsdom 29 foram substituídos por versões compatíveis com Node 20 (Vitest 3.2.4 e jsdom 26.1.0). A configuração dos testes inclui limpeza do DOM e uma adaptação de `scrollIntoView` para o ambiente de navegador simulado. Asserções e seletores de navegação foram ajustados para evitar correspondências duplicadas de texto e consultas ambíguas. A suíte final passou com cinco testes.
+- **Status:** Adaptado
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_
