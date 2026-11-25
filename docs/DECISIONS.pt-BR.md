@@ -4,6 +4,19 @@
 
 Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e indicar o que foi decidido, as alternativas consideradas e o motivo da escolha.
 
+## Status da implementação — 25/11/2026 (`feat/frontend-setup`)
+
+As decisões abaixo descrevem o produto pretendido; não significam que todos os recursos estejam concluídos. Situação do código atual:
+
+- **Check-in diário:** O formulário está implementado em React. Ele chama `/api/checkins`, mas o servidor atual não possui essa rota. O fallback do front mantém o resultado em memória; limite de um check-in por dia e persistência no servidor ainda não foram implementados.
+- **Registro de pausas:** Os botões e a lista existem no front. A rota `/api/breaks` não existe no servidor, então os registros ficam apenas durante a sessão atual do app.
+- **Dicas com IA:** O servidor atual não chama o Claude. A interface usa uma dica estática e dicas de fallback no front.
+- **Histórico semanal:** `GardenView` ainda exibe dados de exemplo; não consulta check-ins ou pausas salvos.
+- **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
+- **Recursos de apoio:** A tela de apoio, os links de contato e o redirecionamento por sofrimento intenso no fallback do front estão implementados.
+- **Armazenamento e privacidade:** O servidor cria uma tabela SQLite `checkins`, mas nenhuma rota atual da API lê ou grava nela. O ID anônimo é gerado no navegador e ainda não está associado a registros no servidor.
+- **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front tem Vitest como dependência, mas não possui script nem suíte de testes. Não há workflow do GitHub Actions nesta branch.
+
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
   1. **Check-in diário:** Uma pergunta simples de humor e energia por dia (escala de 1 a 5 com linguagem cuidadosa) + nota opcional, sem notas ou comparações.
@@ -28,7 +41,7 @@ Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e 
 ## 24/11/2026 — Banco de Dados (`better-sqlite3`), Privacidade e Identificador Anônimo por Dispositivo
 - **Decisão:** Utilizar **SQLite via `better-sqlite3` com SQL puro** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
 - **Alternativas consideradas:** Prisma ORM; cadastro com e-mail e senha (JWT); login social OAuth; PostgreSQL em nuvem.
-- **Justificativa:** O `better-sqlite3` com SQL puro evita problemas de migração de ORM, dispensa configuração de servidor e executa de forma síncrona com alta estabilidade no CI. O identificador anônimo por dispositivo protege a privacidade (nenhum dado pessoal ou médico é coletado), elimina atrito na apresentação ao vivo e garante que cada pessoa veja apenas o próprio histórico de 7 dias.
+- **Justificativa:** O `better-sqlite3` com SQL puro evita problemas de migração de ORM, dispensa configuração de servidor e executa de forma síncrona com alta estabilidade no CI. O identificador anônimo por dispositivo evita o atrito do login e foi escolhido para separar o histórico de cada pessoa. Ele ainda não está associado aos registros no servidor; consulte o status da implementação acima.
 
 ## 24/11/2026 — Regras de Segurança da IA e Estratégia de Fallback
 - **Decisão:** Chamar a **API do Claude (`@anthropic-ai/sdk`)** exclusivamente pelo back-end com prompt de sistema acolhedor e não diretivo. Se o check-in indicar um momento mais difícil (níveis mais baixos de humor), o app **não** gera texto livre e destaca imediatamente a seção de Recursos de Apoio. Inclui dicas estáticas escritas à mão como fallback caso a API falhe.
@@ -38,6 +51,8 @@ Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e 
 ---
 
 ## Perguntas do Briefing Respondidas pelo Time
+
+As respostas abaixo descrevem o comportamento desejado e os critérios de aceitação; consulte o status da implementação acima para saber o que já está entregue.
 
 1. **Como garantimos que uma dica não seja genérica nem potencialmente inadequada?**
    - O prompt de sistema envia o nível de humor/energia e a nota opcional do aluno, instruindo a IA a sugerir uma micro-pausa concreta de 2 a 5 minutos adaptada à rotina do campus, sempre em tom de convite opcional.

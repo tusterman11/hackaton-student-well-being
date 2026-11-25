@@ -4,6 +4,19 @@
 
 Record the team's important decisions here. Each entry should be short and state what was decided, the alternatives considered and the reason for the choice.
 
+## Implementation status — 25/11/2026 (`feat/frontend-setup`)
+
+The decisions below describe the intended product; they are not a statement that every feature is complete. Current implementation:
+
+- **Daily check-in:** The form is implemented in React. It calls `/api/checkins`, but the current server does not provide that route. The front-end fallback keeps the result in memory; once-per-day enforcement and server persistence are not implemented.
+- **Break logging:** The buttons and list are implemented in the front end. `/api/breaks` is not available on the server, so entries only remain in the current app session.
+- **AI tips:** Claude is not called by the current server. The interface currently uses a static tip and front-end fallback tips.
+- **Weekly history:** `GardenView` currently renders mock data; it is not connected to saved check-ins or breaks.
+- **Gentle reminder:** The reminder can be opened with the “Test reminder” button. The planned 45–60 minute timer is not implemented.
+- **Support resources:** The support screen, contact links, and distress redirect in the front-end fallback are implemented.
+- **Storage and privacy:** The server creates a SQLite `checkins` table, but no current API route reads or writes it. The anonymous device ID is generated in the browser and is not yet connected to server records.
+- **Tests and CI:** The back end has a `node --test` script and test file. The front end has Vitest as a dependency but no test script or test suite. No GitHub Actions workflow is present in this branch.
+
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
   1. **Daily Check-in:** Single mood/energy check-in per day (1–5 scale with careful wording) + optional short note, no scores or comparisons.
@@ -28,7 +41,7 @@ Record the team's important decisions here. Each entry should be short and state
 ## 24/11/2026 — Database (`better-sqlite3`), Privacy, and Anonymous Device ID
 - **Decision:** Use **SQLite via `better-sqlite3` with plain SQL** and identify users via an **anonymous per-device ID** stored in the browser, rather than full user accounts.
 - **Alternatives considered:** Prisma ORM; email/password authentication with JWT; OAuth social login; PostgreSQL on cloud servers.
-- **Rationale:** `better-sqlite3` with plain SQL avoids ORM migration issues, requires zero server setup, and executes synchronously with high reliability in CI. An anonymous per-device ID protects student privacy (zero personal or sensitive health data stored), removes login friction during the live demo, and ensures each user only sees their own 7-day history.
+- **Rationale:** `better-sqlite3` with plain SQL avoids ORM migration issues, requires zero server setup, and executes synchronously with high reliability in CI. An anonymous per-device ID avoids login friction and is intended to scope each user's history. The ID is not yet connected to server-side records; see the implementation status above.
 
 ## 24/11/2026 — AI Safety Rules and Fallback Strategy
 - **Decision:** Call the **Claude API (`@anthropic-ai/sdk`)** strictly from the back-end with a warm, non-directive system prompt. If the check-in indicates intense distress (lowest mood levels), bypass free-form AI generation and highlight the Support Resources section. Include static hand-written fallback tips in case of API failure.
@@ -38,6 +51,8 @@ Record the team's important decisions here. Each entry should be short and state
 ---
 
 ## Briefing Guiding Questions (Team Alignment)
+
+The answers below are intended behavior and acceptance criteria; use the implementation status above to see what is currently delivered.
 
 1. **How do we ensure a tip is neither generic nor potentially inappropriate?**
    - The system prompt passes the user's specific mood/energy level and optional context, instructing the AI to suggest a concrete, 2-to-5-minute campus-friendly micro-break framed as an optional invitation.

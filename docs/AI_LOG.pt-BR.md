@@ -128,6 +128,15 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** _A ser preenchido pela equipe._
 - **Status:** Pendente
 
+### 014: Depuração e layout responsivo do front-end
+- **Data:** 25/11/2026
+- **Quem:** Matheus Epifanio de Souza (Presentation Lead)
+- **Ferramenta:** OpenAI Codex (assistente de programação)
+- **Prompt / objetivo:** Pedimos ajuda para descobrir por que o localhost abria em branco e, depois, para adaptar o layout a desktop e celular e trocar o campo curto por uma área de anotação preparada para uma integração futura com IA, ainda sem conectar a IA.
+- **O que a IA gerou:** A análise do front encontrou uma divergência: `App.jsx` importava `BreaksView`, mas `BreaksView.jsx` exportava uma cópia de `GardenView`; foi criada uma tela própria de pausas. O front foi adaptado a diferentes telas, com layout desktop ocupando a janela e sem barra de rolagem da página em larguras de desktop. O campo de anotação virou uma área de texto de até 1.000 caracteres com contador, e o rascunho é mantido ao trocar de aba. O título e o idioma da página também foram atualizados. Nenhuma integração com IA foi adicionada.
+- **O que a equipe revisou / alterou:** Matheus confirmou que a versão para celular ficou boa e pediu que o desktop ocupasse a tela toda sem rolagem. O layout desktop foi ajustado para atender a esse pedido. O build de produção concluiu com sucesso após as mudanças; a equipe ainda deve conferir a aparência do desktop nos tamanhos de tela que pretende usar.
+- **Status:** Adaptado
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_

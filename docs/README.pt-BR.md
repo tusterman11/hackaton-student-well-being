@@ -48,23 +48,53 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 
 ```text
 /
-├── README.md
-├── README.pt-BR.md
-├── DECISIONS.md
-├── DECISIONS.pt-BR.md
-├── AI_LOG.md
-├── AI_LOG.pt-BR.md
-├── .github/
-│   └── workflows/
-│       └── ci.yml
+├── .gitignore
+├── .nvmrc
 ├── backend/
-│   ├── db/
-│   ├── src/
-│   └── tests/
+│   ├── eslint.config.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── server.js
+│   └── server.test.js
+├── docs/
+│   ├── AI_LOG.md
+│   ├── AI_LOG.pt-BR.md
+│   ├── BRIEFING.md
+│   ├── BRIEFING.pt-BR.md
+│   ├── DECISIONS.md
+│   ├── DECISIONS.pt-BR.md
+│   ├── README.md
+│   └── README.pt-BR.md
 ├── frontend/
+│   ├── .gitignore
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public/
+│   │   └── vite.svg
 │   ├── src/
-│   └── tests/
-└── docs/
+│   │   ├── assets/
+│   │   │   └── react.svg
+│   │   ├── components/
+│   │   │   ├── BottomNav.jsx
+│   │   │   ├── BreaksView.jsx
+│   │   │   ├── GardenView.jsx
+│   │   │   ├── GentleReminder.jsx
+│   │   │   ├── HomeView.jsx
+│   │   │   └── SupportView.jsx
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   ├── styles/
+│   │   │   └── theme.css
+│   │   ├── utils/
+│   │   │   └── deviceId.js
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   └── vite.config.js
 ```
 
 ## Como executar

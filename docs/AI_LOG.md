@@ -128,6 +128,15 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** _To be completed by the team._
 - **Status:** Pending
 
+### 014: Front-end debugging and responsive layout
+- **Date:** 2026-11-25
+- **Who:** Matheus Epifanio de Souza (Presentation Lead)
+- **Tool:** OpenAI Codex (coding assistant)
+- **Prompt / purpose:** Asked for help diagnosing the blank localhost page, then requested a responsive desktop/mobile layout and a larger daily reflection field prepared for a future AI integration, without adding the AI integration yet.
+- **What the AI generated:** A front-end review found that `App.jsx` imported `BreaksView`, while `BreaksView.jsx` exported a duplicate `GardenView`; a dedicated breaks screen was added. The front end was made responsive, with a full-window desktop layout and no page scrollbar at desktop widths. The single-line note input became a 1,000-character textarea with a counter, and its draft is kept when switching tabs. The page title and language metadata were also updated. No AI connection was added.
+- **What the team reviewed / changed:** Matheus confirmed the mobile layout looked good and asked for the desktop layout to use the full screen without scrolling. The desktop layout was adjusted to match that feedback. The production build completed successfully after the changes; the team should still review the desktop appearance at its target screen sizes.
+- **Status:** Adapted
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_
