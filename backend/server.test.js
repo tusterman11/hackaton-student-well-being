@@ -1,15 +1,53 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const app = require('./server');
+const Database = require('better-sqlite3');
+const { createApp } = require('./server');
 
-test('health endpoint responds ok', async () => {
+test('check-in and pause endpoints validate and persist weekly data', async () => {
+  const database = new Database(':memory:');
+  const app = createApp(database);
   const server = app.listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
   const { port } = server.address();
+  const baseUrl = `http://127.0.0.1:${port}`;
+
   try {
-    const res = await fetch(`http://127.0.0.1:${port}/api/health`);
-    assert.deepStrictEqual(await res.json(), { ok: true });
+    const healthResponse = await fetch(`${baseUrl}/api/health`);
+    assert.deepStrictEqual(await healthResponse.json(), { ok: true });
+
+    const invalidCheckin = await fetch(`${baseUrl}/api/checkins`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mood: 6, energy: 3 }),
+    });
+    assert.strictEqual(invalidCheckin.status, 400);
+
+    const checkinResponse = await fetch(`${baseUrl}/api/checkins`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mood: 2, energy: 3, note: 'Dia cheio' }),
+    });
+    assert.strictEqual(checkinResponse.status, 201);
+
+    const checkinsResponse = await fetch(`${baseUrl}/api/checkins`);
+    const checkins = await checkinsResponse.json();
+    assert.strictEqual(checkins.length, 1);
+    assert.strictEqual(checkins[0].mood, 2);
+    assert.strictEqual(checkins[0].note, 'Dia cheio');
+
+    const pauseResponse = await fetch(`${baseUrl}/api/pauses`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'water' }),
+    });
+    assert.strictEqual(pauseResponse.status, 201);
+
+    const pausesResponse = await fetch(`${baseUrl}/api/pauses`);
+    const pauses = await pausesResponse.json();
+    assert.strictEqual(pauses.length, 1);
+    assert.strictEqual(pauses[0].type, 'water');
   } finally {
     await new Promise((resolve) => server.close(resolve));
+    database.close();
   }
 });
