@@ -15,7 +15,7 @@ The decisions below describe the intended product; they are not a statement that
 - **Gentle reminder:** The reminder can be opened with the “Test reminder” button. The planned 45–60 minute timer is not implemented.
 - **Support resources:** The support screen and contact links are implemented. The chat can show CVV 188 and SAMU 192 links for urgent risk; the assistant is not a professional or an emergency service.
 - **Storage and privacy:** The server creates a SQLite `checkins` table, but no current API route reads or writes check-ins. The anonymous device ID is generated in the browser and is not connected to server records. Chat history remains in front-end memory and is sent to Anthropic to generate replies; it is not stored in SQLite.
-- **Tests and CI:** The back end has a `node --test` script and test file. The front end has Vitest as a dependency but no test script or test suite. No GitHub Actions workflow is present in this branch.
+- **Tests and CI:** The back end has a `node --test` script and test file. The front end now runs five Vitest integration tests covering navigation, check-in submission, low-mood support routing, break registration and chat error handling. No GitHub Actions workflow is present in this branch.
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
@@ -34,9 +34,14 @@ The decisions below describe the intended product; they are not a statement that
 - **Rationale:** Avoiding scores and clinical claims respects ethical boundaries and prevents user anxiety. Cutting optional extras and external integrations protects the 5-day timeline (if extra time remains on Saturday, silent mode is the lowest-cost addition).
 
 ## 24/11/2026 — Unified JavaScript Stack, Testing & CI
-- **Decision:** Build a mobile-first web app in **Portuguese** using **React + Vite 5 (JavaScript, HTML, and CSS)** on the front-end and **Node.js + Express (JavaScript)** on the back-end. Use **Vitest 2** for front-end tests, Node's built-in **`node --test`** runner for back-end tests, and **GitHub Actions (`node-version: 20`)** for CI, while keeping repository documentation bilingual (English and pt-BR).
+- **Decision:** Build a mobile-first web app in **Portuguese** using **React + Vite (JavaScript, HTML, and CSS)** on the front-end and **Node.js + Express (JavaScript)** on the back-end. Use **Vitest** for front-end tests, Node's built-in **`node --test`** runner for back-end tests, and **GitHub Actions (`node-version: 20`)** for CI, while keeping repository documentation bilingual (English and pt-BR).
 - **Alternatives considered:** TypeScript across both layers; Tailwind CSS; Python (FastAPI) or Java (Spring Boot) on the back-end; Jest for testing; native Android/iOS apps.
-- **Rationale:** Using plain JavaScript with standard HTML/CSS across the entire stack eliminates build/type-checking overhead and allows all 4 members to contribute and review PRs quickly during the hackathon. Native `node --test` and Vitest 2 keep dependencies minimal and run fast in GitHub Actions on Node 20, while a Portuguese UI matches the target campus audience.
+- **Rationale:** Using plain JavaScript with standard HTML/CSS across the entire stack eliminates build/type-checking overhead and allows all 4 members to contribute and review PRs quickly during the hackathon. Native `node --test` and Vitest keep dependencies minimal and run fast in GitHub Actions on Node 20, while a Portuguese UI matches the target campus audience.
+
+## 25/11/2026 — Front-End Vitest Suite and Node 20 Compatibility
+- **Decision:** Use Vitest with Testing Library and jsdom for focused front-end integration tests, and keep only the MVP-critical behaviors in the initial suite.
+- **Alternatives considered:** Continuing to use Jest, adding broad component snapshots, and adding an end-to-end browser suite at the same time.
+- **Rationale:** Vitest integrates with Vite and Jest is not needed as the runner. The first suite covers navigation, successful and distressed check-ins, break registration and chat failures. Vitest 3.2.4 and jsdom 26.1.0 are used because they are compatible with the lab environment's Node 20.12.2; package versions will be reviewed before upgrading Node or Vite.
 
 ## 24/11/2026 — Database (`better-sqlite3`), Privacy, and Anonymous Device ID
 - **Decision:** Use **SQLite via `better-sqlite3` with plain SQL** and identify users via an **anonymous per-device ID** stored in the browser, rather than full user accounts.

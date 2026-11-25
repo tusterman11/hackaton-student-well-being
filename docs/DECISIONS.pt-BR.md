@@ -15,7 +15,7 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 - **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
 - **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
 - **Armazenamento e privacidade:** O servidor cria uma tabela SQLite `checkins`, mas nenhuma rota atual da API lê ou grava check-ins nela. O ID anônimo é gerado no navegador e não está associado a registros no servidor. O histórico do chat fica na memória do front e é enviado à Anthropic para gerar respostas; não é salvo no SQLite.
-- **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front tem Vitest como dependência, mas não possui script nem suíte de testes. Não há workflow do GitHub Actions nesta branch.
+- **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front agora executa cinco testes de integração Vitest que cobrem navegação, envio do check-in, encaminhamento para apoio em humor baixo, registro de pausas e erros no chat. Não há workflow do GitHub Actions nesta branch.
 
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
@@ -34,9 +34,14 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 - **Justificativa:** Evitar notas e promessas clínicas respeita os limites éticos do briefing e evita pressionar o estudante. Cortar extras protege o prazo de 5 dias (caso sobre tempo no sábado, o modo silencioso será a primeira adição por ter menor custo).
 
 ## 24/11/2026 — Stack Unificada em JavaScript, Testes e CI
-- **Decisão:** Construir uma aplicação web mobile-first com interface em **português** usando **React + Vite 5 (JavaScript, HTML e CSS)** no front-end e **Node.js + Express (JavaScript)** no back-end. Utilizar **Vitest 2** para testes no front-end, o executor nativo **`node --test`** para testes no back-end e **GitHub Actions (`node-version: 20`)** para CI, mantendo a documentação do repositório bilíngue (Inglês e pt-BR).
+- **Decisão:** Construir uma aplicação web mobile-first com interface em **português** usando **React + Vite (JavaScript, HTML e CSS)** no front-end e **Node.js + Express (JavaScript)** no back-end. Utilizar **Vitest** para testes no front-end, o executor nativo **`node --test`** para testes no back-end e **GitHub Actions (`node-version: 20`)** para CI, mantendo a documentação do repositório bilíngue (Inglês e pt-BR).
 - **Alternativas consideradas:** TypeScript nas duas pontas; Tailwind CSS; Python (FastAPI) ou Java (Spring Boot) no back-end; Jest para testes; aplicativos mobile nativos.
-- **Justificativa:** Usar JavaScript puro com HTML e CSS padrão em toda a stack elimina a sobrecarga de compilação e tipagem, permitindo que os 4 integrantes contribuam e revisem PRs rapidamente durante o hackathon. O `node --test` nativo e o Vitest 2 mantêm as dependências mínimas e rodam rápido no GitHub Actions com Node 20, enquanto a interface em português atende diretamente os estudantes do campus.
+- **Justificativa:** Usar JavaScript puro com HTML e CSS padrão em toda a stack elimina a sobrecarga de compilação e tipagem, permitindo que os 4 integrantes contribuam e revisem PRs rapidamente durante o hackathon. O `node --test` nativo e o Vitest mantêm as dependências mínimas e rodam rápido no GitHub Actions com Node 20, enquanto a interface em português atende diretamente os estudantes do campus.
+
+## 25/11/2026 — Suíte Vitest do Front-end e Compatibilidade com Node 20
+- **Decisão:** Usar Vitest com Testing Library e jsdom para testes de integração focados no front-end e manter apenas os comportamentos essenciais do MVP na suíte inicial.
+- **Alternativas consideradas:** Continuar usando Jest, criar snapshots amplos de componentes e adicionar uma suíte browser end-to-end ao mesmo tempo.
+- **Justificativa:** Vitest se integra ao Vite e não exige Jest como executor. A primeira suíte cobre navegação, check-ins normais e de sofrimento, registro de pausas e falhas no chat. Vitest 3.2.4 e jsdom 26.1.0 foram usados por serem compatíveis com o Node 20.12.2 dos computadores do laboratório; as versões serão revistas antes de atualizar Node ou Vite.
 
 ## 24/11/2026 — Banco de Dados (`better-sqlite3`), Privacidade e Identificador Anônimo por Dispositivo
 - **Decisão:** Utilizar **SQLite via `better-sqlite3` com SQL puro** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
