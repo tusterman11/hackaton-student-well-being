@@ -111,6 +111,6 @@ Configured for local execution during the live demonstration (optional deploy ta
 
 ## Links
 
-- **Repository:** [Add GitHub Repo URL]
+- **Repository:** [[Add GitHub Repo URL](https://github.com/tusterman11/hackaton-student-well-being)]
 - **Deploy (if any):** Localhost demo
-- **Board / GitHub project (if any):** [Add GitHub Projects URL]
+- **Board / GitHub project (if any):** [[Add GitHub Projects URL](https://github.com/users/tusterman11/projects/2)] 
