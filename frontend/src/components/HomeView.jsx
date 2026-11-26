@@ -75,7 +75,7 @@ export function HomeView({
           alignItems: 'center'
         }}>
           <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-            pausa · bem-estar no campus
+            EntrePausas · bem-estar no campus
           </span>
 
           <button
@@ -137,6 +137,7 @@ export function HomeView({
                   <button
                     key={item.value}
                     type="button"
+                    aria-pressed={selected}
                     onClick={() => setMood(item.value)}
                     style={{
                       display: 'flex',
@@ -192,6 +193,7 @@ export function HomeView({
                     type="button"
                     onClick={() => setEnergy(lvl)}
                     aria-label={`Energia ${lvl}`}
+                    aria-pressed={lvl <= energy}
                     style={{
                       flex: 1,
                       padding: '8px',
@@ -237,7 +239,7 @@ export function HomeView({
             />
             <div className="reflection-meta">
               <p id="daily-reflection-hint">
-                Para conversar com a Pausa Leve, abra a aba Conversa.
+                Para conversar com a Interlude, abra a aba Conversa.
               </p>
               <span aria-live="polite">{note.length}/1000</span>
             </div>
@@ -295,7 +297,7 @@ export function HomeView({
               cursor: 'pointer'
             }}
           >
-            Conversar com a Pausa Leve
+            Conversar com a Interlude
           </button>
         </section>
 

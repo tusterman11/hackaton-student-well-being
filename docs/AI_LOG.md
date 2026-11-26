@@ -155,6 +155,15 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** The team kept Vitest instead of Jest because the project uses Vite and kept the suite limited to high-value MVP behaviors. Vitest 5 and jsdom 29 were replaced with Node 20-compatible versions (Vitest 3.2.4 and jsdom 26.1.0). The test setup includes DOM cleanup and a browser `scrollIntoView` shim. Assertions and navigation selectors were adjusted to avoid duplicate text matches and ambiguous queries. The final suite has five passing tests.
 - **Status:** Adapted
 
+### 017: EntrePausas rebrand and visual experience updates
+- **Date:** 2026-11-26
+- **Who:** Matheus Epifanio de Souza (Presentation Lead)
+- **Tool:** OpenAI Codex (coding assistant)
+- **Prompt / purpose:** Over the conversation, requested a switch from Claude to Gemini without changing Node or Vite versions; a front end inspired by the supplied designs and responsive on phones; a local back-end root that opens the current Vite front end; hover-responsive desktop navigation; a compact mobile menu; dark mode; improved dark-mode readability; and a product rename to EntrePausas with the Gemini assistant named Interlude.
+- **What the AI generated:** Updated the chat privacy text and removed the unused Anthropic SDK. Reworked the visual layer, added browser-local water, journal, goals, sleep and study screens, expandable desktop navigation and a floating mobile menu, plus a browser-persisted theme switch. The local server root redirects to Vite during development and continues serving `frontend/dist` in production. Updated the brand in the front end, READMEs and decisions; the Gemini prompt identifies its assistant as Interlude. Browser-storage keys were migrated while preserving existing values. No Node or Vite version was changed.
+- **What the team reviewed / changed:** The user gave several rounds of feedback on responsiveness, sidebar expansion/collapse, hover highlighting, square home-header corners, dark mode, the mobile menu's green color, and dark-text contrast. The implementation was refined to match. The front-end build was not confirmed in this conversation because the process produced no output and had to be stopped.
+- **Status:** Adapted
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_

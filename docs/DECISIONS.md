@@ -4,14 +4,17 @@
 
 Record the team's important decisions here. Each entry should be short and state what was decided, the alternatives considered and the reason for the choice.
 
-## Implementation status — 25/11/2026 (`feat/frontend-setup`)
+## Implementation status — 26/11/2026 (`feat/frontend-setup`)
 
 The decisions below describe the intended product; they are not a statement that every feature is complete. Current implementation:
 
 - **Daily check-in:** The form is implemented in React and calls `POST /api/checkins`; the server validates and persists check-ins in SQLite. Once-per-day enforcement is not implemented.
 - **Break logging:** The buttons and list are implemented in the front end and call `POST /api/breaks`; the server persists pauses in SQLite.
 - **AI chat:** `POST /api/chat` calls Google Gemini through Node's built-in `fetch` when `GEMINI_API_KEY` is configured in `backend/.env`. The server prompt defines a supportive, non-clinical role; urgent risk phrases receive a fixed response with support contacts. The key is not committed, and a real live reply requires a valid key.
-- **Gemini verification:** Live verification on 25/11/2026 returned `API key not valid`. The configured key must be replaced before live AI responses can be demonstrated.
+- **Brand and assistant identity:** The product is named **EntrePausas** and its chat assistant introduces herself as **Interlude**. The name is used in the interface, page title, and Gemini system prompt.
+- **Interface:** The front end uses an expandable desktop sidebar and a compact floating menu on mobile. Light/dark themes are switchable and the preference is stored in the browser. Additional personal screens store their data in the browser only.
+- **Local development:** The back end redirects `localhost:3000` to Vite at `localhost:5173` during development; in production it serves `frontend/dist` with `NODE_ENV=production`.
+- **Gemini verification:** The last recorded live check, on 25/11/2026, returned `API key not valid`. The key was changed afterward; the current configuration still needs a live call to confirm it works.
 - **Weekly history:** `GardenView` currently renders mock data; it is not connected to saved check-ins or breaks.
 - **Gentle reminder:** The reminder can be opened with the “Test reminder” button. The planned 45–60 minute timer is not implemented.
 - **Support resources:** The support screen and contact links are implemented. The chat can show CVV 188 and SAMU 192 links for urgent risk; the assistant is not a professional or an emergency service.

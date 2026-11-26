@@ -4,14 +4,17 @@
 
 Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e indicar o que foi decidido, as alternativas consideradas e o motivo da escolha.
 
-## Status da implementação — 25/11/2026 (`feat/frontend-setup`)
+## Status da implementação — 26/11/2026 (`feat/frontend-setup`)
 
 As decisões abaixo descrevem o produto pretendido; não significam que todos os recursos estejam concluídos. Situação do código atual:
 
 - **Check-in diário:** O formulário está implementado em React e chama `POST /api/checkins`; o servidor valida e persiste os check-ins no SQLite. O limite de um check-in por dia ainda não foi implementado.
 - **Registro de pausas:** Os botões e a lista existem no front e chamam `POST /api/breaks`; o servidor persiste as pausas no SQLite.
 - **Chat com IA:** `POST /api/chat` chama o Google Gemini pelo `fetch` nativo do Node quando `GEMINI_API_KEY` está configurada em `backend/.env`. O prompt no servidor define um papel acolhedor e não clínico; frases de risco urgente recebem uma resposta fixa com contatos de apoio. A chave não é versionada, e uma resposta ao vivo exige uma chave válida.
-- **Verificação do Gemini:** A verificação ao vivo em 25/11/2026 retornou `API key not valid`. A chave configurada precisa ser substituída antes da demonstração de respostas de IA ao vivo.
+- **Marca e identidade da assistente:** O produto se chama **EntrePausas** e a assistente do chat se apresenta como **Interlude**. A identidade está aplicada na interface, no título da página e no prompt do Gemini.
+- **Interface:** O front usa navegação lateral expansível no desktop e um menu flutuante compacto no celular. O tema claro/escuro é alternável e a preferência fica salva no navegador. As telas pessoais adicionais guardam dados apenas neste navegador.
+- **Desenvolvimento local:** O back-end redireciona a raiz de `localhost:3000` para o Vite em `localhost:5173` durante o desenvolvimento; em produção, serve `frontend/dist` com `NODE_ENV=production`.
+- **Verificação do Gemini:** A última verificação ao vivo registrada, em 25/11/2026, retornou `API key not valid`. A chave foi alterada depois; a configuração atual ainda precisa ser confirmada com uma chamada ao vivo.
 - **Histórico semanal:** `GardenView` ainda exibe dados de exemplo; não consulta check-ins ou pausas salvos.
 - **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
 - **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
