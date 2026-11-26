@@ -28,6 +28,7 @@ Students facing intense study routines, deadlines, and project weeks often negle
 **EntrePausas** is a lightweight, respectful, mobile-first web application built for campus students. It provides a pressure-free space to pause and check in while explicitly stating that it does not replace professional care.
 
 **What the MVP covers:**
+<<<<<<< HEAD
 - **Quick Daily Check-in:** Simple mood and energy rating with welcoming, non-judgmental wording.
 - **Micro-Breaks & Habit Log:** One-click logging for small actions (drinking water, stretching, taking a 5-minute break).
 <<<<<<< HEAD
@@ -47,14 +48,36 @@ Students facing intense study routines, deadlines, and project weeks often negle
 - The server creates SQLite `checkins` and `pauses` tables and exposes weekly check-in and pause history routes.
 - `GardenView` still displays sample weekly data. The reminder is currently opened manually with the test button.
 - The support screen and its contact links are implemented. The assistant is not a therapist or emergency service.
+=======
+- **Dashboard and daily check-in:** Mood and energy ratings from 1 to 5, optional note, daily summary, and access to previous check-ins.
+- **Weekly reports:** Mood and energy charts and summaries calculated only from real records, without scores or comparisons.
+- **Hydration, journal, habits, and sleep:** Records and history stored locally in this browser.
+- **Guided breaks:** Timers for breathing, stretching, eye rest, and a free break; completed breaks are sent to the server.
+- **Study routine:** Focus timer and locally stored history of completed sessions.
+- **EntrePausas AI chat:** Uses the back-end chat route. The UI shows errors when the service is not configured or available and does not simulate replies.
+- **Gentle reminders and support:** Break reminders and real support contacts (CVV 188, SAMU 192, and local care services).
+
+## Current implementation status
+
+- Check-ins and breaks are saved and queried through the existing back-end routes and persisted in SQLite. The API history covers the most recent seven days.
+- Journal, hydration, habits, sleep, and study sessions are stored in this browser's `localStorage`; they are not encrypted or sent to the server.
+- Chat messages are sent to the back end, which currently uses its configured Gemini integration. Keep the API key only in the back-end environment (for example, `backend/.env`); never put it in front-end code or commit it. Avoid sharing identifying details.
+- There is no user-account authentication. The browser identifier does not securely isolate users and is not authentication or authorization. Avoid storing personal information on shared devices. Secure accounts require back-end authentication and authorization.
+- Chat history is not saved after reloading the page. The chat and app are not substitutes for professional care or emergency services.
+>>>>>>> bcacf6f (feat(frontend): expand wellness features)
 
 ## Stack
 
 - **Front-end:** React + Vite (JavaScript, HTML, and CSS)
 - **Back-end:** Node.js + Express (JavaScript)
 - **Database:** SQLite via `better-sqlite3` (plain SQL)
+<<<<<<< HEAD
 - **AI Integration:** The back end uses Google's Gemini API through Node's built-in `fetch` for chat and tips. The API key is read from the server environment.
 - **Tests:** The back end has a `node --test` script and eight tests. The front end has Vitest, Testing Library and five integration tests.
+=======
+- **AI Integration:** The back-end chat route currently uses Gemini. The API key is read from the server environment.
+- **Tests:** The back end uses `node --test`; the front end uses Vitest and Testing Library.
+>>>>>>> bcacf6f (feat(frontend): expand wellness features)
 - **CI:** No GitHub Actions workflow is present in the current feature branch.
 
 ## Folder structure

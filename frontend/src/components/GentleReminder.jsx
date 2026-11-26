@@ -2,77 +2,26 @@ import { Coffee, X } from 'lucide-react';
 
 export function GentleReminder({ onAccept, onDismiss }) {
   return (
-    <div
-      role="dialog"
-      aria-label="Lembrete gentil de pausa"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(31, 46, 40, 0.45)',
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        zIndex: 100,
-        padding: '16px'
-      }}
-    >
-      <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '400px',
-          marginBottom: '12px',
-          position: 'relative'
-        }}
+    <div className="reminder-backdrop" onClick={onDismiss}>
+      <section
+        className="card reminder-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reminder-title"
+        onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label="Fechar lembrete"
-          style={{
-            position: 'absolute',
-            top: '14px',
-            right: '14px',
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
-            cursor: 'pointer'
-          }}
-        >
+        <button type="button" className="icon-button reminder-close" onClick={onDismiss} aria-label="Fechar lembrete">
           <X size={20} />
         </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <Coffee size={22} color="var(--accent-orange)" />
-          <h2 style={{ fontSize: '1.05rem' }}>Que tal uma pausa rápida?</h2>
+        <span className="section-icon"><Coffee size={21} /></span>
+        <p className="eyebrow">Lembrete gentil</p>
+        <h2 id="reminder-title">Que tal uma pausa rápida?</h2>
+        <p>Se fizer sentido agora, respire um pouco, beba água ou alongue os ombros por um instante.</p>
+        <div className="form-actions">
+          <button type="button" className="button button-primary" onClick={onAccept}>Ver opções de pausa</button>
+          <button type="button" className="button button-quiet" onClick={onDismiss}>Agora não</button>
         </div>
-
-        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-          Você já está focado há algum tempo. Se fizer sentido agora, beba um pouco de água ou
-          estique os ombros por 1 minuto.
-        </p>
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button type="button" className="btn-primary" onClick={onAccept}>
-            Registrar pausa
-          </button>
-          <button
-            type="button"
-            onClick={onDismiss}
-            style={{
-              padding: '12px 16px',
-              borderRadius: '999px',
-              border: '1px solid var(--border-light)',
-              backgroundColor: '#fff',
-              color: 'var(--text-secondary)',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            Agora não
-          </button>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

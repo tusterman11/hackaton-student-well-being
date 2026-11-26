@@ -1,13 +1,14 @@
 # Decisões do projeto
 
-[English](DECISIONS.md) · **Português (Brasil)**
+[English](DECISIONS.md) · **Português (Brasil)**     
 
 Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e indicar o que foi decidido, as alternativas consideradas e o motivo da escolha.
 
-## Status da implementação — 25/11/2026 (`feat/frontend-setup`)
+## Status da implementação — 25/11/2026
 
-As decisões abaixo descrevem o produto pretendido; não significam que todos os recursos estejam concluídos. Situação do código atual:
+Situação do código atual:
 
+<<<<<<< HEAD
 - **Check-in diário:** O formulário está implementado em React e chama `POST /api/checkins`; o servidor valida e persiste os check-ins no SQLite. O limite de um check-in por dia ainda não foi implementado.
 - **Registro de pausas:** Os botões e a lista existem no front e chamam `POST /api/breaks`; o servidor persiste as pausas no SQLite.
 - **Chat com IA:** `POST /api/chat` chama o Google Gemini pelo `fetch` nativo do Node quando `GEMINI_API_KEY` está configurada em `backend/.env`. O prompt no servidor define um papel acolhedor e não clínico; frases de risco urgente recebem uma resposta fixa com contatos de apoio. A chave não é versionada, e uma resposta ao vivo exige uma chave válida.
@@ -17,6 +18,15 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 - **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
 - **Armazenamento e privacidade:** O servidor cria tabelas SQLite `checkins` e `pauses`. O ID anônimo é gerado no navegador, mas ainda não está associado aos registros do servidor. O histórico do chat fica na memória do front e é enviado ao Gemini para gerar respostas; não é salvo no SQLite.
 - **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front agora executa cinco testes de integração Vitest que cobrem navegação, envio do check-in, encaminhamento para apoio em humor baixo, registro de pausas e erros no chat. Não há workflow do GitHub Actions nesta branch.
+=======
+- **Check-ins e pausas:** O frontend grava e consulta os registros pelas rotas `/api/checkins` e `/api/pauses`; o backend persiste esses registros no SQLite. Se o servidor estiver indisponível, a interface informa o erro e não inventa registros de check-in ou pausa.
+- **Semana:** Os gráficos consultam somente os check-ins e pausas retornados pelo backend para os últimos sete dias. Hidratação, diário, hábitos, sono e períodos de estudo usam armazenamento local no navegador.
+- **Pausas guiadas e rotina de estudos:** Os temporizadores funcionam no frontend. Pausas concluídas são enviadas ao backend; sessões de estudo são mantidas localmente.
+- **Chat com IA:** O frontend usa `POST /api/chat`, mostra erros de indisponibilidade e não simula respostas. O backend desta versão usa a integração Gemini; a chave permanece somente no ambiente do servidor. Mensagens não são mantidas após recarregar a página.
+- **Recursos de apoio e lembretes:** Os contatos reais e o lembrete de pausa continuam disponíveis.
+- **Privacidade:** Não há autenticação por conta. O identificador enviado pelo navegador não garante isolamento entre usuários; as rotas atuais não fazem autorização por usuário. O `localStorage` não é criptografado. Não use dados pessoais em dispositivos compartilhados. Para uso seguro com contas, o backend precisa implementar autenticação e autorização.
+- **Testes:** O backend usa `node --test`; o frontend usa Vitest e Testing Library.
+>>>>>>> bcacf6f (feat(frontend): expand wellness features)
 
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
@@ -65,7 +75,7 @@ As respostas abaixo descrevem o comportamento desejado e os critérios de aceita
 2. **O que a interface faz se a pessoa indicar um mal-estar mais intenso?**
    - A geração de texto livre por IA é bloqueada e a interface destaca imediatamente o card de Recursos de Apoio (CVV 188, SAMU 192 e acolhimento do Senac), sem tentar conduzir um atendimento.
 3. **Quem pode ver o histórico de check-ins e como esses dados ficam protegidos?**
-   - Apenas a própria pessoa no seu dispositivo. Os registros ficam isolados por um UUID anônimo por dispositivo no SQLite, sem área pública, nomes ou dados clínicos sensíveis.
+   - Atualmente não há autenticação nem autorização por usuário no backend. O identificador aleatório do navegador não isola registros com segurança, e os dados em `localStorage` não são criptografados. As rotas do backend precisam de autenticação e autorização antes de serem usadas com contas ou dados pessoais.
 4. **Como o tom da IA é revisado pelo time antes da demo?**
    - Todos os 4 integrantes testam diferentes cenários de check-in e revisam as respostas geradas antes do congelamento de sábado, registrando ajustes de prompt e textos rejeitados no `AI_LOG.md`.
 5. **Como o produto deixa explícito, o tempo todo, o limite do que ele é e do que ele não é?**

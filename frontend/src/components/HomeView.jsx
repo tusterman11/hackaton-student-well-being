@@ -1,423 +1,284 @@
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  CloudRain,
+  Activity,
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  Check,
   Cloud,
+  CloudDrizzle,
   CloudSun,
-  Sun,
-  Sparkles,
-  Leaf,
   Droplets,
-  Accessibility,
-  Footprints,
-  HeartHandshake,
-  Bell
+  Heart,
+  Moon,
+  Pause,
+  ShieldAlert,
+  Smile,
+  Sparkles,
+  Sun,
+  Timer
 } from 'lucide-react';
+import { formatDateTime } from '../utils/wellnessData';
 
 const MOODS = [
-  { value: 1, label: 'Pesado', icon: CloudRain },
+  { value: 1, label: 'Pesado', icon: CloudDrizzle },
   { value: 2, label: 'Nublado', icon: Cloud },
   { value: 3, label: 'Meio a meio', icon: CloudSun },
   { value: 4, label: 'Bom', icon: Sun },
   { value: 5, label: 'Radiante', icon: Sparkles }
 ];
 
-const quickBtnStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '6px',
-  padding: '12px 6px',
-  borderRadius: '14px',
-  border: '1px solid var(--border-light)',
-  backgroundColor: 'var(--bg-app)',
-  fontSize: '0.78rem',
-  fontWeight: 600,
-  color: 'var(--text-primary)',
-  cursor: 'pointer'
-};
+const ENERGY_LEVELS = [
+  'Muito baixa — vá com calma',
+  'Baixa — escolha um passo pequeno',
+  'Moderada — respeite seu ritmo',
+  'Boa — lembre-se de fazer pausas',
+  'Alta — distribua sua energia ao longo do dia'
+];
+
+const QUICK_LINKS = [
+  { id: 'study', label: 'Rotina de estudos', icon: Timer },
+  { id: 'garden', label: 'Semana', icon: CalendarDays },
+  { id: 'hydration', label: 'Hidratação', icon: Droplets },
+  { id: 'breaks', label: 'Fazer uma pausa', icon: Pause },
+  { id: 'journal', label: 'Diário', icon: BookOpen },
+  { id: 'habits', label: 'Metas e hábitos', icon: Activity },
+  { id: 'sleep', label: 'Sono', icon: Moon },
+  { id: 'support', label: 'Área de apoio', icon: Heart }
+];
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
 
 export function HomeView({
   todayCheckin,
   aiTip,
   todayBreaks,
+  todayWaterMl,
+  waterGoalMl,
+  checkins,
+  historyStatus,
+  historyError,
+  onRetryHistory,
   onSaveCheckin,
-  note,
-  onNoteChange,
-  onAddBreak,
+  onAddWater,
   onNavigate,
   onTriggerReminder
 }) {
   const [mood, setMood] = useState(todayCheckin?.mood || 4);
   const [energy, setEnergy] = useState(todayCheckin?.energy || 3);
+  const [note, setNote] = useState(todayCheckin?.note || '');
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    await onSaveCheckin({ mood, energy, note });
-    setSavedFeedback(true);
-    setTimeout(() => setSavedFeedback(false), 2500);
+  useEffect(() => {
+    if (!todayCheckin) return;
+    setMood(todayCheckin.mood);
+    setEnergy(todayCheckin.energy);
+    setNote(todayCheckin.note || '');
+  }, [todayCheckin]);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setSaving(true);
+    setFormError('');
+    try {
+      await onSaveCheckin({ mood, energy, note: note.trim() });
+      setSavedFeedback(true);
+      window.setTimeout(() => setSavedFeedback(false), 2500);
+    } catch (error) {
+      setFormError(error.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <div>
-      {/* Cabeçalho */}
-      <header
-        className="home-header"
-        style={{
-          backgroundColor: 'var(--bg-sage-dark)',
-          color: 'var(--text-on-dark)'
-        }}
-      >
-        <div className="home-header-inner" style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-            EntrePausas · bem-estar no campus
-          </span>
-
-          <button
-            type="button"
-            onClick={onTriggerReminder}
-            title="Simular lembrete gentil"
-            style={{
-              background: 'rgba(255,255,255,0.12)',
-              border: 'none',
-              color: '#fff',
-              padding: '6px 10px',
-              borderRadius: '999px',
-              fontSize: '0.72rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            <Bell size={13} /> Testar lembrete
-          </button>
+    <div className="view-stack">
+      <header className="welcome-header">
+        <div>
+          <p className="eyebrow">{greeting()}, seja bem-vinda(o)</p>
+          <h1>Como você está hoje?</h1>
+          <p>Um espaço gentil para cuidar do seu ritmo, sem pressão.</p>
         </div>
-
-        <h1 style={{
-          fontWeight: 700
-        }}>
-          Respire. Hoje o dia pode ser leve.
-        </h1>
-
-        <p style={{
-          opacity: 0.85,
-        }}>
-          Um espaço sem pressa para notar como você está.
-        </p>
+        <button type="button" className="button button-quiet" onClick={onTriggerReminder}>
+          <Pause size={17} /> Lembrete gentil
+        </button>
       </header>
 
-      <main className="home-content">
-        {/* Card 1: Check-in Diário */}
-        <section className="card home-checkin">
-          <h2 style={{
-            fontSize: '1.05rem',
-            marginBottom: '12px'
-          }}>
-            Como está o seu céu hoje?
-          </h2>
+      {historyStatus === 'error' && (
+        <div className="notice notice-error" role="alert">
+          <span>{historyError} O resumo de check-ins e pausas está indisponível.</span>
+          <button type="button" className="text-button" onClick={onRetryHistory}>Tentar novamente</button>
+        </div>
+      )}
+
+      <section className="summary-grid" aria-label="Resumo de hoje">
+        <article className="summary-card">
+          <span className="summary-icon"><Smile size={19} /></span>
+          <span className="summary-label">Humor</span>
+          <strong>{todayCheckin ? MOODS.find((item) => item.value === todayCheckin.mood)?.label : historyStatus === 'ready' ? 'Sem registro' : '—'}</strong>
+        </article>
+        <article className="summary-card">
+          <span className="summary-icon"><Activity size={19} /></span>
+          <span className="summary-label">Energia</span>
+          <strong>{todayCheckin ? `${todayCheckin.energy}/5` : historyStatus === 'ready' ? 'Sem registro' : '—'}</strong>
+        </article>
+        <article className="summary-card">
+          <span className="summary-icon"><Pause size={19} /></span>
+          <span className="summary-label">Pausas</span>
+          <strong>{historyStatus === 'ready' ? todayBreaks.length : '—'}</strong>
+        </article>
+        <article className="summary-card">
+          <span className="summary-icon"><Droplets size={19} /></span>
+          <span className="summary-label">Água</span>
+          <strong>{todayWaterMl ? `${todayWaterMl} ml` : 'Sem registro'}</strong>
+          {todayWaterMl > 0 && <span className="summary-progress">{Math.round((todayWaterMl / waterGoalMl) * 100)}% da meta diária</span>}
+        </article>
+      </section>
+
+      <div className="dashboard-grid">
+        <section className="card checkin-card">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Check-in diário</p>
+              <h2>Como está seu humor e sua energia?</h2>
+            </div>
+            <span className="section-icon"><Sparkles size={20} /></span>
+          </div>
 
           <form onSubmit={handleSubmit}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(5, 1fr)',
-              gap: '6px',
-              marginBottom: '16px'
-            }}>
-              {MOODS.map((item) => {
-                const Icon = item.icon;
-                const selected = mood === item.value;
-
-                return (
+            <fieldset className="choice-fieldset">
+              <legend>Humor</legend>
+              <div className="mood-options">
+                {MOODS.map(({ value, label, icon: Icon }) => (
                   <button
-                    key={item.value}
+                    key={value}
                     type="button"
-                    onClick={() => setMood(item.value)}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '10px 4px',
-                      borderRadius: '14px',
-                      border: selected
-                        ? '2px solid var(--bg-sage-dark)'
-                        : '1px solid var(--border-light)',
-                      backgroundColor: selected
-                        ? 'var(--bg-sage-soft)'
-                        : '#fff',
-                      color: selected
-                        ? 'var(--bg-sage-dark)'
-                        : 'var(--text-secondary)',
-                      cursor: 'pointer'
-                    }}
+                    className={`mood-option${mood === value ? ' is-selected' : ''}`}
+                    onClick={() => setMood(value)}
+                    aria-pressed={mood === value}
                   >
-                    <Icon size={20} />
-                    <span style={{
-                      fontSize: '0.68rem',
-                      fontWeight: selected ? 700 : 500
-                    }}>
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Seletor de Energia */}
-            <div style={{ marginBottom: '14px' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '0.85rem',
-                marginBottom: '6px'
-              }}>
-                <span style={{ fontWeight: 600 }}>
-                  Nível de energia
-                </span>
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  {energy} de 5
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {[1, 2, 3, 4, 5].map((lvl) => (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => setEnergy(lvl)}
-                    aria-label={`Energia ${lvl}`}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border-light)',
-                      backgroundColor: lvl <= energy
-                        ? 'var(--bg-sage-soft)'
-                        : '#fff',
-                      color: lvl <= energy
-                        ? 'var(--accent-green)'
-                        : 'var(--text-muted)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Leaf
-                      size={18}
-                      fill={lvl <= energy ? 'currentColor' : 'none'}
-                    />
+                    <Icon size={20} strokeWidth={1.7} />
+                    <span>{label}</span>
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
-            <label htmlFor="daily-reflection" style={{
-              display: 'block',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              marginBottom: '6px'
-            }}>
-              Anotação do check-in <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(opcional)</span>
+            <fieldset className="choice-fieldset">
+              <legend>Nível de energia</legend>
+              <div className="energy-options" role="group" aria-label="Nível de energia">
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    className={`energy-option${energy === level ? ' is-selected' : ''}`}
+                    aria-label={`Energia ${level}`}
+                    aria-pressed={energy === level}
+                    onClick={() => setEnergy(level)}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="field-hint" aria-live="polite">{ENERGY_LEVELS[energy - 1]}</p>
+            </fieldset>
+
+            <label className="field-label" htmlFor="daily-reflection">
+              Anotação <span>(opcional)</span>
             </label>
             <textarea
               id="daily-reflection"
-              placeholder="Quer registrar algo sobre como foi seu dia?"
+              className="text-area"
+              placeholder="Se quiser, conte algo sobre como está se sentindo."
               value={note}
-              onChange={(e) => onNoteChange(e.target.value)}
-              maxLength={1000}
-              rows={5}
-              className="reflection-input"
-              aria-describedby="daily-reflection-hint"
+              onChange={(event) => setNote(event.target.value)}
+              maxLength={500}
+              rows={3}
+              aria-describedby="checkin-note-count"
             />
-            <div className="reflection-meta">
-              <p id="daily-reflection-hint">
-                Para conversar com a EntrePausas, abra a aba Conversa.
-              </p>
-              <span aria-live="polite">{note.length}/1000</span>
+            <div className="form-meta">
+              <span id="checkin-note-count">{note.length}/500</span>
+              {todayCheckin && <span>Check-in de hoje salvo</span>}
             </div>
-
-            <button type="submit" className="btn-primary">
-              {savedFeedback
-                ? 'Check-in guardado com carinho ✓'
-                : 'Salvar check-in de hoje'}
+            {formError && <p className="form-error" role="alert">{formError}</p>}
+            <button type="submit" className="button button-primary" disabled={saving}>
+              {savedFeedback ? <Check size={18} /> : null}
+              {saving ? 'Salvando…' : savedFeedback ? 'Check-in salvo' : 'Salvar check-in'}
             </button>
           </form>
+
+          {todayCheckin?.created_at && (
+            <p className="field-hint">Último registro: {formatDateTime(todayCheckin.created_at)}</p>
+          )}
         </section>
 
-        {/* Card 2: Sugestão da EntrePausas */}
-        <section
-          className="card"
-          style={{ backgroundColor: 'var(--bg-amber-soft)' }}
-        >
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            color: 'var(--accent-orange-hover)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em'
-          }}>
-            Sugestão para agora
-          </span>
-
-          <p style={{
-            fontSize: '0.95rem',
-            marginTop: '6px',
-            color: 'var(--text-primary)'
-          }}>
-            {aiTip}
-          </p>
-
-          <p style={{
-            fontSize: '0.72rem',
-            color: 'var(--text-secondary)',
-            marginTop: '8px'
-          }}>
-            Uma ideia simples para sua pausa. Você decide o que faz sentido no seu ritmo.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => onNavigate('chat')}
-            style={{
-              marginTop: '12px',
-              padding: '9px 14px',
-              border: 'none',
-              borderRadius: '999px',
-              backgroundColor: 'var(--bg-sage-dark)',
-              color: 'var(--text-on-dark)',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            Conversar com a EntrePausas
-          </button>
-        </section>
-
-        {/* Card 3: Pausas Rápidas */}
-        <section className="card">
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '12px'
-          }}>
-            <h2 style={{ fontSize: '1rem' }}>
-              Pausa rápida ({todayBreaks.length} hoje)
-            </h2>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('breaks')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--bg-sage-dark)',
-                fontWeight: 600,
-                fontSize: '0.82rem',
-                cursor: 'pointer'
-              }}
-            >
-              Ver todas →
+        <div className="dashboard-side">
+          <section className="card suggestion-card">
+            <span className="eyebrow">{aiTip ? 'Sugestão para agora' : 'Uma ideia para agora'}</span>
+            <p>{aiTip || 'Você pode escolher uma pausa curta ou registrar uma reflexão, no seu tempo.'}</p>
+            <button type="button" className="text-button" onClick={() => onNavigate('breaks')}>
+              Ver opções de pausa <ArrowRight size={16} />
             </button>
-          </div>
+          </section>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '8px'
-          }}>
-            <button
-              type="button"
-              onClick={() => onAddBreak('water', 'Bebi água')}
-              style={quickBtnStyle}
-            >
-              <Droplets size={18} color="#3b82f6" />
-              <span>Bebi água</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onAddBreak('stretch', 'Me alonguei')}
-              style={quickBtnStyle}
-            >
-              <Accessibility size={18} color="#4e7a65" />
-              <span>Alonguei</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onAddBreak('walk', 'Pausa curta')}
-              style={quickBtnStyle}
-            >
-              <Footprints size={18} color="#f2994a" />
-              <span>Pausa curta</span>
-            </button>
-          </div>
-        </section>
-
-        {/* Banner de Apoio */}
-        <section
-          className="card"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            backgroundColor: '#fff'
-          }}
-        >
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
-            <HeartHandshake
-              size={24}
-              color="var(--bg-sage-dark)"
-            />
-
-            <div>
-              <strong style={{
-                fontSize: '0.88rem',
-                display: 'block'
-              }}>
-                Precisa conversar com alguém?
-              </strong>
-
-              <span style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)'
-              }}>
-                EntrePausas apoia pausas e hábitos. Não substitui atendimento médico ou psicológico.
-              </span>
+          <section className="card">
+            <div className="section-heading">
+              <div><p className="eyebrow">Acessos rápidos</p><h2>O que você precisa?</h2></div>
             </div>
-          </div>
+            <div className="quick-links">
+              {QUICK_LINKS.map(({ id, label, icon: Icon }) => (
+                <button key={id} type="button" className="quick-link" onClick={() => onNavigate(id)}>
+                  <Icon size={18} strokeWidth={1.8} />
+                  <span>{label}</span>
+                  <ArrowRight size={15} className="quick-link-arrow" />
+                </button>
+              ))}
+            </div>
+            <button type="button" className="button button-secondary water-quick-action" onClick={() => onAddWater(250)}>
+              <Droplets size={17} /> Registrar um copo de água (250 ml)
+            </button>
+          </section>
+        </div>
+      </div>
 
-          <button
-            type="button"
-            onClick={() => onNavigate('support')}
-            style={{
-              backgroundColor: 'var(--bg-sage-soft)',
-              color: 'var(--bg-sage-dark)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '8px 12px',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Apoio
+      <section className="card history-card">
+        <div className="section-heading">
+          <div><p className="eyebrow">Seus registros reais</p><h2>Check-ins recentes</h2></div>
+          <button type="button" className="text-button" onClick={() => onNavigate('garden')}>
+            Ver semana <ArrowRight size={16} />
           </button>
-        </section>
-      </main>
+        </div>
+        {historyStatus === 'loading' ? (
+          <p className="empty-state">Carregando seu histórico…</p>
+        ) : historyStatus === 'error' ? (
+          <p className="empty-state">Não foi possível consultar os registros no servidor.</p>
+        ) : checkins.length === 0 ? (
+          <p className="empty-state">Seus check-ins aparecerão aqui depois que você registrar um.</p>
+        ) : (
+          <ul className="record-list">
+            {checkins.slice(0, 5).map((item) => (
+              <li key={item.id}>
+                <span className="record-dot" />
+                <strong>{MOODS.find((moodItem) => moodItem.value === item.mood)?.label || `Humor ${item.mood}/5`}</strong>
+                <span>Energia {item.energy}/5</span>
+                <time>{formatDateTime(item.created_at)}</time>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <aside className="notice notice-privacy">
+        <ShieldAlert size={19} />
+        <p>Este app não tem contas de usuário. O identificador do navegador não isola usuários e os dados salvos localmente não são criptografados. Evite usar em dispositivo compartilhado.</p>
+      </aside>
     </div>
   );
 }

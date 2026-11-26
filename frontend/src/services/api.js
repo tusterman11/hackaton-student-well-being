@@ -2,80 +2,70 @@ import { getDeviceId } from '../utils/deviceId';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-const FALLBACK_TIPS = [
-  'Que tal olhar para longe por 20 segundos? Procure algo verde ou um pedaço de céu.',
-  'Solte os ombros por um instante e tome um copo de água devagar.',
-  'Que tal levantar por 2 minutos e alongar os braços antes de voltar para a tela?'
-];
-
-function getHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'x-device-id': getDeviceId()
-  };
-}
-
-export async function submitCheckin(payload) {
+async function request(path, options = {}) {
+  let response;
   try {
-    const res = await fetch(`${API_BASE_URL}/checkins`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload)
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-device-id': getDeviceId(),
+        ...options.headers
+      }
     });
-    if (!res.ok) throw new Error('API offline');
-    return await res.json();
   } catch {
-    const isDistress = payload.mood <= 1;
-    const randomTip = FALLBACK_TIPS[Math.floor(Math.random() * FALLBACK_TIPS.length)];
-    return {
-      checkin: { ...payload, date: new Date().toISOString() },
-      tip: isDistress ? null : randomTip,
-      showSupportAlert: isDistress
-    };
+    throw new Error('Não foi possível conectar ao servidor. Verifique se o backend está em execução e tente novamente.');
   }
+
+  const responseText = await response.text();
+  let result = null;
+  if (responseText) {
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      throw new Error('O servidor retornou uma resposta inválida. Tente novamente mais tarde.');
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(result?.message || 'Não foi possível salvar os dados no servidor.');
+  }
+  return result;
 }
 
-export async function logBreak(type) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/breaks`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ type })
-    });
-    if (!res.ok) throw new Error('API offline');
-    return await res.json();
-  } catch {
-    return {
-      id: Date.now(),
-      type,
-      createdAt: new Date().toISOString()
-    };
+async function requestList(path) {
+  const result = await request(path);
+  if (!Array.isArray(result)) {
+    throw new Error('O servidor retornou um histórico em formato inválido.');
   }
+  return result;
 }
 
-export async function fetchWeeklyHistory() {
-  try {
-    const res = await fetch(`${API_BASE_URL}/history`, {
-      headers: getHeaders()
-    });
-    if (!res.ok) throw new Error('API offline');
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-export async function sendChatMessage(payload) {
-  const res = await fetch(`${API_BASE_URL}/chat`, {
+export function submitCheckin(payload) {
+  return request('/checkins', {
     method: 'POST',
-    headers: getHeaders(),
     body: JSON.stringify(payload)
   });
+}
 
-  const result = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(result.message || 'Não foi possível enviar sua mensagem agora.');
-  }
+export function logBreak(type) {
+  return request('/pauses', {
+    method: 'POST',
+    body: JSON.stringify({ type })
+  });
+}
 
-  return result;
+export function fetchCheckins() {
+  return requestList('/checkins');
+}
+
+export function fetchPauses() {
+  return requestList('/pauses');
+}
+
+export function sendChatMessage(payload) {
+  return request('/chat', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
 }

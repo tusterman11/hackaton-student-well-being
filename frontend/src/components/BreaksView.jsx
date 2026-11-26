@@ -1,77 +1,186 @@
-import { Accessibility, Droplets, Footprints, Sprout } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Accessibility, Eye, Footprints, Wind } from 'lucide-react';
+import { formatDateTime } from '../utils/wellnessData';
 
-const BREAK_OPTIONS = [
-  { type: 'water', label: 'Bebi água', icon: Droplets, color: '#3b82f6' },
-  { type: 'stretch', label: 'Me alonguei', icon: Accessibility, color: 'var(--accent-green)' },
-  { type: 'walk', label: 'Fiz uma pausa curta', icon: Footprints, color: 'var(--accent-orange)' }
+const BREAK_TIMERS = [
+  {
+    id: 'breathing',
+    title: 'Respiração guiada',
+    duration: 60,
+    type: 'walk',
+    label: 'Respiração guiada',
+    description: 'Um minuto para desacelerar.',
+    instructions: 'Inspire pelo nariz com suavidade e solte o ar devagar. Repita sem forçar o ritmo.'
+  },
+  {
+    id: 'stretch',
+    title: 'Alongamento leve',
+    duration: 120,
+    type: 'stretch',
+    label: 'Alongamento de 2 minutos',
+    description: 'Dois minutos para movimentar o corpo.',
+    instructions: 'Alongue ombros e braços sem fazer força. Pare se sentir desconforto.'
+  },
+  {
+    id: 'eyes',
+    title: 'Descanso visual',
+    duration: 20,
+    type: 'walk',
+    label: 'Descanso visual de 20 segundos',
+    description: 'Descanse o olhar por vinte segundos.',
+    instructions: 'Olhe para um ponto distante e pisque algumas vezes, sem apertar os olhos.'
+  },
+  {
+    id: 'free',
+    title: 'Pausa livre',
+    duration: null,
+    type: 'walk',
+    label: 'Pausa livre',
+    description: 'Escolha o tempo e o jeito da sua pausa.',
+    instructions: 'Quando quiser encerrar, finalize para registrar essa pausa.'
+  }
 ];
 
+function formatClock(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+  const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
 export function BreaksView({ todayBreaks, onAddBreak }) {
+  const [activeTimer, setActiveTimer] = useState(null);
+  const [timerStatus, setTimerStatus] = useState('idle');
+  const [remaining, setRemaining] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (timerStatus !== 'running' || !activeTimer) return undefined;
+    if (activeTimer.duration !== null && remaining === 0) {
+      setTimerStatus('complete');
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (activeTimer.duration === null) {
+        setElapsed((value) => value + 1);
+      } else {
+        setRemaining((value) => Math.max(0, value - 1));
+      }
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [activeTimer, remaining, timerStatus]);
+
+  function startTimer(timer) {
+    setActiveTimer(timer);
+    setRemaining(timer.duration || 0);
+    setElapsed(0);
+    setTimerStatus('running');
+    setNotice('');
+    setError('');
+  }
+
+  function cancelTimer() {
+    setActiveTimer(null);
+    setTimerStatus('idle');
+    setRemaining(0);
+    setElapsed(0);
+    setError('');
+    setNotice('');
+  }
+
+  async function saveCompletedBreak() {
+    if (!activeTimer || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await onAddBreak(activeTimer.type, activeTimer.label);
+      setNotice('Pausa registrada no histórico.');
+      setTimerStatus('saved');
+    } catch (saveError) {
+      setError(`${saveError.message} A pausa ainda não foi salva no servidor.`);
+      setTimerStatus('complete');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <main className="page-content">
-      <h1 style={{ fontSize: '1.4rem', marginBottom: '4px' }}>Pausas de hoje</h1>
-      <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '18px' }}>
-        Pequenas pausas também contam. Escolha uma opção para registrar.
-      </p>
+    <div className="view-stack">
+      <header className="view-header">
+        <p className="eyebrow">Pausas conscientes</p>
+        <h1>Escolha uma pausa</h1>
+        <p>Temporizadores simples para respirar, alongar ou descansar os olhos. Faça no seu ritmo.</p>
+      </header>
 
-      <section className="card" aria-label="Registrar uma pausa">
-        <h2 style={{ fontSize: '1rem', marginBottom: '12px' }}>O que você fez?</h2>
-        <div style={{ display: 'grid', gap: '10px' }}>
-          {BREAK_OPTIONS.map(({ type, label, icon: Icon, color }) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => onAddBreak(type, label)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                width: '100%',
-                padding: '12px 14px',
-                border: '1px solid var(--border-light)',
-                borderRadius: '14px',
-                background: 'var(--bg-app)',
-                color: 'var(--text-primary)',
-                textAlign: 'left',
-                cursor: 'pointer'
-              }}
-            >
-              <Icon size={20} color={color} />
-              <span>{label}</span>
-            </button>
-          ))}
+      <div className="break-timer-grid">
+        {BREAK_TIMERS.map((timer) => {
+          const Icon = timer.id === 'breathing' ? Wind
+            : timer.id === 'stretch' ? Accessibility
+              : timer.id === 'eyes' ? Eye : Footprints;
+          const selected = activeTimer?.id === timer.id;
+          return (
+            <section className={`card break-option${selected ? ' is-active' : ''}`} key={timer.id}>
+              <span className="section-icon"><Icon size={20} /></span>
+              <h2>{timer.title}</h2>
+              <p>{timer.description}</p>
+              {selected ? (
+                <div className="timer-panel" aria-live="polite">
+                  <strong className="timer-display">
+                    {timer.duration === null ? formatClock(elapsed) : formatClock(remaining)}
+                  </strong>
+                  <p>{timer.instructions}</p>
+                  {timerStatus === 'complete' && <p className="success-text">Tempo concluído. Registre a pausa para adicioná-la ao histórico.</p>}
+                  {timerStatus === 'saved' && <p className="success-text">{notice}</p>}
+                  {error && <p className="form-error" role="alert">{error}</p>}
+                  <div className="timer-actions">
+                    {timerStatus === 'running' && timer.duration === null && (
+                      <button type="button" className="button button-primary" onClick={() => setTimerStatus('complete')}>Concluir pausa</button>
+                    )}
+                    {timerStatus === 'running' && timer.duration !== null && (
+                      <button type="button" className="button button-primary" disabled>Em andamento…</button>
+                    )}
+                    {timerStatus === 'complete' && (
+                      <button type="button" className="button button-primary" onClick={saveCompletedBreak} disabled={saving}>
+                        {saving ? 'Salvando…' : 'Registrar pausa concluída'}
+                      </button>
+                    )}
+                    {timerStatus === 'saved' && (
+                      <button type="button" className="button button-secondary" onClick={cancelTimer}>Pronto</button>
+                    )}
+                    <button type="button" className="button button-quiet" onClick={cancelTimer}>Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" className="button button-secondary" onClick={() => startTimer(timer)}>
+                  Iniciar {timer.duration === null ? 'pausa livre' : `(${timer.duration < 60 ? `${timer.duration} s` : `${timer.duration / 60} min`})`}
+                </button>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <section className="card">
+        <div className="section-heading">
+          <div><p className="eyebrow">Registros do servidor</p><h2>Pausas de hoje ({todayBreaks.length})</h2></div>
         </div>
-      </section>
-
-      <section className="card" aria-label="Pausas registradas hoje">
-        <h2 style={{ fontSize: '1rem', marginBottom: '12px' }}>
-          Registradas hoje ({todayBreaks.length})
-        </h2>
         {todayBreaks.length === 0 ? (
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-            Ainda não há pausas registradas. Quando quiser, você pode adicionar uma acima.
-          </p>
+          <p className="empty-state">Ainda não há pausas registradas hoje. As pausas concluídas aparecerão aqui.</p>
         ) : (
-          <ul style={{ listStyle: 'none', display: 'grid', gap: '10px' }}>
-            {todayBreaks.map((item) => {
-              const option = BREAK_OPTIONS.find((entry) => entry.type === item.type);
-              const Icon = option?.icon || Sprout;
-              return (
-                <li
-                  key={item.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-                >
-                  <Icon size={18} color={option?.color || 'var(--accent-green)'} />
-                  <span style={{ flex: 1, fontSize: '0.9rem' }}>{item.label}</span>
-                  <time style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    {item.time}
-                  </time>
-                </li>
-              );
-            })}
+          <ul className="record-list">
+            {todayBreaks.map((item) => (
+              <li key={item.id}>
+                <span className="record-dot" />
+                <strong>{item.label}</strong>
+                <time>{formatDateTime(item.created_at || item.createdAt)}</time>
+              </li>
+            ))}
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

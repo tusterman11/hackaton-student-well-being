@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Pause, Send, Sparkles } from 'lucide-react';
+
+const QUICK_PROMPTS = [
+  'Como posso fazer uma pausa agora?',
+  'Me ajude a organizar meus estudos.',
+  'Quero falar sobre como foi meu dia.'
+];
 
 export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
   const [draft, setDraft] = useState('');
@@ -18,7 +24,7 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
   }
 
   return (
-    <main className="page-content chat-page">
+    <div className="page-content chat-page">
       <header className="chat-header">
         <div className="chat-title-row">
           <span className="chat-avatar" aria-hidden="true"><MessageCircle size={21} /></span>
@@ -28,7 +34,7 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
           </div>
         </div>
         <p className="chat-privacy-note">
-          Suas mensagens são enviadas ao servidor da EntrePausas para gerar respostas com apoio de IA. Evite incluir nome completo, endereço ou outros dados pessoais.
+          Suas mensagens são enviadas ao servidor para gerar respostas com apoio de IA. Evite incluir nome completo, endereço ou outros dados pessoais.
         </p>
       </header>
 
@@ -56,6 +62,20 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
         <div ref={messagesEndRef} />
       </section>
 
+      <div className="chat-shortcuts">
+        <div className="quick-prompts">
+          <span className="field-hint"><Sparkles size={15} /> Perguntas para começar</span>
+          {QUICK_PROMPTS.map((prompt) => (
+            <button type="button" className="prompt-chip" key={prompt} onClick={() => onSendMessage(prompt)} disabled={isSending}>
+              {prompt}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="button button-secondary" onClick={() => onNavigate('breaks')}>
+          <Pause size={17} /> Abrir opções de pausa
+        </button>
+      </div>
+
       <form className="chat-composer" onSubmit={handleSubmit}>
         <label className="sr-only" htmlFor="chat-message">Sua mensagem</label>
         <textarea
@@ -79,6 +99,6 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
       <p className="chat-disclaimer">
         A EntrePausas não é profissional de saúde e não substitui atendimento médico ou psicológico. Em risco imediato, procure uma pessoa de confiança e um serviço de emergência.
       </p>
-    </main>
+    </div>
   );
 }

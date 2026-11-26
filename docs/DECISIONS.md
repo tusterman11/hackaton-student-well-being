@@ -4,10 +4,11 @@
 
 Record the team's important decisions here. Each entry should be short and state what was decided, the alternatives considered and the reason for the choice.
 
-## Implementation status — 25/11/2026 (`feat/frontend-setup`)
+## Implementation status — 25/11/2026
 
-The decisions below describe the intended product; they are not a statement that every feature is complete. Current implementation:
+Current implementation:
 
+<<<<<<< HEAD
 - **Daily check-in:** The form is implemented in React and calls `POST /api/checkins`; the server validates and persists check-ins in SQLite. Once-per-day enforcement is not implemented.
 - **Break logging:** The buttons and list are implemented in the front end and call `POST /api/breaks`; the server persists pauses in SQLite.
 - **AI chat:** `POST /api/chat` calls Google Gemini through Node's built-in `fetch` when `GEMINI_API_KEY` is configured in `backend/.env`. The server prompt defines a supportive, non-clinical role; urgent risk phrases receive a fixed response with support contacts. The key is not committed, and a real live reply requires a valid key.
@@ -17,6 +18,15 @@ The decisions below describe the intended product; they are not a statement that
 - **Support resources:** The support screen and contact links are implemented. The chat can show CVV 188 and SAMU 192 links for urgent risk; the assistant is not a professional or an emergency service.
 - **Storage and privacy:** The server creates SQLite `checkins` and `pauses` tables. The anonymous device ID is generated in the browser but is not yet connected to server records. Chat history remains in front-end memory and is sent to Gemini to generate replies; it is not stored in SQLite.
 - **Tests and CI:** The back end has a `node --test` script and test file. The front end now runs five Vitest integration tests covering navigation, check-in submission, low-mood support routing, break registration and chat error handling. No GitHub Actions workflow is present in this branch.
+=======
+- **Check-ins and breaks:** The front end saves and queries records through `/api/checkins` and `/api/pauses`; the back end persists these records in SQLite. If the server is unavailable, the UI reports the error and does not invent check-in or break records.
+- **Weekly report:** Charts use only check-ins and breaks returned by the back end for the last seven days. Hydration, journal, habits, sleep, and study sessions use browser-local storage.
+- **Guided breaks and study routine:** Timers run in the front end. Completed breaks are sent to the back end; study sessions are stored locally.
+- **AI chat:** The front end uses `POST /api/chat`, displays service errors, and does not simulate replies. This version of the back end uses its Gemini integration; the key remains only in the server environment. Messages are not retained after reloading the page.
+- **Support and reminders:** Real support contacts and the gentle break reminder remain available.
+- **Privacy:** There is no account authentication. The browser identifier does not securely isolate users; current back-end routes do not authorize access by user. `localStorage` is not encrypted. Avoid personal data on shared devices. Secure accounts require back-end authentication and authorization.
+- **Tests:** The back end uses `node --test`; the front end uses Vitest and Testing Library.
+>>>>>>> bcacf6f (feat(frontend): expand wellness features)
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
@@ -65,7 +75,7 @@ The answers below are intended behavior and acceptance criteria; use the impleme
 2. **What does the interface do if the person indicates more intense distress?**
    - Free-form AI text generation is skipped; the UI immediately highlights the Support Resources card (CVV 188, SAMU 192, and Senac campus support) without attempting to counsel the user.
 3. **Who can view the check-in history, and how is this data protected?**
-   - Only the user on their own device. Records are isolated by an anonymous per-device UUID in SQLite, with no public feeds, usernames, or sensitive medical data stored.
+   - There is currently no user authentication or authorization in the back end. The random browser identifier does not securely isolate records, and `localStorage` data is not encrypted. Back-end authentication and authorization are required before using accounts or personal data.
 4. **How is the AI's tone reviewed by the team before the demo?**
    - All 4 members test sample prompts and review generated outputs before Saturday's freeze, logging prompt adjustments and rejected outputs in `AI_LOG.md`.
 5. **How does the product make its limits explicit at all times?**
