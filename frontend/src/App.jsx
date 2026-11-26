@@ -5,11 +5,13 @@ import { BreaksView } from './components/BreaksView';
 import { GardenView } from './components/GardenView';
 import { SupportView } from './components/SupportView';
 import { ChatView } from './components/ChatView';
+import { StudyView } from './components/StudyView';
 import { GentleReminder } from './components/GentleReminder';
 import { submitCheckin, logBreak, sendChatMessage } from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
+  const [navigationExpanded, setNavigationExpanded] = useState(false);
   const [todayCheckin, setTodayCheckin] = useState(null);
   const [dailyNote, setDailyNote] = useState('');
   const [chatMessages, setChatMessages] = useState([
@@ -79,7 +81,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${navigationExpanded ? ' app-shell-nav-expanded' : ''}`}>
       {activeTab === 'home' && (
         <HomeView
           todayCheckin={todayCheckin}
@@ -102,6 +104,8 @@ export default function App() {
         <GardenView todayCheckin={todayCheckin} todayBreaksCount={todayBreaks.length} />
       )}
 
+      {activeTab === 'study' && <StudyView />}
+
       {activeTab === 'support' && <SupportView />}
 
       {activeTab === 'chat' && (
@@ -123,7 +127,12 @@ export default function App() {
         />
       )}
 
-      <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+      <BottomNav
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
+        isExpanded={navigationExpanded}
+        onExpandedChange={setNavigationExpanded}
+      />
     </div>
   );
 }

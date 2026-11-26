@@ -81,7 +81,12 @@ app.post('/api/chat', async (req, res) => {
   const userContent = context ? `${message}\n\n[Contexto opcional do check-in: ${context}]` : message;
 
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const client = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      defaultHeaders: process.env.ANTHROPIC_WORKSPACE_ID
+        ? { 'anthropic-workspace-id': process.env.ANTHROPIC_WORKSPACE_ID }
+        : undefined
+    });
     const response = await client.messages.create({
       model: process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5',
       max_tokens: 350,
@@ -102,7 +107,11 @@ app.post('/api/chat', async (req, res) => {
 
     return res.json({ reply: `${reply || 'Não consegui formular uma resposta agora. Tente novamente.'}${supportNote}`, supportLevel });
   } catch (error) {
-    console.error('Claude API request failed with status:', error.status || 'unknown');
+    const errorStatus = error && typeof error === 'object' && 'status' in error
+      ? error.status
+      : 'unknown';
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Claude API request failed:', errorStatus, errorMessage);
     if (shouldSuggestSupport) {
       return res.json({
         reply: 'Sinto muito que este momento esteja difícil. Se quiser conversar com uma pessoa, ligue para o CVV pelo 188 ou veja outros contatos na seção Apoio. Se houver perigo imediato, ligue 192 (SAMU). Você tem alguém de confiança por perto?',

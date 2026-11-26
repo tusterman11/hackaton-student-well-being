@@ -6,7 +6,7 @@ import {
   CloudSun,
   Sun,
   Sparkles,
-  Leaf,
+  Zap,
   Droplets,
   Accessibility,
   Footprints,
@@ -208,7 +208,7 @@ export function HomeView({
                       justifyContent: 'center'
                     }}
                   >
-                    <Leaf
+                    <Zap
                       size={18}
                       fill={lvl <= energy ? 'currentColor' : 'none'}
                     />
