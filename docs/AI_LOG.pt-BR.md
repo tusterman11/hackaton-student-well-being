@@ -16,7 +16,7 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
 - **Contexto:** O briefing do projeto e o modelo de README (tema Bem-estar estudantil) foram compartilhados com a IA.
 - **Prompt / objetivo:** Pedimos orientação sobre as melhores tecnologias para o projeto e como começar.
-- **O que a IA gerou:** Uma stack recomendada (back-end Node.js + TypeScript com Fastify ou Express, front-end React + Vite + TypeScript com Tailwind, SQLite com Prisma, API do Claude chamada apenas pelo back-end com fallback de dicas escritas à mão e uma camada de segurança para check-ins muito baixos, Vitest, ESLint/Prettier, GitHub Actions), uma sugestão de divisão de trabalho para 4 pessoas e um plano dia a dia até o code freeze.
+- **O que a IA gerou:** Uma stack recomendada (back-end Node.js + TypeScript com Fastify ou Express, front-end React + Vite + TypeScript com Tailwind, SQLite com Prisma, uma API de IA chamada apenas pelo back-end com fallback de dicas escritas à mão e uma camada de segurança para check-ins muito baixos, Vitest, ESLint/Prettier, GitHub Actions), uma sugestão de divisão de trabalho para 4 pessoas e um plano dia a dia até o code freeze.
 - **O que a equipe revisou / alterou:** A stack sugerida não coube nas nossas máquinas (veja as entradas 006 a 009). Abandonamos TypeScript, Fastify, Prisma e Tailwind e mantivemos React, Vite (fixado na versão 5), Node.js com Express e SQLite.
 - **Status:** Adaptado. A justificativa vai no `DECISIONS.md`.
 
@@ -89,7 +89,7 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai), com busca na documentação do Vite
 - **Prompt / objetivo:** Perguntamos qual versão o React exige.
 - **O que a IA gerou:** Uma explicação de que o React não tem requisito de Node, mas o Vite tem: o Vite 7 exige Node 20.19+ ou 22.12+, enquanto o Vite 5 funciona no Node 18 e 20+. Recomendou criar o projeto com o Vite 5.
-- **O que a equipe revisou / alterou:** Decidimos usar React com Vite 5, JavaScript, HTML, CSS e SQLite. _A equipe deve verificar a versão do Vite instalada no `package.json`._
+- **O que a equipe revisou / alterou:** Decidimos usar React com Vite, JavaScript, HTML, CSS e SQLite. O projeto atual usa Vite 7.3.8 e Vitest 3.2.4, que exigem conferência de compatibilidade com o Node dos computadores do laboratório.
 - **Status:** Adotado
 
 ### 010: Passo a passo de configuração
@@ -97,7 +97,7 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **Quem:** Tech Lead
 - **Ferramenta:** Claude (Claude Sonnet 5.5, chat do claude.ai)
 - **Prompt / objetivo:** Pedimos um guia de configuração do zero para a stack final.
-- **O que a IA gerou:** Passos para começar do zero, arquivos da raiz, o esqueleto do back-end em Express com um endpoint de saúde e um teste, o front-end React com Vite 5 e um proxy para `/api`, um workflow do GitHub Actions para as duas pastas, o primeiro PR com proteção da `main` e passos para a equipe começar.
+- **O que a IA gerou:** Passos para começar do zero, arquivos da raiz, o esqueleto do back-end em Express com um endpoint de saúde e um teste, o front-end React/Vite com um proxy para `/api`, um workflow do GitHub Actions para as duas pastas, o primeiro PR com proteção da `main` e passos para a equipe começar.
 - **O que a equipe revisou / alterou:** O back-end foi configurado como descrito. O teste do back-end falhou na primeira execução (entrada 011). _A equipe deve completar depois de verificar o front-end e o CI._
 - **Status:** Pendente
 
@@ -137,14 +137,14 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** Matheus confirmou que a versão para celular ficou boa e pediu que o desktop ocupasse a tela toda sem rolagem. O layout desktop foi ajustado para atender a esse pedido. O build de produção concluiu com sucesso após as mudanças; a equipe ainda deve conferir a aparência do desktop nos tamanhos de tela que pretende usar.
 - **Status:** Adaptado
 
-### 015: Integração do chat com Claude para apoio estudantil
+### 015: Integração do chat com Gemini para apoio estudantil
 - **Data:** 25/11/2026
 - **Quem:** Matheus Epifanio de Souza (Presentation Lead)
 - **Ferramenta:** OpenAI Codex (assistente de programação)
-- **Prompt / objetivo:** Perguntamos como configurar com segurança uma chave da API do Claude e conectar um chat acolhedor em português, no front, a um prompt no servidor. A companhia deve sugerir ações pequenas e opcionais para a rotina no campus e indicar os contatos profissionais da seção Apoio quando a pessoa estiver passando por um momento difícil.
-- **O que a IA gerou:** Criou a tela “Conversa” e a rota `POST /api/chat` usando a dependência existente do SDK da Anthropic. O prompt fixo fica no servidor; o tamanho das mensagens e do histórico é limitado; a chave não vai para o navegador; e o back retorna orientações de apoio em mensagens de sofrimento ou risco urgente. Também adicionou `backend/.env.example`, carregamento local do `.env` pelo Node e proxy `/api` do Vite. A interface avisa que as mensagens são enviadas à Anthropic e pede que a pessoa não compartilhe dados que a identifiquem.
-- **O que a equipe revisou / alterou:** Matheus explicou o tom e deu exemplos para a companhia (como perguntar se há um bebedouro por perto), além de pedir a indicação de contatos profissionais em momentos de sofrimento. O prompt foi limitado para evitar diagnósticos, não presumir que a IA conhece o campus e distinguir apoio emocional de emergências. Nenhuma chave real foi compartilhada ou versionada. Os builds do front e do back passaram; uma chamada real ao Claude ainda depende de uma chave local da equipe.
-- **Status:** Adaptado (código implementado; chamada real pendente de chave local e revisão da equipe)
+- **Prompt / objetivo:** Perguntamos como configurar com segurança uma chave da API do Gemini e conectar um chat acolhedor em português, no front, a um prompt no servidor. A companhia deve sugerir ações pequenas e opcionais para a rotina no campus e indicar os contatos profissionais da seção Apoio quando a pessoa estiver passando por um momento difícil.
+- **O que a IA gerou:** Criou a tela “Conversa” e a rota `POST /api/chat` usando o `fetch` nativo do Node e a API do Google Gemini. O prompt fixo fica no servidor; o tamanho das mensagens e do histórico é limitado; a chave não vai para o navegador; e o back retorna orientações de apoio em mensagens de sofrimento ou risco urgente. Também adicionou `backend/.env.example`, carregamento local do `.env` pelo Node e proxy `/api` do Vite. A interface pede que a pessoa não compartilhe dados que a identifiquem.
+- **O que a equipe revisou / alterou:** Matheus explicou o tom e deu exemplos para a companhia (como perguntar se há um bebedouro por perto), além de pedir a indicação de contatos profissionais em momentos de sofrimento. O prompt foi limitado para evitar diagnósticos, não presumir que a IA conhece o campus e distinguir apoio emocional de emergências. Nenhuma chave real foi compartilhada ou versionada. Os builds do front e do back passaram. Uma verificação posterior mostrou que a chave configurada não é válida e que o fallback do provider permanece ativo até sua substituição.
+- **Status:** Adaptado (código implementado; chamada ao Gemini pendente de uma chave local válida)
 
 ### 016: Configuração do Vitest e testes essenciais do front-end
 - **Data:** 25/11/2026

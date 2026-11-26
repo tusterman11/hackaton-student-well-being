@@ -8,20 +8,21 @@ Record the team's important decisions here. Each entry should be short and state
 
 The decisions below describe the intended product; they are not a statement that every feature is complete. Current implementation:
 
-- **Daily check-in:** The form is implemented in React. It calls `/api/checkins`, but the current server does not provide that route. The front-end fallback keeps the result in memory; once-per-day enforcement and server persistence are not implemented.
-- **Break logging:** The buttons and list are implemented in the front end. `/api/breaks` is not available on the server, so entries only remain in the current app session.
-- **AI chat:** `POST /api/chat` calls Claude through the Anthropic SDK when `ANTHROPIC_API_KEY` is configured in `backend/.env`. The server prompt defines a supportive, non-clinical role; urgent risk phrases receive a fixed response with support contacts. The key is not committed, and a real API call still requires a team member's local key.
+- **Daily check-in:** The form is implemented in React and calls `POST /api/checkins`; the server validates and persists check-ins in SQLite. Once-per-day enforcement is not implemented.
+- **Break logging:** The buttons and list are implemented in the front end and call `POST /api/breaks`; the server persists pauses in SQLite.
+- **AI chat:** `POST /api/chat` calls Google Gemini through Node's built-in `fetch` when `GEMINI_API_KEY` is configured in `backend/.env`. The server prompt defines a supportive, non-clinical role; urgent risk phrases receive a fixed response with support contacts. The key is not committed, and a real live reply requires a valid key.
+- **Gemini verification:** Live verification on 25/11/2026 returned `API key not valid`. The configured key must be replaced before live AI responses can be demonstrated.
 - **Weekly history:** `GardenView` currently renders mock data; it is not connected to saved check-ins or breaks.
 - **Gentle reminder:** The reminder can be opened with the “Test reminder” button. The planned 45–60 minute timer is not implemented.
 - **Support resources:** The support screen and contact links are implemented. The chat can show CVV 188 and SAMU 192 links for urgent risk; the assistant is not a professional or an emergency service.
-- **Storage and privacy:** The server creates a SQLite `checkins` table, but no current API route reads or writes check-ins. The anonymous device ID is generated in the browser and is not connected to server records. Chat history remains in front-end memory and is sent to Anthropic to generate replies; it is not stored in SQLite.
+- **Storage and privacy:** The server creates SQLite `checkins` and `pauses` tables. The anonymous device ID is generated in the browser but is not yet connected to server records. Chat history remains in front-end memory and is sent to Gemini to generate replies; it is not stored in SQLite.
 - **Tests and CI:** The back end has a `node --test` script and test file. The front end now runs five Vitest integration tests covering navigation, check-in submission, low-mood support routing, break registration and chat error handling. No GitHub Actions workflow is present in this branch.
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
   1. **Daily Check-in:** Single mood/energy check-in per day (1–5 scale with careful wording) + optional short note, no scores or comparisons.
   2. **Break & Habit Logging:** One-click buttons ("Drank water", "Stretched", "Took a short break") saving type and timestamp.
-  3. **AI-Generated Tips:** Back-end calls `@anthropic-ai/sdk` (Claude API) to return a short, optional suggestion based on the check-in, with hand-written fallback tips if the API fails.
+  3. **AI-Generated Tips:** The back end calls the Google Gemini API to return a short, optional suggestion based on mood and energy, with hand-written fallback tips if the API fails or is not configured.
   4. **Weekly History:** Simple 7-day list/chart of check-ins and breaks visible only to the user.
   5. **Gentle In-App Reminder:** Non-intrusive on-screen prompt after 45–60 minutes of usage with a dismiss button (no push notifications).
   6. **Support Resources Section:** Always-visible directory with Brazilian support contacts (CVV 188, SAMU 192, and campus student support) and clear non-clinical disclaimers.
@@ -49,7 +50,7 @@ The decisions below describe the intended product; they are not a statement that
 - **Rationale:** `better-sqlite3` with plain SQL avoids ORM migration issues, requires zero server setup, and executes synchronously with high reliability in CI. An anonymous per-device ID avoids login friction and is intended to scope each user's history. The ID is not yet connected to server-side records; see the implementation status above.
 
 ## 24/11/2026 — AI Safety Rules and Fallback Strategy
-- **Decision:** Call the **Claude API (`@anthropic-ai/sdk`)** strictly from the back-end with a warm, non-directive system prompt. If the check-in indicates intense distress (lowest mood levels), bypass free-form AI generation and highlight the Support Resources section. Include static hand-written fallback tips in case of API failure.
+- **Decision:** Call the **Google Gemini API** strictly from the back end with a warm, non-directive system prompt. If the check-in indicates intense distress (mood 1 or 2), bypass free-form AI generation and highlight the Support Resources section. Include static hand-written fallback tips in case of API failure.
 - **Alternatives considered:** Letting the LLM generate open-ended emotional advice for low mood states.
 - **Rationale:** Deterministic routing to human help (CVV 188 / SAMU 192) guarantees safety during distress, while static fallbacks prevent demo failures due to network or quota issues.
 

@@ -8,20 +8,21 @@ Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e 
 
 As decisões abaixo descrevem o produto pretendido; não significam que todos os recursos estejam concluídos. Situação do código atual:
 
-- **Check-in diário:** O formulário está implementado em React. Ele chama `/api/checkins`, mas o servidor atual não possui essa rota. O fallback do front mantém o resultado em memória; limite de um check-in por dia e persistência no servidor ainda não foram implementados.
-- **Registro de pausas:** Os botões e a lista existem no front. A rota `/api/breaks` não existe no servidor, então os registros ficam apenas durante a sessão atual do app.
-- **Chat com IA:** `POST /api/chat` chama o Claude pelo SDK da Anthropic quando `ANTHROPIC_API_KEY` está configurada em `backend/.env`. O prompt no servidor define um papel acolhedor e não clínico; frases de risco urgente recebem uma resposta fixa com contatos de apoio. A chave não é versionada, e uma chamada real ainda depende da chave local de alguém da equipe.
+- **Check-in diário:** O formulário está implementado em React e chama `POST /api/checkins`; o servidor valida e persiste os check-ins no SQLite. O limite de um check-in por dia ainda não foi implementado.
+- **Registro de pausas:** Os botões e a lista existem no front e chamam `POST /api/breaks`; o servidor persiste as pausas no SQLite.
+- **Chat com IA:** `POST /api/chat` chama o Google Gemini pelo `fetch` nativo do Node quando `GEMINI_API_KEY` está configurada em `backend/.env`. O prompt no servidor define um papel acolhedor e não clínico; frases de risco urgente recebem uma resposta fixa com contatos de apoio. A chave não é versionada, e uma resposta ao vivo exige uma chave válida.
+- **Verificação do Gemini:** A verificação ao vivo em 25/11/2026 retornou `API key not valid`. A chave configurada precisa ser substituída antes da demonstração de respostas de IA ao vivo.
 - **Histórico semanal:** `GardenView` ainda exibe dados de exemplo; não consulta check-ins ou pausas salvos.
 - **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
 - **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
-- **Armazenamento e privacidade:** O servidor cria uma tabela SQLite `checkins`, mas nenhuma rota atual da API lê ou grava check-ins nela. O ID anônimo é gerado no navegador e não está associado a registros no servidor. O histórico do chat fica na memória do front e é enviado à Anthropic para gerar respostas; não é salvo no SQLite.
+- **Armazenamento e privacidade:** O servidor cria tabelas SQLite `checkins` e `pauses`. O ID anônimo é gerado no navegador, mas ainda não está associado aos registros do servidor. O histórico do chat fica na memória do front e é enviado ao Gemini para gerar respostas; não é salvo no SQLite.
 - **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front agora executa cinco testes de integração Vitest que cobrem navegação, envio do check-in, encaminhamento para apoio em humor baixo, registro de pausas e erros no chat. Não há workflow do GitHub Actions nesta branch.
 
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
   1. **Check-in diário:** Uma pergunta simples de humor e energia por dia (escala de 1 a 5 com linguagem cuidadosa) + nota opcional, sem notas ou comparações.
   2. **Registro de pausas e hábitos:** Botões rápidos ("Bebi água", "Alonguei", "Fiz uma pausa curta") salvando tipo e horário.
-  3. **Dicas geradas por IA:** O back-end chama o `@anthropic-ai/sdk` (API do Claude) e retorna uma sugestão curta e opcional baseada no check-in, com fallback de dicas escritas à mão caso a API falhe.
+  3. **Dicas geradas por IA:** O back-end chama a API do Google Gemini e retorna uma sugestão curta e opcional baseada no humor e na energia, com fallback de dicas escritas à mão caso a API falhe ou não esteja configurada.
   4. **Histórico semanal:** Tela simples com check-ins e pausas dos últimos 7 dias (lista ou gráfico básico), visível apenas para a própria pessoa.
   5. **Lembrete gentil dentro do app:** Aviso discreto na tela após 45 a 60 minutos de uso com botão para dispensar (sem notificações push).
   6. **Seção de recursos de apoio:** Sempre visível, com contatos reais do Brasil (CVV 188, SAMU 192 e acolhimento do campus) e aviso explícito de que o app não substitui atendimento profissional.
@@ -49,7 +50,7 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 - **Justificativa:** O `better-sqlite3` com SQL puro evita problemas de migração de ORM, dispensa configuração de servidor e executa de forma síncrona com alta estabilidade no CI. O identificador anônimo por dispositivo evita o atrito do login e foi escolhido para separar o histórico de cada pessoa. Ele ainda não está associado aos registros no servidor; consulte o status da implementação acima.
 
 ## 24/11/2026 — Regras de Segurança da IA e Estratégia de Fallback
-- **Decisão:** Chamar a **API do Claude (`@anthropic-ai/sdk`)** exclusivamente pelo back-end com prompt de sistema acolhedor e não diretivo. Se o check-in indicar um momento mais difícil (níveis mais baixos de humor), o app **não** gera texto livre e destaca imediatamente a seção de Recursos de Apoio. Inclui dicas estáticas escritas à mão como fallback caso a API falhe.
+- **Decisão:** Chamar a **API do Google Gemini** exclusivamente pelo back-end com prompt de sistema acolhedor e não diretivo. Se o check-in indicar um momento mais difícil (humor 1 ou 2), o app **não** gera texto livre e destaca imediatamente a seção de Recursos de Apoio. Inclui dicas estáticas escritas à mão como fallback caso a API falhe.
 - **Alternativas consideradas:** Deixar a IA gerar conselhos livres em momentos de mal-estar intenso.
 - **Justificativa:** O encaminhamento fixo para ajuda humana (CVV 188 / SAMU 192) garante segurança emocional, enquanto o fallback evita falhas na apresentação por rede ou cota da API.
 
