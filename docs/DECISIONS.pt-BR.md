@@ -19,7 +19,7 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 - **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
 - **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
 - **Armazenamento e privacidade:** O servidor cria tabelas SQLite `checkins` e `pauses`. O ID anônimo é gerado no navegador, mas ainda não está associado aos registros do servidor. O histórico do chat fica na memória do front e é enviado ao Gemini para gerar respostas; não é salvo no SQLite.
-- **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front agora executa cinco testes de integração Vitest que cobrem navegação, envio do check-in, encaminhamento para apoio em humor baixo, registro de pausas e erros no chat. Não há workflow do GitHub Actions nesta branch.
+- **Testes e CI:** O back-end tem 8 testes com `node --test`. O front tem 5 testes de integração Vitest cobrindo navegação, envio do check-in, encaminhamento para apoio em humor baixo, registro de pausas e erros no chat. `.github/workflows/ci.yml` é o pipeline ativo do GitHub Actions para pull requests e pushes na `main`; ele instala, executa lint, testa e compila os dois lados.
 
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:

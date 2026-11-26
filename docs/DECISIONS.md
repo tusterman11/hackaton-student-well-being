@@ -19,7 +19,7 @@ The decisions below describe the intended product; they are not a statement that
 - **Gentle reminder:** The reminder can be opened with the “Test reminder” button. The planned 45–60 minute timer is not implemented.
 - **Support resources:** The support screen and contact links are implemented. The chat can show CVV 188 and SAMU 192 links for urgent risk; the assistant is not a professional or an emergency service.
 - **Storage and privacy:** The server creates SQLite `checkins` and `pauses` tables. The anonymous device ID is generated in the browser but is not yet connected to server records. Chat history remains in front-end memory and is sent to Gemini to generate replies; it is not stored in SQLite.
-- **Tests and CI:** The back end has a `node --test` script and test file. The front end now runs five Vitest integration tests covering navigation, check-in submission, low-mood support routing, break registration and chat error handling. No GitHub Actions workflow is present in this branch.
+- **Tests and CI:** The back end has 8 `node --test` tests. The front end has 5 Vitest integration tests covering navigation, check-in submission, low-mood support routing, break registration and chat error handling. `.github/workflows/ci.yml` is the working GitHub Actions pipeline for pull requests and pushes to `main`; it installs, lints, tests and builds both sides.
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:

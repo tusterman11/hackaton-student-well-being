@@ -164,6 +164,15 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** The user gave several rounds of feedback on responsiveness, sidebar expansion/collapse, hover highlighting, square home-header corners, dark mode, the mobile menu's green color, and dark-text contrast. The implementation was refined to match. The front-end build was not confirmed in this conversation because the process produced no output and had to be stopped.
 - **Status:** Adapted
 
+### 018: Documentation aligned with the working project
+- **Date:** 2026-11-26
+- **Who:** GitHub Copilot in VS Code
+- **Tool:** Copilot SDK
+- **Prompt / purpose:** Update project documentation to match the implemented application and explicitly document the working CI workflow.
+- **What the AI generated:** Updated the English and Portuguese project READMEs, added root READMEs, updated the front-end README, and corrected the implementation status, test counts, API routes, and CI/CD sections in the documentation.
+- **What the team reviewed / changed:** The code was verified locally before the documentation update: 8 back-end tests and 5 front-end tests pass, both linters pass, and both builds pass. The team should keep the Gemini key and live-provider status as environment-specific information rather than a committed secret.
+- **Status:** Adapted
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_
