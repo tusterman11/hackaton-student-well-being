@@ -155,6 +155,15 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** A equipe manteve o Vitest em vez do Jest porque o projeto usa Vite e limitou a suíte aos comportamentos de maior valor do MVP. Vitest 5 e jsdom 29 foram substituídos por versões compatíveis com Node 20 (Vitest 3.2.4 e jsdom 26.1.0). A configuração dos testes inclui limpeza do DOM e uma adaptação de `scrollIntoView` para o ambiente de navegador simulado. Asserções e seletores de navegação foram ajustados para evitar correspondências duplicadas de texto e consultas ambíguas. A suíte final passou com cinco testes.
 - **Status:** Adaptado
 
+### 017: Reidentificação como EntrePausas e ajustes da experiência visual
+- **Data:** 26/11/2026
+- **Quem:** Matheus Epifanio de Souza (Presentation Lead)
+- **Ferramenta:** OpenAI Codex (assistente de programação)
+- **Prompt / objetivo:** Ao longo da conversa, pedimos para trocar a integração de Claude para Gemini sem alterar as versões de Node ou Vite; aproximar o front das referências visuais, incluindo adaptação para celular; encaminhar a raiz do back-end local para o front do Vite; ajustar a navegação lateral ao passar o mouse; criar um menu móvel compacto; implementar tema escuro; corrigir a legibilidade nesse tema; e renomear o produto para EntrePausas e a assistente Gemini para Interlude.
+- **O que a IA gerou:** Atualizou o texto de privacidade do chat e removeu o SDK Anthropic não usado. Refez a camada visual, acrescentou telas locais de água, diário, metas, sono e estudos, criou navegação expansível no desktop e menu flutuante no celular, com alternância de tema persistida no navegador. A raiz do servidor local passou a redirecionar para o Vite em desenvolvimento e o servidor continua servindo `frontend/dist` em produção. A marca foi atualizada no front e nos READMEs/decisões; o prompt do Gemini agora identifica a assistente como Interlude, e as chaves de armazenamento foram migradas preservando valores anteriores. Nenhuma versão de Node ou Vite foi alterada.
+- **O que a equipe revisou / alterou:** A pessoa solicitou ajustes sucessivos de responsividade, expansão/recolhimento do menu, destaque de hover, bordas quadradas do cabeçalho inicial, tema escuro, cor verde do botão móvel e contraste do texto. A implementação foi refinada conforme esse feedback. A compilação do front não foi confirmada nesta conversa porque o processo ficou sem saída e precisou ser interrompido.
+- **Status:** Adaptado
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_

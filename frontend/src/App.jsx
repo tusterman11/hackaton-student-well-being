@@ -6,9 +6,12 @@ import { GardenView } from './components/GardenView';
 import { SupportView } from './components/SupportView';
 import { ChatView } from './components/ChatView';
 import { GentleReminder } from './components/GentleReminder';
+import { PersonalViews } from './components/PersonalViews';
 import { submitCheckin, logBreak, sendChatMessage } from './services/api';
+import { readAppStorage } from './utils/appStorage';
 
 export default function App() {
+  const [isDarkMode, setIsDarkMode] = useState(() => readAppStorage('entrepausas-theme') === 'dark');
   const [activeTab, setActiveTab] = useState('home');
   const [todayCheckin, setTodayCheckin] = useState(null);
   const [dailyNote, setDailyNote] = useState('');
@@ -16,7 +19,7 @@ export default function App() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Oi! Posso ouvir como foi seu dia e pensar com você em uma pausa pequena. Não substituo apoio profissional. O que está passando pela sua cabeça?'
+      content: 'Oi! Sou a Interlude, assistente do EntrePausas. Posso ouvir como foi seu dia e pensar com você em uma pausa pequena. Não substituo apoio profissional. O que está passando pela sua cabeça?'
     }
   ]);
   const [isChatSending, setIsChatSending] = useState(false);
@@ -79,7 +82,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={isDarkMode ? 'dark' : 'light'}>
       {activeTab === 'home' && (
         <HomeView
           todayCheckin={todayCheckin}
@@ -104,6 +107,10 @@ export default function App() {
 
       {activeTab === 'support' && <SupportView />}
 
+      {['hydration', 'journal', 'habits', 'sleep', 'study'].includes(activeTab) && (
+        <PersonalViews tab={activeTab} />
+      )}
+
       {activeTab === 'chat' && (
         <ChatView
           messages={chatMessages}
@@ -123,7 +130,16 @@ export default function App() {
         />
       )}
 
-      <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+      <BottomNav
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
+        isDarkMode={isDarkMode}
+        onToggleTheme={() => setIsDarkMode((current) => {
+          const next = !current;
+          localStorage.setItem('entrepausas-theme', next ? 'dark' : 'light');
+          return next;
+        })}
+      />
     </div>
   );
 }

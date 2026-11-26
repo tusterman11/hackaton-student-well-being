@@ -1,4 +1,4 @@
-# Pausa Leve
+# EntrePausas
 
 **English** · [Português (Brasil)](README.pt-BR.md)
 
@@ -25,7 +25,7 @@ Students facing intense study routines, deadlines, and project weeks often negle
 
 ## Solution
 
-**Pausa Leve** is a lightweight, respectful, mobile-first web application built for campus students. It provides a pressure-free space to pause and check in while explicitly stating that it does not replace professional care.
+**EntrePausas** is a lightweight, respectful, mobile-first web application built for campus students. It provides a pressure-free space to pause and check in while explicitly stating that it does not replace professional care. Its chat assistant is named **Interlude**.
 
 **What the MVP covers:**
 - **Quick Daily Check-in:** Simple mood and energy rating with welcoming, non-judgmental wording.
@@ -38,8 +38,9 @@ Students facing intense study routines, deadlines, and project weeks often negle
 ## Current implementation status
 
 - The check-in and break screens work in the front end and use `/api/checkins` and `/api/breaks`; values are persisted in SQLite by the back end.
+- The water, journal, goals, sleep, and study screens store their entries only in this browser's local storage.
 - The chat uses `POST /api/chat`. It calls Gemini only when `GEMINI_API_KEY` is configured in the back end. The key belongs in `backend/.env`, which is ignored by Git; never put it in front-end code or commit it. Chat messages are sent to Gemini to generate replies, so users should avoid sharing identifying details.
-- **Gemini key status:** Live verification found the configured key to be invalid. Replace it with a valid, private key in `backend/.env`; until then, the app uses the safe fallback responses and does not produce live AI replies.
+- **Gemini key status:** The last recorded live check, on 2026-11-25, found the key invalid. The key was changed afterward; the current configuration still needs a live call to confirm it works.
 - The server creates SQLite `checkins` and `pauses` tables and exposes weekly check-in and pause history routes.
 - `GardenView` still displays sample weekly data. The reminder is currently opened manually with the test button.
 - The support screen and its contact links are implemented. The assistant is not a therapist or emergency service.

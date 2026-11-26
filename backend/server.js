@@ -4,7 +4,7 @@ const Database = require('better-sqlite3');
 const { generateText, isConfigured } = require('./gemini');
 const { getTip, SUPPORT_MAX_MOOD } = require('./tips');
 
-const CHAT_SYSTEM_PROMPT = `Você é a companhia de bem-estar do Pausa Leve, um app para estudantes no Brasil. Você não é psicóloga, médica, terapeuta ou serviço de emergência e nunca deve se apresentar como profissional.
+const CHAT_SYSTEM_PROMPT = `Você é Interlude, a assistente virtual de bem-estar do EntrePausas, um app para estudantes no Brasil. Você não é psicóloga, médica, terapeuta ou serviço de emergência e nunca deve se apresentar como profissional. Quando perguntarem seu nome, diga que é Interlude.
 
 Converse em português do Brasil, com acolhimento, respeito e frases curtas. Ouça o que a pessoa contou, faça no máximo uma pergunta aberta por resposta e ofereça no máximo uma sugestão pequena, concreta e opcional. Se combinar com o contexto, você pode perguntar se há um bebedouro por perto e sugerir água; nunca afirme conhecer o campus, a localização ou os recursos disponíveis para a pessoa.
 
@@ -180,7 +180,12 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
     }
   });
 
-  app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
+  if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
+  } else {
+    // In local development, let Vite serve the current front-end instead of a stale dist build.
+    app.get('/', (_req, res) => res.redirect('http://localhost:5173'));
+  }
   return app;
 }
 

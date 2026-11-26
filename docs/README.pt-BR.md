@@ -1,4 +1,4 @@
-# Pausa Leve
+# EntrePausas
 
 [English](README.md) · **Português (Brasil)**
 
@@ -25,7 +25,7 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 
 ## Solução
 
-**Pausa Leve** é uma aplicação web leve, respeitosa e mobile-first criada para estudantes. Ela oferece um espaço livre de pressão para pausar e fazer check-in, deixando explícito o tempo todo que não substitui atendimento profissional.
+**EntrePausas** é uma aplicação web leve, respeitosa e mobile-first criada para estudantes. Ela oferece um espaço livre de pressão para pausar e fazer check-in, deixando explícito o tempo todo que não substitui atendimento profissional. A assistente virtual do chat se chama **Interlude**.
 
 **O que o MVP cobre:**
 - **Check-in Diário Rápido:** Avaliação simples de humor e energia com linguagem acolhedora e sem julgamentos.
@@ -38,8 +38,9 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 ## Status atual da implementação
 
 - As telas de check-in e pausas funcionam no front e usam `/api/checkins` e `/api/breaks`; os registros são persistidos pelo back-end no SQLite.
+- As telas de água, diário, metas, sono e estudos salvam seus registros somente no armazenamento local deste navegador.
 - O chat usa `POST /api/chat` e chama o Gemini quando `GEMINI_API_KEY` está configurada no back-end. A chave deve ficar em `backend/.env`, arquivo ignorado pelo Git; nunca coloque a chave no código do front nem a envie ao repositório. As mensagens são enviadas ao Gemini para gerar respostas, então evite compartilhar dados que identifiquem alguém.
-- **Status da chave Gemini:** A verificação ao vivo mostrou que a chave configurada não é válida. Substitua-a por uma chave privada e válida em `backend/.env`; até lá, o app usa respostas de fallback seguras e não gera respostas ao vivo.
+- **Status da chave Gemini:** A última verificação registrada, em 25/11/2026, retornou chave inválida. A chave foi alterada depois; a validade da configuração atual ainda precisa ser confirmada com uma chamada ao vivo.
 - O servidor cria tabelas SQLite `checkins` e `pauses` e oferece rotas semanais de check-ins e pausas.
 - `GardenView` ainda exibe dados de exemplo. O lembrete é aberto manualmente pelo botão de teste.
 - A tela de apoio e os links de contato estão implementados. A IA não é terapeuta nem serviço de emergência.
