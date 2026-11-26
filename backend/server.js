@@ -1,8 +1,13 @@
 const path = require('node:path');
+const { URL } = require('node:url');
 const express = require('express');
-const Database = require('better-sqlite3');
+const rateLimit = require('express-rate-limit');
 const { generateText, isConfigured } = require('./gemini');
 const { getTip, SUPPORT_MAX_MOOD } = require('./tips');
+const { createPool, migrateDatabase } = require('./database');
+const { createMailer } = require('./email');
+const { createAuth } = require('./auth');
+const { createWellnessRouter } = require('./wellness');
 
 const CHAT_SYSTEM_PROMPT = `Você é Interlude, a assistente virtual de bem-estar do EntrePausas, um app para estudantes no Brasil. Você não é psicóloga, médica, terapeuta ou serviço de emergência e nunca deve se apresentar como profissional. Quando perguntarem seu nome, diga que é Interlude.
 
@@ -14,35 +19,76 @@ Se a pessoa disser que está se sentindo mal, responda com empatia e sugira conv
 
 const URGENT_SUPPORT_REPLY = 'Sinto muito que você esteja passando por isso. Você não precisa enfrentar isso sozinho. Procure agora um adulto de confiança ou alguém que esteja perto de você e conte o que está acontecendo. Para conversar e receber apoio emocional, ligue 188 (CVV). Se houver perigo imediato ou risco de alguém se machucar, ligue 192 (SAMU) ou vá a um pronto atendimento. Você está com alguém de confiança agora?';
 
-function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
-  database.exec(`CREATE TABLE IF NOT EXISTS checkins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    mood INTEGER NOT NULL,
-    energy INTEGER NOT NULL,
-    note TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-  database.exec(`CREATE TABLE IF NOT EXISTS pauses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
+function createApp({
+  pool,
+  mailer = createMailer(),
+  appBaseUrl = process.env.APP_BASE_URL,
+  isProduction = process.env.NODE_ENV === 'production'
+} = {}) {
+  if (!pool) throw new Error('A PostgreSQL pool must be provided to createApp.');
   const app = express();
-  app.use(express.json());
+  app.disable('x-powered-by');
+  if (isProduction) app.set('trust proxy', 1);
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    if (isProduction) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
+  });
+  app.use('/api', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
+  app.use(express.json({ limit: '1mb' }));
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true }));
-
-  // Note: created_at is stored in UTC without a timezone marker.
-  // The front-end must parse it as UTC (see docs / DECISIONS.md).
-  app.get('/api/checkins', (_req, res) => {
-    const checkins = database.prepare(
-      "SELECT id, mood, energy, note, created_at FROM checkins WHERE created_at >= datetime('now', '-7 days') ORDER BY created_at DESC"
-    ).all();
-    return res.json(checkins);
+  const allowedOrigins = new Set(
+    [appBaseUrl, process.env.FRONTEND_ORIGIN]
+      .filter(Boolean)
+      .map((origin) => new URL(origin).origin)
+  );
+  app.use((req, res, next) => {
+    if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
+    const origin = req.get('origin');
+    if (origin && !allowedOrigins.has(origin)) {
+      return res.status(403).json({ error: 'ORIGIN_NOT_ALLOWED', message: 'A origem desta solicitação não é permitida.' });
+    }
+    return next();
   });
 
-  app.post('/api/checkins', async (req, res) => {
+  const auth = createAuth({ pool, mailer, appBaseUrl, isProduction });
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    skip: (req) => req.method === 'GET' && req.path === '/me',
+    message: { error: 'RATE_LIMITED', message: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' }
+  });
+  app.use('/api/auth', authLimiter, auth.router);
+  app.use('/api/wellness', createWellnessRouter({
+    pool,
+    requireAuth: auth.requireAuth,
+    requireCsrf: auth.requireCsrf
+  }));
+
+  app.get('/api/health', async (_req, res) => {
+    await pool.query('SELECT 1');
+    return res.json({ ok: true });
+  });
+
+  app.get('/api/checkins', auth.requireAuth, async (req, res) => {
+    const checkins = await pool.query(
+      `SELECT id, mood, energy, note, created_at
+       FROM checkins
+       WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
+       ORDER BY created_at DESC LIMIT 500`,
+      [req.auth.user.id]
+    );
+    return res.json(checkins.rows);
+  });
+
+  app.post('/api/checkins', auth.requireAuth, auth.requireCsrf, async (req, res) => {
     const { mood, energy, note } = req.body || {};
     if (
       !Number.isInteger(mood) || mood < 1 || mood > 5
@@ -52,48 +98,65 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
       return res.status(400).json({ error: 'INVALID_CHECKIN', message: 'Informe humor e energia de 1 a 5 e uma anotação de até 500 caracteres.' });
     }
 
-    const result = database.prepare(
-      'INSERT INTO checkins (mood, energy, note) VALUES (?, ?, ?)'
-    ).run(mood, energy, note || null);
-    const checkin = database.prepare(
-      'SELECT id, mood, energy, note, created_at FROM checkins WHERE id = ?'
-    ).get(result.lastInsertRowid);
+    const result = await pool.query(
+      'INSERT INTO checkins (user_id, mood, energy, note) VALUES ($1, $2, $3, $4) RETURNING id, mood, energy, note, created_at',
+      [req.auth.user.id, mood, energy, note || null]
+    );
 
-    // getTip never throws: it falls back to a hand-written tip if the AI fails.
     const { tip, showSupport } = await getTip({ mood, energy });
     return res.status(201).json({
-      checkin,
+      checkin: result.rows[0],
       tip,
       showSupportAlert: showSupport
     });
   });
 
-  app.get(['/api/pauses', '/api/breaks'], (_req, res) => {
-    const pauses = database.prepare(
-      "SELECT id, type, created_at FROM pauses WHERE created_at >= datetime('now', '-7 days') ORDER BY created_at DESC"
-    ).all();
-    return res.json(pauses);
+  app.get(['/api/pauses', '/api/breaks'], auth.requireAuth, async (req, res) => {
+    const pauses = await pool.query(
+      `SELECT id, type, created_at
+       FROM pauses
+       WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
+       ORDER BY created_at DESC LIMIT 1000`,
+      [req.auth.user.id]
+    );
+    return res.json(pauses.rows);
   });
 
-  const createPause = (req, res) => {
+  const createPause = async (req, res) => {
     const { type } = req.body || {};
     if (!['water', 'stretch', 'walk'].includes(type)) {
       return res.status(400).json({ error: 'INVALID_PAUSE', message: 'Tipo de pausa inválido.' });
     }
 
-    const result = database.prepare('INSERT INTO pauses (type) VALUES (?)').run(type);
-    const pause = database.prepare(
-      'SELECT id, type, created_at FROM pauses WHERE id = ?'
-    ).get(result.lastInsertRowid);
+    const result = await pool.query(
+      'INSERT INTO pauses (user_id, type) VALUES ($1, $2) RETURNING id, type, created_at',
+      [req.auth.user.id, type]
+    );
+    const pause = result.rows[0];
     return res.status(201).json({
       ...pause,
       createdAt: pause.created_at
     });
   };
 
-  app.post(['/api/pauses', '/api/breaks'], createPause);
+  app.post(['/api/pauses', '/api/breaks'], auth.requireAuth, auth.requireCsrf, createPause);
+  app.get('/api/history', auth.requireAuth, async (req, res) => {
+    const [checkins, pauses] = await Promise.all([
+      pool.query(
+        `SELECT id, mood, energy, note, created_at FROM checkins
+         WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '7 days' ORDER BY created_at`,
+        [req.auth.user.id]
+      ),
+      pool.query(
+        `SELECT id, type, created_at FROM pauses
+         WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '7 days' ORDER BY created_at`,
+        [req.auth.user.id]
+      )
+    ]);
+    return res.json({ checkins: checkins.rows, pauses: pauses.rows });
+  });
 
-  app.post('/api/chat', async (req, res) => {
+  app.post('/api/chat', auth.requireAuth, auth.requireCsrf, async (req, res) => {
     const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
     if (!message) {
       return res.status(400).json({ error: 'EMPTY_MESSAGE', message: 'Escreva uma mensagem antes de enviar.' });
@@ -106,10 +169,10 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
-    const mood = Number.isInteger(req.body.mood) && req.body.mood >= 1 && req.body.mood <= 5
+    const mood = Number.isInteger(req.body?.mood) && req.body.mood >= 1 && req.body.mood <= 5
       ? req.body.mood
       : null;
-    const energy = Number.isInteger(req.body.energy) && req.body.energy >= 1 && req.body.energy <= 5
+    const energy = Number.isInteger(req.body?.energy) && req.body.energy >= 1 && req.body.energy <= 5
       ? req.body.energy
       : null;
     const urgentPattern = /\b(suicid\w*|quero me matar|vou me matar|penso em me matar|tirar minha vida|nao quero mais viver|me machucar|me cortar|me ferir)\b/;
@@ -133,7 +196,7 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
       });
     }
 
-    const history = Array.isArray(req.body.history)
+    const history = Array.isArray(req.body?.history)
       ? req.body.history
         .filter((item) => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string')
         .slice(-10)
@@ -180,18 +243,44 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
     }
   });
 
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction) {
     app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
   } else {
     // In local development, let Vite serve the current front-end instead of a stale dist build.
     app.get('/', (_req, res) => res.redirect('http://localhost:5173'));
   }
+
+  app.use((error, _req, res, next) => {
+    if (res.headersSent) return next(error);
+    console.error('Request failed:', error.code || error.name || 'unknown');
+    const emailNotConfigured = [
+      'EMAIL_NOT_CONFIGURED',
+      'APP_BASE_URL_NOT_CONFIGURED',
+      'APP_BASE_URL_NOT_SECURE'
+    ].includes(error.code);
+    return res.status(emailNotConfigured ? 503 : 500).json({
+      error: emailNotConfigured
+        ? 'ACCOUNT_EMAIL_NOT_CONFIGURED'
+        : 'INTERNAL_ERROR',
+      message: emailNotConfigured
+        ? 'O envio de e-mails da conta ainda não está configurado neste servidor.'
+        : 'Não foi possível concluir esta solicitação agora.'
+    });
+  });
   return app;
 }
 
-// Only open the real database and listen when run directly (npm start / npm run dev).
 if (require.main === module) {
-  createApp().listen(3000, () => console.log('http://localhost:3000'));
+  (async () => {
+    const pool = createPool();
+    await migrateDatabase(pool);
+    const app = createApp({ pool });
+    const port = Number(process.env.PORT) || 3000;
+    app.listen(port, '0.0.0.0', () => console.log(`EntrePausas API listening on port ${port}`));
+  })().catch((error) => {
+    console.error('Server startup failed:', error.code || error.name || 'unknown');
+    process.exitCode = 1;
+  });
 }
 
 module.exports = { createApp };

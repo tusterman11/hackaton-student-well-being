@@ -31,27 +31,28 @@ Students facing intense study routines, deadlines, and project weeks often negle
 - **Quick Daily Check-in:** Simple mood and energy rating with welcoming, non-judgmental wording.
 - **Micro-Breaks & Habit Log:** One-click logging for small actions (drinking water, stretching, taking a 5-minute break).
 - **AI Companion Chat:** A conversation on the “Conversa” tab, handled by the back-end through the Google Gemini API with a fixed, supportive system prompt. It offers optional small breaks, does not diagnose, and points users to human support when appropriate.
-- **Private 7-Day History:** Per-device isolated view of recent check-ins and breaks without comparative scores.
+- **Private 7-Day History:** Account-scoped view of recent check-ins and breaks without comparative scores.
 - **Gentle On-Screen Reminder:** Non-intrusive prompt encouraging a short pause during study sessions.
 - **Professional Support Section:** A dedicated screen with real support channels (e.g., CVV - 188, SAMU 192, and campus student support), accessible from the main navigation.
 
 ## Current implementation status
 
-- The check-in and break screens work in the front end and use `/api/checkins` and `/api/breaks`; values are persisted in SQLite by the back end.
-- The water, journal, goals, sleep, and study screens store their entries only in this browser's local storage.
-- The chat uses `POST /api/chat`. It calls Gemini only when `GEMINI_API_KEY` is configured in the back end. The key belongs in `backend/.env`, which is ignored by Git; never put it in front-end code or commit it. Chat messages are sent to Gemini to generate replies, so users should avoid sharing identifying details.
-- **Gemini key status:** The last recorded live check, on 2026-11-25, found the key invalid. The key was changed afterward; the current configuration still needs a live call to confirm it works.
-- The server creates SQLite `checkins` and `pauses` tables and exposes weekly check-in and pause history routes.
-- `GardenView` still displays sample weekly data. The reminder is currently opened manually with the test button.
+- Account registration requires email verification; users set their password after opening the verification link. Login and password reset use `HttpOnly` session cookies, CSRF protection, and rate limits.
+- Check-ins, breaks, hydration, journal entries, goals, sleep, and study schedules are associated with the signed-in account and stored in PostgreSQL. Reads and changes are scoped to the authenticated user.
+- After sign-in, users can consent to importing legacy `localStorage` entries. Local copies are removed only after a successful import; entries without a reliable date are assigned today's date. Anonymous check-ins and breaks from the old SQLite database are not automatically attributed to an account.
+- The chat calls Gemini through `POST /api/chat` when `GEMINI_API_KEY` is configured. Messages are sent to Gemini for replies, but the app does not persist conversation history. Avoid sharing identifying details.
+- SMTP is required for registration and password recovery. PostgreSQL and SMTP still need to be configured in the runtime environment; **the app has not been deployed to Render**.
+- In production, the app serves the built front end and API on the same origin, which is required by the current session-cookie setup.
 - The support screen and its contact links are implemented. The assistant is not a therapist or emergency service.
 
 ## Stack
 
 - **Front-end:** React + Vite (JavaScript, HTML, and CSS)
 - **Back-end:** Node.js + Express (JavaScript)
-- **Database:** SQLite via `better-sqlite3` (plain SQL)
+- **Database:** PostgreSQL via `pg` (parameterized SQL and startup migration)
 - **AI Integration:** The back end uses Google's Gemini API through Node's built-in `fetch` for chat and tips. The API key is read from the server environment.
-- **Tests:** The back end has a `node --test` script and eight tests. The front end has Vitest, Testing Library and five integration tests.
+- **Email:** SMTP via Nodemailer for account verification and password recovery.
+- **Tests:** `node --test` for the back end and Vitest/Testing Library for the front end.
 - **CI:** No GitHub Actions workflow is present in the current feature branch.
 
 ## Folder structure
@@ -62,9 +63,11 @@ Students facing intense study routines, deadlines, and project weeks often negle
 ├── .nvmrc
 ├── backend/
 │   ├── .env.example
-│   ├── eslint.config.js
+│   ├── auth.js
+│   ├── database.js
+│   ├── email.js
 │   ├── package.json
-│   ├── package-lock.json
+│   ├── wellness.js
 │   ├── server.js
 │   └── server.test.js
 ├── docs/
@@ -95,12 +98,15 @@ Students facing intense study routines, deadlines, and project weeks often negle
 │   │   │   ├── GardenView.jsx
 │   │   │   ├── GentleReminder.jsx
 │   │   │   ├── HomeView.jsx
+│   │   │   ├── AuthView.jsx
+│   │   │   ├── PersonalViews.jsx
 │   │   │   └── SupportView.jsx
 │   │   ├── services/
 │   │   │   └── api.js
 │   │   ├── styles/
 │   │   │   └── theme.css
 │   │   ├── utils/
+│   │   │   ├── appStorage.js
 │   │   │   └── deviceId.js
 │   │   ├── App.css
 │   │   ├── App.jsx
@@ -113,37 +119,53 @@ Students facing intense study routines, deadlines, and project weeks often negle
 
 ### Prerequisites
 
-- Node.js (v20 or higher)
+- Node.js 20.12.2 (see `.nvmrc`)
 - npm (v10 or higher)
-- Gemini API key configured in `backend/.env` (see `backend/.env.example`)
+- Local PostgreSQL or an accessible `DATABASE_URL`
+- SMTP credentials to test registration and password recovery
+- Gemini API key is optional and only needed to enable AI replies
 
 ### Back-end
 
-```bash
+In PowerShell:
+
+```powershell
 cd backend
-cp .env.example .env
-# Add your GEMINI_API_KEY inside .env
-npm install
+Copy-Item .env.example .env
+# Edit .env: DATABASE_URL and SMTP credentials are required for accounts.
+npm ci
 npm run dev
 ```
 
-*(Note: The SQLite database file and tables are initialized automatically via `better-sqlite3` on server startup.)*
+The server applies the PostgreSQL schema migration on startup. `GEMINI_API_KEY` can remain empty if the AI feature is not needed.
 
 ### Front-end
 
-```bash
+In a second terminal:
+
+```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
+Vite proxies `/api` requests to the server at `localhost:3000`.
+
 ## CI/CD
 
-The current feature branch has no GitHub Actions workflow. Available checks are the back-end `npm test` and the front-end `npm run lint` / `npm run build`. Configure a workflow and front-end tests before describing them as active CI checks.
+The current branch has no GitHub Actions workflow. Run `npm test`, `npm run lint`, and `npm run build` in both `backend/` and `frontend/` for local checks.
 
 ## Deploy
 
-Configured for local execution during the live demonstration (optional deploy targets: Vercel for front-end and Render/Railway for back-end).
+Deployment has not been performed. To publish using a Render Web Service:
+
+1. Create a Render PostgreSQL database and set the service's `DATABASE_URL` to its internal connection URL.
+2. Set `NODE_ENV=production`, `APP_BASE_URL`, and `FRONTEND_ORIGIN` to the same public HTTPS origin as the service.
+3. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. Set `GEMINI_API_KEY` only if AI chat should be enabled.
+4. Use build command `npm --prefix backend ci && npm --prefix frontend ci && npm --prefix frontend run build` and start command `npm --prefix backend start`. Render provides `PORT`; the PostgreSQL migration runs on startup.
+5. Test email verification and password recovery with a real address before sharing the service. Never commit credentials.
+
+The front end and API must remain on the same domain for cookie sessions to work. A live PostgreSQL/SMTP test and deployment are still pending.
 
 ## Links
 

@@ -4,22 +4,14 @@
 
 Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e indicar o que foi decidido, as alternativas consideradas e o motivo da escolha.
 
-## Status da implementação — 26/11/2026 (`feat/frontend-setup`)
+## Status da implementação
 
-As decisões abaixo descrevem o produto pretendido; não significam que todos os recursos estejam concluídos. Situação do código atual:
-
-- **Check-in diário:** O formulário está implementado em React e chama `POST /api/checkins`; o servidor valida e persiste os check-ins no SQLite. O limite de um check-in por dia ainda não foi implementado.
-- **Registro de pausas:** Os botões e a lista existem no front e chamam `POST /api/breaks`; o servidor persiste as pausas no SQLite.
-- **Chat com IA:** `POST /api/chat` chama o Google Gemini pelo `fetch` nativo do Node quando `GEMINI_API_KEY` está configurada em `backend/.env`. O prompt no servidor define um papel acolhedor e não clínico; frases de risco urgente recebem uma resposta fixa com contatos de apoio. A chave não é versionada, e uma resposta ao vivo exige uma chave válida.
-- **Marca e identidade da assistente:** O produto se chama **EntrePausas** e a assistente do chat se apresenta como **Interlude**. A identidade está aplicada na interface, no título da página e no prompt do Gemini.
-- **Interface:** O front usa navegação lateral expansível no desktop e um menu flutuante compacto no celular. O tema claro/escuro é alternável e a preferência fica salva no navegador. As telas pessoais adicionais guardam dados apenas neste navegador.
-- **Desenvolvimento local:** O back-end redireciona a raiz de `localhost:3000` para o Vite em `localhost:5173` durante o desenvolvimento; em produção, serve `frontend/dist` com `NODE_ENV=production`.
-- **Verificação do Gemini:** A última verificação ao vivo registrada, em 25/11/2026, retornou `API key not valid`. A chave foi alterada depois; a configuração atual ainda precisa ser confirmada com uma chamada ao vivo.
-- **Histórico semanal:** `GardenView` ainda exibe dados de exemplo; não consulta check-ins ou pausas salvos.
-- **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
-- **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
-- **Armazenamento e privacidade:** O servidor cria tabelas SQLite `checkins` e `pauses`. O ID anônimo é gerado no navegador, mas ainda não está associado aos registros do servidor. O histórico do chat fica na memória do front e é enviado ao Gemini para gerar respostas; não é salvo no SQLite.
-- **Testes e CI:** O back-end tem script `node --test` e arquivo de teste. O front agora executa cinco testes de integração Vitest que cobrem navegação, envio do check-in, encaminhamento para apoio em humor baixo, registro de pausas e erros no chat. Não há workflow do GitHub Actions nesta branch.
+- **Contas:** Cadastro por e-mail com confirmação; a senha é definida após abrir o link, evitando ativar uma senha escolhida por outra pessoa antes da confirmação. Há login, logout, recuperação de senha, cookie `HttpOnly`, proteção CSRF e limite de tentativas.
+- **Persistência:** Check-ins, pausas e dados de água, diário, metas, sono e estudos são associados à conta em PostgreSQL. Rotas de leitura e gravação validam a sessão e o proprietário dos registros.
+- **Importação local:** O app solicita consentimento antes de importar dados de `localStorage` e só remove a cópia local após sucesso. Datas antigas incompletas são tratadas de forma explícita; registros anônimos do SQLite legado não são associados automaticamente.
+- **Privacidade:** O histórico do chat não é persistido pelo app, mas as mensagens são enviadas ao Gemini quando configurado. Evite compartilhar dados identificáveis.
+- **Deploy:** Ainda não foi feito. PostgreSQL e SMTP reais precisam ser configurados; o front e a API devem compartilhar a mesma origem HTTPS para a sessão por cookie.
+- **Testes:** Há suítes `node --test` no back-end e Vitest/Testing Library no front-end. Não há workflow ativo do GitHub Actions.
 
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
@@ -45,11 +37,18 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 ## 25/11/2026 — Suíte Vitest do Front-end e Compatibilidade com Node 20
 - **Decisão:** Usar Vitest com Testing Library e jsdom para testes de integração focados no front-end e manter apenas os comportamentos essenciais do MVP na suíte inicial.
 - **Alternativas consideradas:** Continuar usando Jest, criar snapshots amplos de componentes e adicionar uma suíte browser end-to-end ao mesmo tempo.
-- **Justificativa:** Vitest se integra ao Vite e não exige Jest como executor. A primeira suíte cobre navegação, check-ins normais e de sofrimento, registro de pausas e falhas no chat. Vitest 3.2.4 e jsdom 26.1.0 foram usados por serem compatíveis com o Node 20.12.2 dos computadores do laboratório; as versões serão revistas antes de atualizar Node ou Vite.
+- **Justificativa:** Vitest se integra ao Vite e não exige Jest como executor. A suíte cobre navegação, check-ins, fluxo de contas, importação de dados locais, pausas e erros no chat. O projeto usa atualmente Vite 5.4.21 e Vitest 2.1.9 para manter compatibilidade com o Node 20.12.2.
 
-## 24/11/2026 — Banco de Dados (`better-sqlite3`), Privacidade e Identificador Anônimo por Dispositivo
-- **Decisão:** Utilizar **SQLite via `better-sqlite3` com SQL puro** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
+## 26/11/2026 — Contas, PostgreSQL e sincronização entre dispositivos
+- **Decisão:** Substituir a persistência de dispositivo por contas com e-mail verificado e PostgreSQL, para que registros pessoais possam acompanhar a pessoa entre dispositivos. O acesso exige sessão autenticada e os dados permanecem privados por usuário.
+- **Alternativas consideradas:** Manter `localStorage`/SQLite por dispositivo ou usar armazenamento local sem login.
+- **Justificativa:** SQLite local não sincroniza entre computadores. PostgreSQL hospedado permite sincronização; a importação dos dados do navegador exige consentimento e os registros anônimos do SQLite antigo não são atribuídos automaticamente.
+- **Operação:** O deploy no Render depende de configurar PostgreSQL, SMTP e segredos de ambiente. Ainda não foi publicado nem testado com serviços reais.
+
+## 24/11/2026 — Banco de Dados (`better-sqlite3`), Privacidade e Identificador Anônimo por Dispositivo (decisão substituída)
+- **Decisão histórica:** Utilizar **SQLite via `better-sqlite3` com SQL puro** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
 - **Alternativas consideradas:** Prisma ORM; cadastro com e-mail e senha (JWT); login social OAuth; PostgreSQL em nuvem.
+- **Status:** Decisão substituída em 26/11/2026 por PostgreSQL e contas verificadas; registros anônimos do SQLite antigo não são atribuídos automaticamente a uma conta.
 - **Justificativa:** O `better-sqlite3` com SQL puro evita problemas de migração de ORM, dispensa configuração de servidor e executa de forma síncrona com alta estabilidade no CI. O identificador anônimo por dispositivo evita o atrito do login e foi escolhido para separar o histórico de cada pessoa. Ele ainda não está associado aos registros no servidor; consulte o status da implementação acima.
 
 ## 24/11/2026 — Regras de Segurança da IA e Estratégia de Fallback

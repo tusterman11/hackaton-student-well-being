@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Accessibility, Droplets, Footprints, Sprout } from 'lucide-react';
 
 const BREAK_OPTIONS = [
@@ -7,6 +8,20 @@ const BREAK_OPTIONS = [
 ];
 
 export function BreaksView({ todayBreaks, onAddBreak }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  async function add(type, label) {
+    setSaving(true);
+    setError('');
+    try {
+      await onAddBreak(type, label);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <main className="page-content">
       <h1 style={{ fontSize: '1.4rem', marginBottom: '4px' }}>Pausas de hoje</h1>
@@ -21,7 +36,8 @@ export function BreaksView({ todayBreaks, onAddBreak }) {
             <button
               key={type}
               type="button"
-              onClick={() => onAddBreak(type, label)}
+              disabled={saving}
+              onClick={() => add(type, label)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -41,6 +57,7 @@ export function BreaksView({ todayBreaks, onAddBreak }) {
             </button>
           ))}
         </div>
+        {error && <p className="form-error" role="alert">{error}</p>}
       </section>
 
       <section className="card" aria-label="Pausas registradas hoje">
