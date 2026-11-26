@@ -16,7 +16,7 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **Tool:** Claude (Claude Sonnet 5.5, claude.ai chat)
 - **Context:** Project briefing and README template (Student well-being theme) were shared with the AI.
 - **Prompt / purpose:** Asked for guidance on the best technologies for the project and how to start it.
-- **What the AI generated:** A recommended stack (Node.js + TypeScript back-end with Fastify or Express, React + Vite + TypeScript front-end with Tailwind, SQLite with Prisma, Claude API called only from the back-end with a fallback of hand-written tips and a safety layer for low check-ins, Vitest, ESLint/Prettier, GitHub Actions), a suggested split of work among 4 people, and a day-by-day plan up to code freeze.
+- **What the AI generated:** A recommended stack (Node.js + TypeScript back-end with Fastify or Express, React + Vite + TypeScript front-end with Tailwind, SQLite with Prisma, an AI API called only from the back-end with a fallback of hand-written tips and a safety layer for low check-ins, Vitest, ESLint/Prettier, GitHub Actions), a suggested split of work among 4 people, and a day-by-day plan up to code freeze.
 - **What the team reviewed / changed:** The suggested stack did not fit our machines (see entries 006 to 009). We dropped TypeScript, Fastify, Prisma and Tailwind and kept React, Vite (pinned to version 5), Node.js with Express, and SQLite.
 - **Status:** Adapted. Justification goes in `DECISIONS.md`.
 
@@ -89,7 +89,7 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **Tool:** Claude (Claude Sonnet 5.5, claude.ai chat), with a web search of the Vite documentation
 - **Prompt / purpose:** Asked which version React requires.
 - **What the AI generated:** An explanation that React has no Node requirement, but Vite does: Vite 7 needs Node 20.19+ or 22.12+, while Vite 5 works on Node 18 and 20+. It recommended scaffolding with Vite 5.
-- **What the team reviewed / changed:** We decided on React with Vite 5, JavaScript, HTML, CSS and SQLite. _Team to verify the installed Vite version in `package.json`._
+- **What the team reviewed / changed:** We decided on React with Vite, JavaScript, HTML, CSS and SQLite. The actual project later used Vite 7.3.8 and Vitest 3.2.4, which require Node compatibility checks with the lab environment.
 - **Status:** Adopted
 
 ### 010: Step-by-step setup walkthrough
@@ -97,7 +97,7 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **Who:** Tech Lead
 - **Tool:** Claude (Claude Sonnet 5.5, claude.ai chat)
 - **Prompt / purpose:** Asked for a guided, fresh-start setup for the final stack.
-- **What the AI generated:** Clean-slate steps, root files, the Express back-end skeleton with a health endpoint and a test, the Vite 5 React front-end with an `/api` proxy, a GitHub Actions workflow for both folders, the first PR and branch-protection steps, and team onboarding steps.
+- **What the AI generated:** Clean-slate steps, root files, the Express back-end skeleton with a health endpoint and a test, the React/Vite front-end with an `/api` proxy, a GitHub Actions workflow for both folders, the first PR and branch-protection steps, and team onboarding steps.
 - **What the team reviewed / changed:** The back-end was set up as described. The back-end test failed on the first run (entry 011). _Team to complete after the front-end and CI are verified._
 - **Status:** Pending
 
@@ -137,14 +137,14 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** Matheus confirmed the mobile layout looked good and asked for the desktop layout to use the full screen without scrolling. The desktop layout was adjusted to match that feedback. The production build completed successfully after the changes; the team should still review the desktop appearance at its target screen sizes.
 - **Status:** Adapted
 
-### 015: Claude chat integration for the student support companion
+### 015: Gemini chat integration for the student support companion
 - **Date:** 2026-11-25
 - **Who:** Matheus Epifanio de Souza (Presentation Lead)
 - **Tool:** OpenAI Codex (coding assistant)
-- **Prompt / purpose:** Asked how to configure a Claude API key safely and connect a supportive Portuguese chat in the front end to a server-side prompt. The desired companion should suggest small, optional campus-friendly actions and point students to the professional contacts in the Support section when they feel distressed.
-- **What the AI generated:** Added a “Conversa” screen and `POST /api/chat` using the existing Anthropic SDK dependency. The server owns the fixed system prompt, limits message/history sizes, keeps the API key out of the browser, and returns support guidance for distress or urgent-risk messages. Added `backend/.env.example`, Node's `.env` loading for local development, and a Vite `/api` proxy. The interface explains that messages are sent to Anthropic and should not contain identifying details.
-- **What the team reviewed / changed:** Matheus described the companion's tone and examples (such as asking whether a water fountain is nearby), and asked for professional contacts to be recommended during distress. The prompt was constrained to avoid diagnoses, avoid assuming local campus knowledge, and distinguish emotional support from emergencies. No real API key was shared or committed. Front-end and back-end builds passed; a live Claude request still needs a team member's local key.
-- **Status:** Adapted (code implemented; live API call pending local key and team review)
+- **Prompt / purpose:** Asked how to configure a Gemini API key safely and connect a supportive Portuguese chat in the front end to a server-side prompt. The desired companion should suggest small, optional campus-friendly actions and point students to the professional contacts in the Support section when they feel distressed.
+- **What the AI generated:** Added a “Conversa” screen and `POST /api/chat` using Node's built-in `fetch` and Google's Gemini API. The server owns the fixed system prompt, limits message/history sizes, keeps the API key out of the browser, and returns support guidance for distress or urgent-risk messages. Added `backend/.env.example`, Node's `.env` loading for local development, and a Vite `/api` proxy. The interface explains that messages should not contain identifying details.
+- **What the team reviewed / changed:** Matheus described the companion's tone and examples (such as asking whether a water fountain is nearby), and asked for professional contacts to be recommended during distress. The prompt was constrained to avoid diagnoses, avoid assuming local campus knowledge, and distinguish emotional support from emergencies. No real API key was shared or committed. Front-end and back-end builds passed. A later live verification showed that the configured key is not valid and that the provider fallback remains active until it is replaced.
+- **Status:** Adapted (code implemented; live Gemini call pending a valid local key)
 
 ### 016: Vitest setup and essential front-end tests
 - **Date:** 2026-11-25
