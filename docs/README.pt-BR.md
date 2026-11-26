@@ -37,13 +37,16 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 
 ## Status atual da implementação
 
-- As telas de check-in e pausas funcionam no front e usam `/api/checkins` e `/api/breaks`; os registros são persistidos pelo back-end no SQLite.
-- As telas de água, diário, metas, sono e estudos salvam seus registros somente no armazenamento local deste navegador.
-- O chat usa `POST /api/chat` e chama o Gemini quando `GEMINI_API_KEY` está configurada no back-end. A chave deve ficar em `backend/.env`, arquivo ignorado pelo Git; nunca coloque a chave no código do front nem a envie ao repositório. As mensagens são enviadas ao Gemini para gerar respostas, então evite compartilhar dados que identifiquem alguém.
-- **Status da chave Gemini:** A última verificação registrada, em 25/11/2026, retornou chave inválida. A chave foi alterada depois; a validade da configuração atual ainda precisa ser confirmada com uma chamada ao vivo.
-- O servidor cria tabelas SQLite `checkins` e `pauses` e oferece rotas semanais de check-ins e pausas.
-- `GardenView` ainda exibe dados de exemplo. O lembrete é aberto manualmente pelo botão de teste.
+- As telas de check-in e pausas chamam `POST /api/checkins` e `POST /api/breaks`; os registros são persistidos pelo back-end no SQLite.
+- As rotas `GET` retornam registros dos últimos sete dias em `/api/checkins` e `/api/pauses` (`/api/breaks` também aceita consulta de pausas).
+- As telas de água, diário, metas, sono e estudos salvam seus registros somente no `localStorage` deste navegador.
+- O chat usa `POST /api/chat` e chama o Gemini quando `GEMINI_API_KEY` está configurada no back-end. A chave deve ficar em `backend/.env`, arquivo ignorado pelo Git; nunca coloque a chave no código do front nem a envie ao repositório.
+- As mensagens são enviadas ao Gemini quando o recurso está configurado. A interface pede que a pessoa não compartilhe dados de identificação.
+- Sem chave ou com falha no Gemini, chat e dicas de check-in usam respostas e dicas locais de fallback.
+- `GardenView` mostra o check-in e a quantidade de pausas da sessão atual com dados semanais de exemplo; ainda não é um gráfico conectado ao servidor.
+- O lembrete gentil é aberto pelo botão de teste. O disparo automático planejado após 45 a 60 minutos ainda não foi implementado.
 - A tela de apoio e os links de contato estão implementados. A IA não é terapeuta nem serviço de emergência.
+- O identificador anônimo está presente nos headers das requisições, mas ainda não separa registros no SQLite.
 
 ## Stack
 
@@ -52,7 +55,7 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 - **Banco de Dados:** SQLite via `better-sqlite3` (SQL puro)
 - **Integração com IA:** O back-end usa a API Gemini do Google por meio do `fetch` nativo do Node nas rotas de chat e dicas. A chave é lida pelo servidor a partir do ambiente.
 - **Testes:** O back-end tem script `node --test` e oito testes. O front-end tem Vitest, Testing Library e cinco testes de integração.
-- **CI:** Não há workflow do GitHub Actions na branch de front atual.
+- **CI:** `.github/workflows/ci.yml` executa lint, testes e builds do back-end e do front-end em pull requests e pushes na `main`.
 
 ## Estrutura de pastas
 
@@ -139,7 +142,13 @@ npm run dev
 
 ## CI/CD
 
-Na branch atual não há workflow do GitHub Actions. Os comandos de verificação disponíveis são `npm test` no back-end e `npm run lint` / `npm run build` no front. Configure um workflow e testes do front antes de descrevê-los como verificações de CI ativas.
+O repositório tem um workflow funcional do GitHub Actions em [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). Ele roda em pull requests e pushes na `main`, com jobs separados para back-end e front-end: `npm ci`, lint, testes e build.
+
+Verificado localmente com Node 20.12.2:
+- Back-end: 8 testes aprovados; lint e build de sintaxe aprovados.
+- Front-end: 5 testes aprovados; lint e build Vite aprovados.
+
+O Vite 7.3.8 mostra um aviso de versão no ambiente local, pois prefere Node 20.19+ ou 22.12+, mesmo com o build concluído. O job de CI usa a linha principal do Node 20.
 
 ## Deploy
 

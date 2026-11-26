@@ -37,13 +37,16 @@ Students facing intense study routines, deadlines, and project weeks often negle
 
 ## Current implementation status
 
-- The check-in and break screens work in the front end and use `/api/checkins` and `/api/breaks`; values are persisted in SQLite by the back end.
-- The water, journal, goals, sleep, and study screens store their entries only in this browser's local storage.
-- The chat uses `POST /api/chat`. It calls Gemini only when `GEMINI_API_KEY` is configured in the back end. The key belongs in `backend/.env`, which is ignored by Git; never put it in front-end code or commit it. Chat messages are sent to Gemini to generate replies, so users should avoid sharing identifying details.
-- **Gemini key status:** The last recorded live check, on 2026-11-25, found the key invalid. The key was changed afterward; the current configuration still needs a live call to confirm it works.
-- The server creates SQLite `checkins` and `pauses` tables and exposes weekly check-in and pause history routes.
-- `GardenView` still displays sample weekly data. The reminder is currently opened manually with the test button.
+- The check-in and break screens call `POST /api/checkins` and `POST /api/breaks`; values are persisted in SQLite.
+- Check-in and pause `GET` routes return records from the latest seven days at `/api/checkins` and `/api/pauses` (`/api/breaks` is an alias for pauses).
+- The water, journal, goals, sleep, and study screens store their entries only in browser `localStorage`.
+- The chat uses `POST /api/chat`. It calls Gemini only when `GEMINI_API_KEY` is configured in the back end. The key belongs in `backend/.env`, which is ignored by Git; never put it in front-end code or commit it.
+- Chat messages are sent to Gemini when AI is configured. The interface asks users not to share identifying details.
+- If Gemini is absent or unavailable, chat and check-in tips use fixed fallback responses.
+- `GardenView` displays the current session's check-in and break count plus mock weekly values; it is not yet a server-backed weekly chart.
+- The gentle reminder is opened by the test button. The planned timed 45–60 minute trigger is not implemented.
 - The support screen and its contact links are implemented. The assistant is not a therapist or emergency service.
+- The anonymous browser device ID is present in API headers, but it is not currently used to scope SQLite records.
 
 ## Stack
 
@@ -52,7 +55,7 @@ Students facing intense study routines, deadlines, and project weeks often negle
 - **Database:** SQLite via `better-sqlite3` (plain SQL)
 - **AI Integration:** The back end uses Google's Gemini API through Node's built-in `fetch` for chat and tips. The API key is read from the server environment.
 - **Tests:** The back end has a `node --test` script and eight tests. The front end has Vitest, Testing Library and five integration tests.
-- **CI:** No GitHub Actions workflow is present in the current feature branch.
+- **CI:** `.github/workflows/ci.yml` runs lint, tests and builds for both the back end and front end on pull requests and pushes to `main`.
 
 ## Folder structure
 
@@ -139,7 +142,13 @@ npm run dev
 
 ## CI/CD
 
-The current feature branch has no GitHub Actions workflow. Available checks are the back-end `npm test` and the front-end `npm run lint` / `npm run build`. Configure a workflow and front-end tests before describing them as active CI checks.
+The repository has a working GitHub Actions workflow at [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). It runs on pull requests and pushes to `main`, with separate back-end and front-end jobs that install with `npm ci`, lint, test, and build.
+
+Verified locally on Node 20.12.2:
+- Back end: 8 tests passing; lint and syntax build passing.
+- Front end: 5 tests passing; lint and Vite build passing.
+
+Vite 7.3.8 prints a Node-version warning in this local environment because it prefers Node 20.19+ or 22.12+, although the local build still completed. The CI job currently uses the major Node 20 line.
 
 ## Deploy
 

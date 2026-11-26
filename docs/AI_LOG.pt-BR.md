@@ -164,6 +164,15 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** A pessoa solicitou ajustes sucessivos de responsividade, expansão/recolhimento do menu, destaque de hover, bordas quadradas do cabeçalho inicial, tema escuro, cor verde do botão móvel e contraste do texto. A implementação foi refinada conforme esse feedback. A compilação do front não foi confirmada nesta conversa porque o processo ficou sem saída e precisou ser interrompido.
 - **Status:** Adaptado
 
+### 018: Documentação alinhada ao projeto funcional
+- **Data:** 26/11/2026
+- **Quem:** GitHub Copilot no VS Code
+- **Ferramenta:** Copilot SDK
+- **Prompt / objetivo:** Atualizar a documentação do projeto para refletir a aplicação implementada e registrar claramente o workflow de CI funcional.
+- **O que a IA gerou:** Atualizou os READMEs do projeto em inglês e português, criou READMEs na raiz, atualizou o README do front-end e corrigiu nas decisões o status da implementação, a quantidade de testes, as rotas da API e as seções de CI/CD.
+- **O que a equipe revisou / alterou:** O código foi verificado localmente antes da atualização: 8 testes do back-end e 5 do front-end passam, ambos os linters passam e ambos os builds passam. A equipe deve manter a chave do Gemini e o status do provedor ao vivo como informações específicas do ambiente, nunca como segredo versionado.
+- **Status:** Adaptado
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_
