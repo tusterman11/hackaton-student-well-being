@@ -162,7 +162,7 @@ Deployment has not been performed. To publish using a Render Web Service:
 1. Create a Render PostgreSQL database and set the service's `DATABASE_URL` to its internal connection URL.
 2. Set `NODE_ENV=production`, `APP_BASE_URL`, and `FRONTEND_ORIGIN` to the same public HTTPS origin as the service.
 3. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. Set `GEMINI_API_KEY` only if AI chat should be enabled.
-4. Use build command `npm --prefix backend ci && npm --prefix frontend ci && npm --prefix frontend run build` and start command `npm --prefix backend start`. Render provides `PORT`; the PostgreSQL migration runs on startup.
+4. Use build command `npm --prefix backend ci --omit=dev && npm --prefix frontend ci --include=dev && npm --prefix frontend run build` and start command `npm --prefix backend start`. Render provides `PORT`; the PostgreSQL migration runs on startup.
 5. Test email verification and password recovery with a real address before sharing the service. Never commit credentials.
 
 The front end and API must remain on the same domain for cookie sessions to work. A live PostgreSQL/SMTP test and deployment are still pending.
