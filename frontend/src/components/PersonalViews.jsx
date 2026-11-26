@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, Droplets, Moon, NotebookPen, Plus, Target } from 'lucide-react';
+import { BookOpen, Droplets, Moon, Plus, Target } from 'lucide-react';
 import { readAppStorage } from '../utils/appStorage';
 
 function useLocalList(key) {

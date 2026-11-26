@@ -4,7 +4,7 @@ import {
   Moon, Sun, NotebookPen, Sprout, Target, Bed, Menu, X
 } from 'lucide-react';
 
-export const NAV_ITEMS = [
+const NAV_ITEMS = [
   { id: 'home', label: 'Início', icon: Home },
   { id: 'breaks', label: 'Pausas', icon: Sprout },
   { id: 'garden', label: 'Semana', icon: CalendarDays },
