@@ -28,6 +28,9 @@ test('check-in and pause endpoints validate and persist weekly data', async () =
       body: JSON.stringify({ mood: 2, energy: 3, note: 'Dia cheio' }),
     });
     assert.strictEqual(checkinResponse.status, 201);
+    const created = await checkinResponse.json();
+    assert.strictEqual(created.showSupportAlert, true);
+    assert.ok(created.tip.length > 0);
 
     const checkinsResponse = await fetch(`${baseUrl}/api/checkins`);
     const checkins = await checkinsResponse.json();
@@ -46,6 +49,35 @@ test('check-in and pause endpoints validate and persist weekly data', async () =
     const pauses = await pausesResponse.json();
     assert.strictEqual(pauses.length, 1);
     assert.strictEqual(pauses[0].type, 'water');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    database.close();
+  }
+});
+
+test('chat validates input and answers urgent messages without calling the AI', async () => {
+  delete process.env.GEMINI_API_KEY;
+  const database = new Database(':memory:');
+  const server = createApp(database).listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const post = (body) => fetch(`${baseUrl}/api/chat`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  try {
+    assert.strictEqual((await post({ message: '   ' })).status, 400);
+
+    const urgent = await post({ message: 'não quero mais viver' });
+    assert.strictEqual(urgent.status, 200);
+    assert.strictEqual((await urgent.json()).supportLevel, 'urgent');
+
+    const suggested = await post({ message: 'oi', mood: 1 });
+    assert.strictEqual((await suggested.json()).supportLevel, 'suggested');
+
+    assert.strictEqual((await post({ message: 'oi' })).status, 503);
   } finally {
     await new Promise((resolve) => server.close(resolve));
     database.close();

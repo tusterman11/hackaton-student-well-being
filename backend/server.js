@@ -1,7 +1,8 @@
 const path = require('node:path');
 const express = require('express');
 const Database = require('better-sqlite3');
-const Anthropic = require('@anthropic-ai/sdk');
+const { generateText, isConfigured } = require('./gemini');
+const { getTip, SUPPORT_MAX_MOOD } = require('./tips');
 
 const CHAT_SYSTEM_PROMPT = `Você é a companhia de bem-estar do Pausa Leve, um app para estudantes no Brasil. Você não é psicóloga, médica, terapeuta ou serviço de emergência e nunca deve se apresentar como profissional.
 
@@ -32,6 +33,8 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
+  // Note: created_at is stored in UTC without a timezone marker.
+  // The front-end must parse it as UTC (see docs / DECISIONS.md).
   app.get('/api/checkins', (_req, res) => {
     const checkins = database.prepare(
       "SELECT id, mood, energy, note, created_at FROM checkins WHERE created_at >= datetime('now', '-7 days') ORDER BY created_at DESC"
@@ -39,7 +42,7 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
     return res.json(checkins);
   });
 
-  app.post('/api/checkins', (req, res) => {
+  app.post('/api/checkins', async (req, res) => {
     const { mood, energy, note } = req.body || {};
     if (
       !Number.isInteger(mood) || mood < 1 || mood > 5
@@ -55,10 +58,13 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
     const checkin = database.prepare(
       'SELECT id, mood, energy, note, created_at FROM checkins WHERE id = ?'
     ).get(result.lastInsertRowid);
+
+    // getTip never throws: it falls back to a hand-written tip if the AI fails.
+    const { tip, showSupport } = await getTip({ mood, energy });
     return res.status(201).json({
       checkin,
-      tip: null,
-      showSupportAlert: mood <= 1
+      tip,
+      showSupportAlert: showSupport
     });
   });
 
@@ -87,104 +93,100 @@ function createApp(database = new Database(path.join(__dirname, 'app.db'))) {
 
   app.post(['/api/pauses', '/api/breaks'], createPause);
 
-app.post('/api/chat', async (req, res) => {
-  const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
-  if (!message) {
-    return res.status(400).json({ error: 'EMPTY_MESSAGE', message: 'Escreva uma mensagem antes de enviar.' });
-  }
-  if (message.length > 1000) {
-    return res.status(413).json({ error: 'MESSAGE_TOO_LONG', message: 'A mensagem deve ter até 1.000 caracteres.' });
-  }
+  app.post('/api/chat', async (req, res) => {
+    const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+    if (!message) {
+      return res.status(400).json({ error: 'EMPTY_MESSAGE', message: 'Escreva uma mensagem antes de enviar.' });
+    }
+    if (message.length > 1000) {
+      return res.status(413).json({ error: 'MESSAGE_TOO_LONG', message: 'A mensagem deve ter até 1.000 caracteres.' });
+    }
 
-  const normalizedMessage = message
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-  const mood = Number.isInteger(req.body.mood) && req.body.mood >= 1 && req.body.mood <= 5
-    ? req.body.mood
-    : null;
-  const energy = Number.isInteger(req.body.energy) && req.body.energy >= 1 && req.body.energy <= 5
-    ? req.body.energy
-    : null;
-  const urgentPattern = /\b(suicid\w*|quero me matar|vou me matar|penso em me matar|tirar minha vida|nao quero mais viver|me machucar|me cortar|me ferir)\b/;
-  const feelingPattern = /\b(estou|to|me sinto|me sentindo)\s+(muito\s+)?(mal|triste|ansioso|ansiosa|sobrecarregado|sobrecarregada|esgotado|esgotada)\b/;
-  const shouldSuggestSupport = (mood !== null && mood <= 2) || feelingPattern.test(normalizedMessage);
+    const normalizedMessage = message
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    const mood = Number.isInteger(req.body.mood) && req.body.mood >= 1 && req.body.mood <= 5
+      ? req.body.mood
+      : null;
+    const energy = Number.isInteger(req.body.energy) && req.body.energy >= 1 && req.body.energy <= 5
+      ? req.body.energy
+      : null;
+    const urgentPattern = /\b(suicid\w*|quero me matar|vou me matar|penso em me matar|tirar minha vida|nao quero mais viver|me machucar|me cortar|me ferir)\b/;
+    const feelingPattern = /\b(estou|to|me sinto|me sentindo)\s+(muito\s+)?(mal|triste|ansioso|ansiosa|sobrecarregado|sobrecarregada|esgotado|esgotada)\b/;
+    const shouldSuggestSupport = (mood !== null && mood <= SUPPORT_MAX_MOOD) || feelingPattern.test(normalizedMessage);
 
-  if (urgentPattern.test(normalizedMessage)) {
-    return res.json({ reply: URGENT_SUPPORT_REPLY, supportLevel: 'urgent' });
-  }
+    if (urgentPattern.test(normalizedMessage)) {
+      return res.json({ reply: URGENT_SUPPORT_REPLY, supportLevel: 'urgent' });
+    }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    if (shouldSuggestSupport) {
-      return res.json({
-        reply: 'Sinto muito que este momento esteja difícil. Você pode conversar com alguém de confiança ou ligar para o CVV pelo 188. Se houver perigo imediato, ligue 192 (SAMU). A seção Apoio tem outros contatos. Tem alguém de confiança com quem você possa falar agora?',
-        supportLevel: 'suggested'
+    if (!isConfigured()) {
+      if (shouldSuggestSupport) {
+        return res.json({
+          reply: 'Sinto muito que este momento esteja difícil. Você pode conversar com alguém de confiança ou ligar para o CVV pelo 188. Se houver perigo imediato, ligue 192 (SAMU). A seção Apoio tem outros contatos. Tem alguém de confiança com quem você possa falar agora?',
+          supportLevel: 'suggested'
+        });
+      }
+      return res.status(503).json({
+        error: 'AI_NOT_CONFIGURED',
+        message: 'A conversa com IA ainda não está configurada neste servidor. Use a seção Apoio ou tente novamente mais tarde.'
       });
     }
-    return res.status(503).json({
-      error: 'AI_NOT_CONFIGURED',
-      message: 'A conversa com IA ainda não está configurada neste servidor. Use a seção Apoio ou tente novamente mais tarde.'
-    });
-  }
 
-  const history = Array.isArray(req.body.history)
-    ? req.body.history
-      .filter((item) => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string')
-      .slice(-10)
-      .map((item) => ({ role: item.role, content: item.content.slice(0, 1000) }))
-    : [];
+    const history = Array.isArray(req.body.history)
+      ? req.body.history
+        .filter((item) => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string')
+        .slice(-10)
+        .map((item) => ({ role: item.role, content: item.content.slice(0, 1000) }))
+      : [];
+    // The API expects the conversation to start with a user message.
+    while (history.length > 0 && history[0].role !== 'user') {
+      history.shift();
+    }
 
-  const context = [
-    mood ? `Humor informado no check-in: ${mood}/5.` : '',
-    energy ? `Energia informada no check-in: ${energy}/5.` : ''
-  ].filter(Boolean).join(' ');
-  const userContent = context ? `${message}\n\n[Contexto opcional do check-in: ${context}]` : message;
+    const context = [
+      mood ? `Humor informado no check-in: ${mood}/5.` : '',
+      energy ? `Energia informada no check-in: ${energy}/5.` : ''
+    ].filter(Boolean).join(' ');
+    const userContent = context ? `${message}\n\n[Contexto opcional do check-in: ${context}]` : message;
 
-  try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await client.messages.create({
-      model: process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5',
-      max_tokens: 350,
-      system: CHAT_SYSTEM_PROMPT,
-      messages: [...history, { role: 'user', content: userContent }]
-    });
+    try {
+      // The output budget is generous because some Gemini models count internal "thinking" tokens in it.
+      const reply = await generateText({
+        system: CHAT_SYSTEM_PROMPT,
+        messages: [...history, { role: 'user', content: userContent }],
+        maxOutputTokens: 1024,
+        timeoutMs: 15000
+      });
 
-    const reply = response.content
-      .filter((block) => block.type === 'text')
-      .map((block) => block.text)
-      .join('\n')
-      .trim();
+      const supportLevel = shouldSuggestSupport ? 'suggested' : 'none';
+      const supportNote = supportLevel === 'suggested'
+        ? '\n\nSe quiser conversar com uma pessoa, o CVV atende pelo 188. A seção Apoio tem outras opções.'
+        : '';
 
-    const supportLevel = shouldSuggestSupport ? 'suggested' : 'none';
-    const supportNote = supportLevel === 'suggested'
-      ? '\n\nSe quiser conversar com uma pessoa, o CVV atende pelo 188. A seção Apoio tem outras opções.'
-      : '';
-
-    return res.json({ reply: `${reply || 'Não consegui formular uma resposta agora. Tente novamente.'}${supportNote}`, supportLevel });
-  } catch (error) {
-    console.error('Claude API request failed with status:', error.status || 'unknown');
-    if (shouldSuggestSupport) {
-      return res.json({
-        reply: 'Sinto muito que este momento esteja difícil. Se quiser conversar com uma pessoa, ligue para o CVV pelo 188 ou veja outros contatos na seção Apoio. Se houver perigo imediato, ligue 192 (SAMU). Você tem alguém de confiança por perto?',
-        supportLevel: 'suggested'
+      return res.json({ reply: `${reply || 'Não consegui formular uma resposta agora. Tente novamente.'}${supportNote}`, supportLevel });
+    } catch (error) {
+      console.error('Gemini API request failed with status:', error.status || 'unknown');
+      if (shouldSuggestSupport) {
+        return res.json({
+          reply: 'Sinto muito que este momento esteja difícil. Se quiser conversar com uma pessoa, ligue para o CVV pelo 188 ou veja outros contatos na seção Apoio. Se houver perigo imediato, ligue 192 (SAMU). Você tem alguém de confiança por perto?',
+          supportLevel: 'suggested'
+        });
+      }
+      return res.status(502).json({
+        error: 'AI_UNAVAILABLE',
+        message: 'Não consegui conectar à conversa agora. Tente novamente em instantes ou acesse a seção Apoio.'
       });
     }
-    return res.status(502).json({
-      error: 'AI_UNAVAILABLE',
-      message: 'Não consegui conectar à conversa agora. Tente novamente em instantes ou acesse a seção Apoio.'
-    });
-  }
-});
+  });
 
   app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
   return app;
 }
 
-const app = createApp();
-
+// Only open the real database and listen when run directly (npm start / npm run dev).
 if (require.main === module) {
-  app.listen(3000, () => console.log('http://localhost:3000'));
+  createApp().listen(3000, () => console.log('http://localhost:3000'));
 }
 
-module.exports = app;
-module.exports.createApp = createApp;
+module.exports = { createApp };
