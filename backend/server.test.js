@@ -1,13 +1,19 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { URL, URLSearchParams } = require('node:url');
-const { newDb } = require('pg-mem');
+const { newDb, DataType } = require('pg-mem');
 const { createApp } = require('./server');
 const { migrateDatabase } = require('./database');
 const { ensureDemoAccount } = require('./auth');
 
 async function createFixture({ demoAccountEnabled = false } = {}) {
   const memory = newDb();
+  memory.public.registerFunction({
+    name: 'length',
+    args: [DataType.text],
+    returns: DataType.integer,
+    implementation: (value) => value?.length ?? null
+  });
   const { Pool } = memory.adapters.createPg();
   const pool = new Pool();
   await migrateDatabase(pool);

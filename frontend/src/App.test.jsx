@@ -5,6 +5,8 @@ import App from './App';
 import * as api from './services/api';
 
 vi.mock('./services/api', () => ({
+  clearChatHistory: vi.fn(),
+  fetchChatHistory: vi.fn(),
   getCurrentSession: vi.fn(),
   registerAccount: vi.fn(),
   verifyEmail: vi.fn(),
@@ -32,6 +34,8 @@ beforeEach(() => {
     csrfToken: 'csrf-token'
   });
   api.fetchWeeklyHistory.mockResolvedValue({ checkins: [], pauses: [] });
+  api.fetchChatHistory.mockResolvedValue([]);
+  api.clearChatHistory.mockResolvedValue({ messages: [] });
   api.fetchWellnessData.mockResolvedValue({
     hydrationGoalMl: 2000,
     localImportAvailable: false,

@@ -1,8 +1,33 @@
-# React + Vite
+# EntrePausas Front-end
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite application for the EntrePausas student well-being experience.
 
-Currently, two official plugins are available:
+## Available screens
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Home check-in and AI tip
+- Break logging
+- Garden-style weekly summary
+- Interlude chat
+- Support resources
+- Water, journal, habits, sleep and study views
+
+The check-in and break services call the Express API. Water, journal, habits, sleep and study entries are stored in browser `localStorage`; they are not sent to the server.
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+Vite runs on `http://localhost:5173` and proxies `/api` requests to `http://localhost:3000`.
+
+## Verification
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+The front-end suite currently contains five Vitest/Testing Library integration tests.
