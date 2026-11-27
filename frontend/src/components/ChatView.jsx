@@ -40,7 +40,7 @@ export function ChatView({ messages, isSending, onSendMessage, onClearHistory, o
           </button>
         )}
         <p className="chat-privacy-note">
-          Esta conversa fica salva na sua conta. Para responder, a Interlude usa as mensagens recentes e um resumo dos seus registros dos últimos 7 dias (humor, energia, água, pausas, sono e hábitos), enviado ao Gemini. O conteúdo do Diário não é enviado. Evite incluir nome completo, endereço ou outros dados pessoais. Você pode apagar a conversa quando quiser.
+          Esta conversa fica salva na sua conta. Para responder, a Interlude usa as mensagens recentes e um resumo dos seus registros dos últimos 7 dias (humor, energia, água, pausas e sono), enviado ao Gemini. Evite incluir nome completo, endereço ou outros dados pessoais. Você pode apagar a conversa quando quiser.
         </p>
       </header>
 

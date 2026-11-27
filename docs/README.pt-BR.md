@@ -29,7 +29,7 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 
 **O que o MVP cobre:**
 - **Check-in Diário Rápido:** Avaliação simples de humor e energia com linguagem acolhedora e sem julgamentos.
-- **Registro de Micro-Pausas e Hábitos:** Registro em um clique para pequenas ações (beber água, alongar, fazer uma pausa de 5 minutos).
+- **Registro de Micro-Pausas:** Registro em um clique para pequenas ações, como alongar ou fazer uma pausa curta.
 - **Conversa com IA:** Chat na aba “Conversa”, atendido pelo back-end via API do Google Gemini com um prompt fixo e acolhedor. A IA sugere pausas opcionais, não faz diagnósticos e indica apoio humano quando necessário.
 - **Histórico Privado de 7 Dias:** Visualização por conta dos check-ins e pausas recentes, sem pontuações comparativas.
 - **Lembrete Gentil Manual na Tela:** Um aviso discreto pode ser aberto pela tela inicial; ele não aparece automaticamente.
@@ -38,14 +38,15 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 ## Status atual da implementação
 
 - **Contas:** Cadastro aberto por e-mail, confirmação do endereço, login com senha, logout e recuperação de senha estão implementados. Cadastro e recuperação precisam de SMTP configurado. Cada conta é separada pelo identificador autenticado no servidor.
-- **Persistência no PostgreSQL:** Check-ins, pausas, água, diário, hábitos, sono, estudos, foco e configurações ficam no PostgreSQL. O servidor aplica as migrações ao iniciar. Em produção, `DATABASE_URL` deve apontar para o PostgreSQL persistente do Render.
-- **Importação local:** No primeiro acesso à conta, o app oferece importar dados compatíveis do `localStorage` para a conta. A cópia local só é removida após a importação concluir. Check-ins e pausas anônimos do antigo SQLite não podem ser atribuídos automaticamente a uma conta.
-- **Conversa:** `POST /api/chat` usa Gemini quando `GEMINI_API_KEY` está configurada. O histórico individual da conta é salvo no PostgreSQL e volta a aparecer após o login. A pessoa pode apagar a conversa. O Gemini recebe a mensagem atual, mensagens recentes e um resumo numérico dos últimos sete dias; o texto do Diário não é enviado.
-- **Privacidade:** A chave do Gemini fica no servidor. A tela da conversa informa o que é salvo e qual resumo é enviado ao Gemini. Evite incluir dados que identifiquem alguém no chat ou no Diário.
+- **Persistência no PostgreSQL:** Check-ins, pausas, metas/hábitos, água, sono e configurações ficam no PostgreSQL, sempre associados à conta. O servidor aplica as migrações ao iniciar. Registros antigos de Diário e Estudos permanecem arquivados no banco, mas não são exibidos, alterados ou incluídos na importação. Em produção, `DATABASE_URL` deve apontar para o PostgreSQL persistente do Render.
+- **Importação local:** No primeiro acesso à conta, o app oferece importar metas/hábitos, registros de água e sono compatíveis do `localStorage`. A cópia desses registros só é removida após a importação concluir. Dados antigos de Diário e Estudos não são importados nem apagados e ficam arquivados no navegador.
+- **Conversa:** `POST /api/chat` usa Gemini quando `GEMINI_API_KEY` está configurada. O histórico individual da conta é salvo no PostgreSQL e volta a aparecer após o login. A pessoa pode apagar a conversa. O Gemini recebe a mensagem atual, mensagens recentes e um resumo numérico dos últimos sete dias sobre check-ins, pausas, água e sono.
+- **Privacidade:** A chave do Gemini fica no servidor. A tela da conversa informa o que é salvo e qual resumo é enviado ao Gemini. Evite incluir dados que identifiquem alguém no chat.
 - **Conta demo:** `DEMO_ACCOUNT_ENABLED=true` habilita uma conta demonstrativa compartilhada. Use somente dados fictícios; o cadastro normal é aberto e não exige lista de autorização. Desative a conta demo para uso público se ela não for mais necessária.
 - **Desenvolvimento local:** A raiz do back-end redireciona `http://localhost:3000` para o Vite em `http://localhost:5173`; o Vite encaminha `/api` ao back-end. Em produção, o Express serve `frontend/dist`.
 - **Apoio e lembretes:** Os links para CVV 188 e SAMU 192 usam `tel:` e só iniciam o fluxo de chamada após uma ação da pessoa. A chamada depende de um aplicativo compatível no dispositivo; o app não liga nem aciona serviços de emergência automaticamente. O lembrete pode ser aberto manualmente; o temporizador automático de 45 a 60 minutos ainda não foi implementado. A assistente não é profissional de saúde nem serviço de emergência.
 - **Verificação de serviços externos:** O envio real por SMTP, uma chamada ao Gemini com chave válida e a implantação de produção no Render/PostgreSQL ainda precisam ser verificados com credenciais e ambiente reais.
+- **Escopo simplificado para apresentação:** Diário e Estudos continuam fora da interface e das rotas ativas. A aba Metas permite criar objetivos pessoais, registrar a conclusão diária e acompanhar o progresso sem rankings ou cobranças.
 
 ## Stack
 
@@ -57,7 +58,7 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 - **Runtime:** Node.js `20.12.2` (definido em `.nvmrc`; o back-end exige `>=20.12.0`)
 - **Ferramentas do front-end:** Vite `^5.4.10` (lockfile resolve `5.4.21`), Vitest `^2.1.9` (lockfile resolve `2.1.9`), React `18.3.1` e jsdom `26.1.0`.
 - **Testes e CI:** O back-end usa `node --test`; o front-end usa Vitest e Testing Library. `.github/workflows/ci.yml` executa lint, testes e builds dos dois pacotes em pull requests e pushes para `main`.
-- **Última verificação local (27/11/2026):** Back-end: 11/11 testes, lint e build passaram. Front-end: 12/12 testes, lint e build passaram após instalar pelo lockfile com `npm ci`.
+- **Última verificação local (27/11/2026):** Back-end: 11/11 testes, lint e build passaram. Front-end: 13/13 testes, lint e build passaram após instalar pelo lockfile com `npm ci`.
 - **CI:** `.github/workflows/ci.yml` executa lint, testes e builds dos dois pacotes em pull requests e pushes na `main`.
 
 ## Estrutura de pastas

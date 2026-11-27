@@ -26,12 +26,8 @@ const EMPTY_WELLNESS = {
   hydrationGoalMl: 2000,
   localImportAvailable: false,
   hydration: [],
-  journal: [],
   habits: [],
-  sleep: [],
-  study: [],
-  focusSessions: [],
-  habitCompletions: []
+  sleep: []
 };
 const EMPTY_HISTORY = { checkins: [], pauses: [] };
 const LEGACY_WELLNESS_KEY = 'entrepausas_wellness_data_v1';
@@ -42,11 +38,8 @@ const WELCOME_CHAT_MESSAGE = {
 };
 const LOCAL_KEYS = [
   'entrepausas-hydration',
-  'entrepausas-water-goal',
-  'entrepausas-journal',
   'entrepausas-habits',
-  'entrepausas-sleep',
-  'entrepausas-study'
+  'entrepausas-sleep'
 ];
 
 function isToday(value) {
@@ -67,7 +60,7 @@ function readLocalRecords() {
     if (!aggregate || typeof aggregate !== 'object' || Array.isArray(aggregate)) {
       throw new Error('Os dados locais estão em formato inválido e foram preservados.');
     }
-    for (const key of ['hydration', 'diary', 'habits', 'sleep', 'studySessions']) {
+    for (const key of ['hydration', 'habits', 'sleep']) {
       if (aggregate[key] !== undefined && !Array.isArray(aggregate[key])) {
         throw new Error('Os dados locais estão em formato inválido e foram preservados.');
       }
@@ -80,26 +73,21 @@ function readLocalRecords() {
     return result;
   };
   const goal = readAppStorage('entrepausas-water-goal');
-  const today = todayDateKey();
   const hydrationGoalMl = Number(aggregate.hydrationGoalMl ?? goal) || 2000;
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   return {
-    today,
+    today: todayKey,
     hydrationGoalMl: hydrationGoalMl >= 250 && hydrationGoalMl <= 10000 ? hydrationGoalMl : 2000,
     hydration: readList('entrepausas-hydration', 'hydration').map((item) => ({
       ...item,
       amount: item.amount ?? item.amountMl,
       date: legacyDate(item.date ?? item.createdAt)
     })),
-    journal: readList('entrepausas-journal', 'diary').map((item) => ({
-      ...item,
-      title: item.title || '',
-      body: item.body ?? item.text,
-      date: legacyDate(item.date ?? item.createdAt)
-    })),
     habits: readList('entrepausas-habits', 'habits').map((item) => ({
       ...item,
       label: item.label ?? item.title,
-      done: item.done === undefined ? Boolean(item.completedDates?.includes(today)) : item.done,
+      done: item.done === undefined ? Boolean(item.completedDates?.includes(todayKey)) : item.done,
       completedDates: item.completedDates || []
     })),
     sleep: readList('entrepausas-sleep', 'sleep').map((item) => ({
@@ -107,15 +95,13 @@ function readLocalRecords() {
       bed: item.bed ?? item.bedtime,
       wake: item.wake ?? item.wakeTime,
       date: legacyDate(item.date ?? item.createdAt)
-    })),
-    study: readList('entrepausas-study', 'study'),
-    focusSessions: aggregate.studySessions || []
+    }))
   };
 }
 
 function hasLocalRecords(data) {
-  return ['hydration', 'journal', 'habits', 'sleep', 'study', 'focusSessions']
-    .some((key) => data[key].length > 0) || data.hydrationGoalMl !== 2000;
+  return ['hydration', 'habits', 'sleep'].some((key) => data[key].length > 0)
+    || data.hydrationGoalMl !== 2000;
 }
 
 function legacyDate(value) {
@@ -127,11 +113,6 @@ function legacyDate(value) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-function todayDateKey() {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
 function clearLocalRecords() {
   LOCAL_KEYS.forEach((key) => {
     const legacyKey = key.replace(/^entrepausas-/, 'pausa-');
@@ -140,8 +121,23 @@ function clearLocalRecords() {
   });
   localStorage.removeItem('entrepausas-water-goal');
   localStorage.removeItem('pausa-water-goal');
-  localStorage.removeItem(LEGACY_WELLNESS_KEY);
-  localStorage.removeItem('pausa_wellness_data_v1');
+
+  const aggregateValue = localStorage.getItem(LEGACY_WELLNESS_KEY)
+    ?? localStorage.getItem('pausa_wellness_data_v1');
+  if (aggregateValue !== null) {
+    const archived = JSON.parse(aggregateValue);
+    delete archived.hydration;
+    delete archived.habits;
+    delete archived.sleep;
+    delete archived.hydrationGoalMl;
+    if (Object.keys(archived).length > 0) {
+      localStorage.setItem(LEGACY_WELLNESS_KEY, JSON.stringify(archived));
+      localStorage.removeItem('pausa_wellness_data_v1');
+    } else {
+      localStorage.removeItem(LEGACY_WELLNESS_KEY);
+      localStorage.removeItem('pausa_wellness_data_v1');
+    }
+  }
 }
 
 export default function App() {
@@ -397,12 +393,19 @@ export default function App() {
       {activeTab === 'breaks' && <BreaksView todayBreaks={todayBreaks} onAddBreak={handleAddBreak} />}
       {activeTab === 'garden' && <GardenView history={history} wellnessData={wellnessData} />}
       {activeTab === 'support' && <SupportView />}
-      {['hydration', 'journal', 'habits', 'sleep', 'study'].includes(activeTab) && (
+      {['hydration', 'sleep'].includes(activeTab) && (
         <PersonalViews
           tab={activeTab}
           data={wellnessData}
           onCollectionChange={(collection, update) => updateWellnessCollection(collection, update)}
           onGoalChange={(hydrationGoalMl) => setWellnessData((current) => ({ ...current, hydrationGoalMl }))}
+        />
+      )}
+      {activeTab === 'habits' && (
+        <PersonalViews
+          tab={activeTab}
+          data={wellnessData}
+          onCollectionChange={(collection, update) => updateWellnessCollection(collection, update)}
         />
       )}
       {activeTab === 'chat' && (
@@ -427,8 +430,8 @@ export default function App() {
         <div className="modal-backdrop" role="presentation">
           <section className="card import-dialog" role="dialog" aria-modal="true" aria-labelledby="import-title">
             <h2 id="import-title">Importar seus dados deste navegador?</h2>
-            <p>Encontramos {importPrompt.hydration.length + importPrompt.journal.length + importPrompt.habits.length + importPrompt.sleep.length + importPrompt.study.length + importPrompt.focusSessions.length} registros locais e uma meta de água de {importPrompt.hydrationGoalMl} ml. Se importar, eles serão copiados para sua conta e a cópia local será removida somente após a confirmação de sucesso.</p>
-            <p className="muted">Registros sem uma data confiável serão associados à data de hoje; datas de conclusão de hábitos disponíveis serão mantidas. Check-ins e pausas antigos do SQLite são anônimos e não serão atribuídos a esta conta.</p>
+            <p>Encontramos {importPrompt.hydration.length + importPrompt.habits.length + importPrompt.sleep.length} registros locais e uma meta de água de {importPrompt.hydrationGoalMl} ml. Se importar, eles serão copiados para sua conta e a cópia local será removida somente após a confirmação de sucesso.</p>
+            <p className="muted">Diários e estudos antigos não serão importados nem apagados; permanecerão arquivados neste navegador. Check-ins e pausas antigos do SQLite são anônimos e não serão atribuídos a esta conta.</p>
             <p className="auth-privacy">Se não importar, os dados permanecerão apenas neste navegador. Esta escolha vale para esta conta.</p>
             {importError && <p className="auth-error" role="alert">{importError}</p>}
             <div className="import-actions">

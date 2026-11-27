@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, Droplets, Moon, Plus, Target, Trash2 } from 'lucide-react';
+import { Droplets, Moon, Trash2, Plus, Target } from 'lucide-react';
 import {
   createWellnessRecord,
   deleteWellnessRecord,
   setHabitCompletion,
-  updateHydrationGoal,
-  updateJournalEntry
+  updateHydrationGoal
 } from '../services/api';
 
 function localDate() {
@@ -61,9 +60,8 @@ function useRemoteList(key, records, onChange = () => {}) {
     onChange((current) => current.map((item) => String(item.id) === String(id) ? updated : item));
   }
 
-  return { items, setItems, error, setError, add, remove, replace };
+  return { items, error, setError, add, remove, replace };
 }
-
 function PageIntro({ eyebrow, title, children }) {
   return <header className="page-intro"><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{children}</p></header>;
 }
@@ -81,11 +79,42 @@ function RemoveButton({ label, onClick }) {
 export function PersonalViews({ tab, data, onCollectionChange, onGoalChange }) {
   const notifyCollectionChange = (update) => onCollectionChange?.(tab, update);
   if (tab === 'hydration') return <HydrationView records={data.hydration} goal={data.hydrationGoalMl} onCollectionChange={notifyCollectionChange} onGoalChange={onGoalChange} />;
-  if (tab === 'journal') return <JournalView records={data.journal} onCollectionChange={notifyCollectionChange} />;
   if (tab === 'habits') return <HabitsView records={data.habits} onCollectionChange={notifyCollectionChange} />;
   if (tab === 'sleep') return <SleepView records={data.sleep} onCollectionChange={notifyCollectionChange} />;
-  if (tab === 'study') return <StudyView records={data.study} focusSessions={data.focusSessions || []} onCollectionChange={notifyCollectionChange} />;
   return null;
+}
+
+function HabitsView({ records, onCollectionChange }) {
+  const { items, error, setError, add, remove, replace } = useRemoteList('habits', records, onCollectionChange);
+  const [draft, setDraft] = useState('');
+  const done = items.filter((item) => item.done).length;
+
+  async function toggle(item) {
+    try {
+      const result = await setHabitCompletion(item.id, !item.done);
+      replace(item.id, { ...item, done: result.done });
+      setError('');
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  return <main className="page-content personal-page">
+    <PageIntro eyebrow="Pequenos passos" title="Metas e hábitos">Escolha objetivos gentis e acompanhe seu progresso sem competição.</PageIntro>
+    <section className="card progress-card"><span className="icon-tile"><Target /></span><div><strong>{done} {done === 1 ? 'meta concluída' : 'metas concluídas'} hoje</strong><p className="muted">Seu progresso é pessoal; cada dia é uma nova oportunidade.</p></div><strong className="progress-percent">{items.length ? Math.round(done / items.length * 100) : 0}%</strong><div className="progress-track"><span style={{ width: `${items.length ? done / items.length * 100 : 0}%` }} /></div></section>
+    <section className="card"><span className="eyebrow">Nova meta</span><h2>O que você quer cultivar?</h2>
+      <form className="inline-input habit-form" onSubmit={async (event) => { event.preventDefault(); if (await add({ label: draft.trim() })) setDraft(''); }}>
+        <input aria-label="Nome da nova meta" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ex.: fazer uma pausa depois de estudar" maxLength={100} />
+        <button className="btn-primary" type="submit"><Plus size={16} /> Adicionar</button>
+      </form>
+      <RequestError>{error}</RequestError>
+      <div className="suggestions">{['Beber água', 'Fazer uma pausa', 'Descansar os olhos', 'Respirar com calma'].map((label) => <button type="button" key={label} onClick={() => add({ label })}>＋ {label}</button>)}</div>
+    </section>
+    <section className="card"><span className="eyebrow">Seu acompanhamento</span><h2>Metas pessoais <span className="count-pill">{items.length}</span></h2>
+      {items.length ? <ul className="habit-list">{items.map((item) => <li key={item.id}><label><input type="checkbox" checked={Boolean(item.done)} onChange={() => toggle(item)} /><span className={item.done ? 'completed' : ''}>{item.label}</span></label><RemoveButton label={`Excluir meta ${item.label}`} onClick={() => remove(item.id)} /></li>)}</ul> : <Empty>Adicione uma meta pequena para começar.</Empty>}
+    </section>
+    <p className="disclaimer-text">Sem rankings e sem cobrança: este espaço apoia seus próprios objetivos.</p>
+  </main>;
 }
 
 function HydrationView({ records, goal, onCollectionChange, onGoalChange }) {
@@ -142,91 +171,6 @@ function HydrationView({ records, goal, onCollectionChange, onGoalChange }) {
   </main>;
 }
 
-function JournalView({ records, onCollectionChange }) {
-  const { items: entries, error, add, remove, replace, setError } = useRemoteList('journal', records, onCollectionChange);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [editingId, setEditingId] = useState(null);
-  const [editingDate, setEditingDate] = useState('');
-
-  async function save(event) {
-    event.preventDefault();
-    if (!body.trim()) return;
-    if (editingId !== null) {
-      try {
-        const updated = await updateJournalEntry(editingId, { title: title.trim(), body: body.trim(), date: editingDate });
-        replace(editingId, updated);
-        setError('');
-      } catch (requestError) {
-        setError(requestError.message);
-        return;
-      }
-    } else if (!(await add({ title: title.trim(), body: body.trim(), date: localDate() }))) {
-      return;
-    }
-    setTitle('');
-    setBody('');
-    setEditingId(null);
-    setEditingDate('');
-  }
-
-  function edit(entry) {
-    setTitle(entry.title);
-    setBody(entry.body);
-    setEditingId(entry.id);
-    setEditingDate(String(entry.date).slice(0, 10));
-  }
-
-  return <main className="page-content personal-page">
-    <PageIntro eyebrow="Espaço pessoal" title="Diário">Escreva sem pressa. Seus pensamentos não precisam estar organizados.</PageIntro>
-    <form className="card form-stack" onSubmit={save}>
-      <span className="eyebrow">{editingId === null ? 'Novo registro' : 'Editar registro'}</span><h2>O que está na sua cabeça?</h2>
-      <label htmlFor="journal-title">Título <span className="muted">(opcional)</span></label>
-      <input id="journal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Uma palavra ou frase curta" maxLength={100} />
-      <label htmlFor="journal-body">Seu registro</label>
-      <textarea id="journal-body" value={body} onChange={(event) => setBody(event.target.value)} placeholder="Escreva livremente…" maxLength={5000} rows={6} required />
-      <RequestError>{error}</RequestError>
-      <div className="form-footer"><small className="muted">{body.length}/5000 · A data será registrada automaticamente.</small><button className="btn-primary" type="submit"><Plus size={16} /> {editingId === null ? 'Salvar registro' : 'Atualizar registro'}</button></div>
-    </form>
-    <section className="card"><span className="eyebrow">Seus textos</span><h2>Registros anteriores <span className="count-pill">{entries.length}</span></h2>
-      {entries.length ? <div className="entry-list">{entries.map((item) => <article key={item.id}><time>{formatDate(item.date)}</time>{item.title && <h3>{item.title}</h3>}<p>{item.body}</p><div className="record-actions"><button type="button" onClick={() => edit(item)}>Editar</button><RemoveButton label="Excluir registro do diário" onClick={() => remove(item.id)} /></div></article>)}</div> : <Empty>Seus registros aparecerão aqui depois que você salvar o primeiro.</Empty>}
-    </section>
-  </main>;
-}
-
-function HabitsView({ records, onCollectionChange }) {
-  const { items, error, setError, add, remove, replace } = useRemoteList('habits', records, onCollectionChange);
-  const [draft, setDraft] = useState('');
-  const done = items.filter((item) => item.done).length;
-
-  async function toggle(item) {
-    try {
-      const result = await setHabitCompletion(item.id, !item.done);
-      replace(item.id, { ...item, done: result.done });
-      setError('');
-    } catch (requestError) {
-      setError(requestError.message);
-    }
-  }
-
-  return <main className="page-content personal-page">
-    <PageIntro eyebrow="Pequenos passos" title="Metas e hábitos">Escolha objetivos gentis e acompanhe seu progresso sem competição.</PageIntro>
-    <section className="card progress-card"><span className="icon-tile"><Target /></span><div><strong>{done} hábitos concluídos hoje</strong><p className="muted">Seu progresso é pessoal; cada dia é uma nova oportunidade.</p></div><strong className="progress-percent">{items.length ? Math.round(done / items.length * 100) : 0}%</strong><div className="progress-track"><span style={{ width: `${items.length ? done / items.length * 100 : 0}%` }} /></div></section>
-    <section className="card"><span className="eyebrow">Nova meta</span><h2>O que você quer cultivar?</h2>
-      <form className="inline-input habit-form" onSubmit={async (event) => { event.preventDefault(); if (await add({ label: draft.trim() })) setDraft(''); }}>
-        <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ex.: fazer uma pausa depois de estudar" maxLength={100} />
-        <button className="btn-primary" type="submit"><Plus size={16} /> Adicionar</button>
-      </form>
-      <RequestError>{error}</RequestError>
-      <div className="suggestions">{['Beber água', 'Fazer uma pausa', 'Descansar os olhos', 'Organizar o tempo de estudo', 'Fazer respiração guiada'].map((label) => <button type="button" key={label} onClick={() => add({ label })}>＋ {label}</button>)}</div>
-    </section>
-    <section className="card"><span className="eyebrow">Seu acompanhamento</span><h2>Metas pessoais <span className="count-pill">{items.length}</span></h2>
-      {items.length ? <ul className="habit-list">{items.map((item) => <li key={item.id}><label><input type="checkbox" checked={Boolean(item.done)} onChange={() => toggle(item)} /><span className={item.done ? 'completed' : ''}>{item.label}</span></label><RemoveButton label={`Excluir hábito ${item.label}`} onClick={() => remove(item.id)} /></li>)}</ul> : <Empty>Adicione uma meta pequena para começar.</Empty>}
-    </section>
-    <p className="disclaimer-text">Sem rankings e sem cobrança: este espaço apoia seus próprios objetivos.</p>
-  </main>;
-}
-
 function SleepView({ records, onCollectionChange }) {
   const { items: entries, error, add, remove } = useRemoteList('sleep', records, onCollectionChange);
   const [bed, setBed] = useState('23:00');
@@ -246,31 +190,5 @@ function SleepView({ records, onCollectionChange }) {
       {entries.length ? <ul className="record-list">{entries.map((item) => <li key={item.id}><Moon size={18} /> {item.bed} – {item.wake}<span>Qualidade: {item.quality}/5</span><time>{formatDate(item.date)}</time><RemoveButton label="Excluir registro de sono" onClick={() => remove(item.id)} /></li>)}</ul> : <Empty>Seus registros aparecerão aqui. Não há análise médica nesta seção.</Empty>}
     </section>
     <p className="disclaimer-text">O acompanhamento é apenas informativo e não substitui orientação de um profissional de saúde.</p>
-  </main>;
-}
-
-function StudyView({ records, focusSessions, onCollectionChange }) {
-  const { items, error, add, remove } = useRemoteList('study', records, onCollectionChange);
-  const [subject, setSubject] = useState('');
-  const [day, setDay] = useState('Segunda-feira');
-  const [time, setTime] = useState('');
-
-  return <main className="page-content personal-page">
-    <PageIntro eyebrow="Organização gentil" title="Rotina de estudos">Organize seus estudos no seu ritmo.</PageIntro>
-    <div className="two-column study-layout">
-      <form className="card form-stack" onSubmit={async (event) => { event.preventDefault(); if (await add({ subject: subject.trim(), day, time })) setSubject(''); }}>
-        <h2>Adicionar estudo</h2>
-        <label>Matéria ou atividade<input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Ex.: Matemática" maxLength={200} required /></label>
-        <div className="two-column"><label>Dia da semana<select value={day} onChange={(event) => setDay(event.target.value)}>{['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'].map((weekday) => <option key={weekday}>{weekday}</option>)}</select></label><label>Horário<input type="time" value={time} onChange={(event) => setTime(event.target.value)} /></label></div>
-        <RequestError>{error}</RequestError>
-        <button className="btn-primary" type="submit"><Plus size={16} /> Adicionar à rotina</button>
-      </form>
-      <section className="card"><h2>Agenda <span className="count-pill">{items.length} estudos</span></h2>
-        {items.length ? <ul className="record-list">{items.map((item) => <li key={item.id}><BookOpen size={18} /><strong>{item.subject}</strong><span>{item.day} · {item.time || 'sem horário'}</span><RemoveButton label={`Excluir estudo ${item.subject}`} onClick={() => remove(item.id)} /></li>)}</ul> : <Empty>Nenhum estudo planejado. Adicione uma atividade acima.</Empty>}
-      </section>
-      {focusSessions.length > 0 && <section className="card"><span className="eyebrow">Histórico importado</span><h2>Períodos de foco concluídos <span className="count-pill">{focusSessions.length}</span></h2>
-        <ul className="record-list">{focusSessions.map((session) => <li key={session.id}><BookOpen size={18} /><strong>{session.minutes} minutos de foco</strong><time>{formatDate(session.createdAt)} {formatTime(session.createdAt)}</time></li>)}</ul>
-      </section>}
-    </div>
   </main>;
 }

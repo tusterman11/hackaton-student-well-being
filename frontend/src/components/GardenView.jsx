@@ -24,15 +24,13 @@ export function GardenView({ history, wellnessData }) {
       const checkins = history.checkins.filter((item) => localDateKey(item.created_at) === key);
       const pauses = history.pauses.filter((item) => localDateKey(item.created_at) === key).length;
       const water = wellnessData.hydration.filter((item) => item.date === key).reduce((total, item) => total + Number(item.amount), 0);
-      const habitCount = wellnessData.habitCompletions.find((item) => item.date === key)?.count || 0;
       return {
         key,
         label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
         mood: checkins.length ? checkins.reduce((total, item) => total + item.mood, 0) / checkins.length : null,
         energy: checkins.length ? checkins.reduce((total, item) => total + item.energy, 0) / checkins.length : null,
         pauses,
-        water,
-        habitCount
+        water
       };
     });
   }, [history, wellnessData]);
@@ -40,7 +38,6 @@ export function GardenView({ history, wellnessData }) {
   const checkins = history.checkins.filter((item) => days.some((day) => localDateKey(item.created_at) === day.key));
   const totalPauses = days.reduce((total, day) => total + day.pauses, 0);
   const totalWater = days.reduce((total, day) => total + day.water, 0);
-  const habitsCompleted = days.reduce((total, day) => total + Number(day.habitCount), 0);
   const todayKey = dateKey(new Date());
   const sleepCount = wellnessData.sleep.filter((item) => item.date === todayKey).length;
   const averageEnergy = checkins.length
@@ -72,10 +69,9 @@ export function GardenView({ history, wellnessData }) {
         <Metric icon={Heart} label="Média de energia" value={averageEnergy === '—' ? '—' : `${averageEnergy}/5`} />
         <Metric icon={Sprout} label="Pausas na semana" value={totalPauses} />
         <Metric icon={Droplets} label="Água registrada" value={`${totalWater} ml`} />
-        <Metric icon={Sprout} label="Hábitos concluídos" value={habitsCompleted} />
         <Metric icon={Moon} label="Registros de sono hoje" value={sleepCount} />
       </div>
-      <p className="disclaimer-text">Os registros de sono e hábitos são apenas informativos. Não há diagnóstico ou comparação com outras pessoas.</p>
+      <p className="disclaimer-text">Os registros são apenas informativos. Não há diagnóstico ou comparação com outras pessoas.</p>
     </main>
   );
 }

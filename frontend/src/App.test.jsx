@@ -22,7 +22,6 @@ vi.mock('./services/api', () => ({
   fetchWellnessData: vi.fn(),
   createWellnessRecord: vi.fn(),
   updateHydrationGoal: vi.fn(),
-  updateJournalEntry: vi.fn(),
   setHabitCompletion: vi.fn(),
   deleteWellnessRecord: vi.fn(),
   importLocalData: vi.fn()
@@ -40,11 +39,8 @@ beforeEach(() => {
     hydrationGoalMl: 2000,
     localImportAvailable: false,
     hydration: [],
-    journal: [],
     habits: [],
-    sleep: [],
-    study: [],
-    habitCompletions: []
+    sleep: []
   });
   api.resendVerificationEmail.mockResolvedValue({ message: 'Link enviado.' });
 });
@@ -60,6 +56,12 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
     const nav = await screen.findByRole('navigation', { name: 'Navegação principal' });
+    expect(within(nav).queryByRole('button', { name: 'Diário' })).not.toBeInTheDocument();
+    expect(within(nav).getByRole('button', { name: 'Metas' })).toBeInTheDocument();
+    expect(within(nav).queryByRole('button', { name: 'Estudos' })).not.toBeInTheDocument();
+
+    await user.click(within(nav).getByRole('button', { name: 'Metas' }));
+    expect(screen.getByRole('heading', { name: 'Metas e hábitos' })).toBeInTheDocument();
 
     await user.click(within(nav).getByRole('button', { name: 'Pausas' }));
     expect(screen.getByRole('heading', { name: 'Pausas de hoje' })).toBeInTheDocument();
@@ -69,6 +71,26 @@ describe('App', () => {
 
     await user.click(within(nav).getByRole('button', { name: 'Apoio' }));
     expect(screen.getByRole('heading', { name: 'Apoio e cuidado real' })).toBeInTheDocument();
+  });
+
+  it('creates a personal goal and records its completion', async () => {
+    const user = userEvent.setup();
+    api.createWellnessRecord.mockResolvedValue({ id: 8, label: 'Alongar', done: false });
+    api.setHabitCompletion.mockResolvedValue({ id: '8', done: true });
+    render(<App />);
+
+    await user.click(await screen.findByRole('button', { name: 'Metas' }));
+    await user.type(screen.getByRole('textbox', { name: 'Nome da nova meta' }), 'Alongar');
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }));
+
+    expect(await screen.findByText('Alongar')).toBeInTheDocument();
+    expect(api.createWellnessRecord).toHaveBeenCalledWith('habits', { label: 'Alongar' });
+    await user.click(screen.getByRole('checkbox'));
+
+    await waitFor(() => {
+      expect(api.setHabitCompletion).toHaveBeenCalledWith(8, true);
+    });
+    expect(screen.getByText('1 meta concluída hoje')).toBeInTheDocument();
   });
 
   it('saves a check-in and shows the success state', async () => {
@@ -149,21 +171,15 @@ describe('App', () => {
         hydrationGoalMl: 2000,
         localImportAvailable: true,
         hydration: [],
-        journal: [],
         habits: [],
-        sleep: [],
-        study: [],
-        habitCompletions: []
+        sleep: []
       })
       .mockResolvedValueOnce({
         hydrationGoalMl: 2000,
         localImportAvailable: false,
         hydration: [{ id: '1', amount: 300, date: new Date().toISOString().slice(0, 10) }],
-        journal: [],
         habits: [],
-        sleep: [],
-        study: [],
-        habitCompletions: []
+        sleep: []
       });
     api.importLocalData.mockResolvedValue({ imported: { hydration: 1 } });
     render(<App />);
@@ -199,23 +215,15 @@ describe('App', () => {
         hydrationGoalMl: 2000,
         localImportAvailable: true,
         hydration: [],
-        journal: [],
         habits: [],
-        sleep: [],
-        study: [],
-        focusSessions: [],
-        habitCompletions: []
+        sleep: []
       })
       .mockResolvedValueOnce({
         hydrationGoalMl: 2250,
         localImportAvailable: false,
         hydration: [],
-        journal: [],
         habits: [],
-        sleep: [],
-        study: [],
-        focusSessions: [],
-        habitCompletions: []
+        sleep: []
       });
     api.importLocalData.mockResolvedValue({ imported: { hydration: 1 } });
     render(<App />);
@@ -226,14 +234,18 @@ describe('App', () => {
       expect(api.importLocalData).toHaveBeenCalledWith(expect.objectContaining({
         hydrationGoalMl: 2250,
         hydration: [expect.objectContaining({ amount: 300, date: importedHydrationDate })],
-        journal: [expect.objectContaining({ body: 'Um dia de cada vez' })],
         habits: [expect.objectContaining({ label: 'Beber água', done: true, completedDates: [today] })],
-        sleep: [expect.objectContaining({ bed: '23:00', wake: '07:00' })],
-        study: [],
-        focusSessions: [{ id: 'focus-1', minutes: 25, createdAt: `${today}T12:00:00.000Z` }]
+        sleep: [expect.objectContaining({ bed: '23:00', wake: '07:00' })]
       }), false);
     });
-    expect(localStorage.getItem('entrepausas_wellness_data_v1')).toBeNull();
+    const importedData = api.importLocalData.mock.calls[0][0];
+    expect(importedData).not.toHaveProperty('journal');
+    expect(importedData).not.toHaveProperty('study');
+    expect(importedData).not.toHaveProperty('focusSessions');
+    expect(JSON.parse(localStorage.getItem('entrepausas_wellness_data_v1'))).toEqual({
+      diary: [{ id: 'entry-1', text: 'Um dia de cada vez', createdAt: `${today}T11:00:00.000Z` }],
+      studySessions: [{ id: 'focus-1', minutes: 25, createdAt: `${today}T12:00:00.000Z` }]
+    });
   });
 
   it('shows sign-in first and opens the private app after authentication', async () => {

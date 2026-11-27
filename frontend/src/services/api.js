@@ -86,9 +86,7 @@ export async function fetchWeeklyHistory() {
 }
 
 export async function fetchWellnessData() {
-  const today = new Date();
-  const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  return request(`/wellness?date=${date}`);
+  return request('/wellness');
 }
 
 export async function createWellnessRecord(collection, payload) {
@@ -102,19 +100,10 @@ export async function updateHydrationGoal(hydrationGoalMl) {
   });
 }
 
-export async function updateJournalEntry(id, payload) {
-  return request(`/wellness/journal/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    body: payload
-  });
-}
-
 export async function setHabitCompletion(id, done) {
-  const today = new Date();
-  const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   return request(`/wellness/habits/${encodeURIComponent(id)}/completion`, {
     method: 'PUT',
-    body: { done, date }
+    body: { done }
   });
 }
 

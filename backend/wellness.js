@@ -2,10 +2,6 @@ const { Router } = require('express');
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
-const WEEKDAYS = new Set([
-  'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira',
-  'Sexta-feira', 'Sábado', 'Domingo'
-]);
 const MAX_IMPORT_ITEMS = 250;
 
 function isDate(value) {
@@ -14,10 +10,8 @@ function isDate(value) {
   return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-function validText(value, maxLength, allowEmpty = false) {
-  return typeof value === 'string'
-    && value.length <= maxLength
-    && (allowEmpty || value.trim().length > 0);
+function validText(value, maxLength) {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= maxLength;
 }
 
 function legacyDate(value, fallback) {
@@ -32,16 +26,10 @@ function legacyDate(value, fallback) {
   return isDate(date) ? date : fallback;
 }
 
-function dateOffset(date, offset) {
-  const result = new Date(`${date}T00:00:00.000Z`);
-  result.setUTCDate(result.getUTCDate() + offset);
-  return result.toISOString().slice(0, 10);
-}
-
 function validateImport(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
   if (data.today !== undefined && !isDate(data.today)) return false;
-  for (const key of ['hydration', 'journal', 'habits', 'sleep', 'study', 'focusSessions']) {
+  for (const key of ['hydration', 'habits', 'sleep']) {
     if (data[key] !== undefined && (!Array.isArray(data[key]) || data[key].length > MAX_IMPORT_ITEMS)) {
       return false;
     }
@@ -49,25 +37,15 @@ function validateImport(data) {
   const hydrationGoalMl = data.hydrationGoalMl === undefined ? 2000 : Number(data.hydrationGoalMl);
   if (!Number.isInteger(hydrationGoalMl) || hydrationGoalMl < 250 || hydrationGoalMl > 10000) return false;
   const hydration = data.hydration || [];
-  const journal = data.journal || [];
   const habits = data.habits || [];
   const sleep = data.sleep || [];
-  const study = data.study || [];
-  const focusSessions = data.focusSessions || [];
   if (hydration.some((item) => !item || !Number.isInteger(Number(item.amount)) || Number(item.amount) < 1 || Number(item.amount) > 5000)) return false;
-  if (journal.some((item) => !item || !validText(item.body, 5000) || !validText(item.title || '', 100, true))) return false;
   if (habits.some((item) => !item
     || !validText(item.label, 100)
     || (item.done !== undefined && typeof item.done !== 'boolean')
     || (item.completedDates !== undefined
       && (!Array.isArray(item.completedDates) || item.completedDates.length > MAX_IMPORT_ITEMS || item.completedDates.some((date) => !isDate(date)))))) return false;
   if (sleep.some((item) => !item || !TIME_PATTERN.test(item.bed || '') || !TIME_PATTERN.test(item.wake || '') || !Number.isInteger(Number(item.quality)) || Number(item.quality) < 1 || Number(item.quality) > 5)) return false;
-  if (study.some((item) => !item || !validText(item.subject, 200) || !WEEKDAYS.has(item.day) || (item.time !== '' && !TIME_PATTERN.test(item.time || '')))) return false;
-  if (focusSessions.some((item) => !item
-    || !Number.isInteger(Number(item.minutes))
-    || Number(item.minutes) < 5
-    || Number(item.minutes) > 180
-    || (item.createdAt !== undefined && (typeof item.createdAt !== 'string' || Number.isNaN(Date.parse(item.createdAt)))))) return false;
   return true;
 }
 
@@ -92,9 +70,7 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
 
   router.get('/', async (req, res) => {
     const userId = req.auth.user.id;
-    const today = isDate(req.query.date) ? req.query.date : new Date().toISOString().slice(0, 10);
-    const firstDay = dateOffset(today, -6);
-    const [settings, hydration, journal, habits, sleep, study, focusSessions, habitCompletions] = await Promise.all([
+    const [settings, hydration, habits, sleep] = await Promise.all([
       pool.query('SELECT hydration_goal_ml, local_imported_at FROM user_settings WHERE user_id = $1', [userId]),
       pool.query(
         `SELECT id, amount_ml AS amount, recorded_on AS date, created_at
@@ -102,37 +78,16 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
         [userId]
       ),
       pool.query(
-        `SELECT id, title, body, entry_date AS date
-         FROM journal_entries WHERE user_id = $1 ORDER BY entry_date DESC, created_at DESC LIMIT 1000`,
-        [userId]
-      ),
-      pool.query(
         `SELECT h.id, h.label, (c.habit_id IS NOT NULL) AS done
          FROM habits h LEFT JOIN habit_completions c
-           ON c.user_id = h.user_id AND c.habit_id = h.id AND c.completed_on = $2
+           ON c.user_id = h.user_id AND c.habit_id = h.id AND c.completed_on = CURRENT_DATE
          WHERE h.user_id = $1 ORDER BY h.created_at DESC LIMIT 500`,
-        [userId, today]
+        [userId]
       ),
       pool.query(
         `SELECT id, bed_time AS bed, wake_time AS wake, quality, sleep_date AS date
          FROM sleep_records WHERE user_id = $1 ORDER BY sleep_date DESC, created_at DESC LIMIT 1000`,
         [userId]
-      ),
-      pool.query(
-        `SELECT id, subject, day, study_time AS time
-         FROM study_sessions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 500`,
-        [userId]
-      ),
-      pool.query(
-        `SELECT id, duration_minutes AS minutes, completed_at AS "createdAt"
-         FROM focus_sessions WHERE user_id = $1 ORDER BY completed_at DESC LIMIT 500`,
-        [userId]
-      ),
-      pool.query(
-        `SELECT completed_on AS date, COUNT(*)::INTEGER AS count
-         FROM habit_completions WHERE user_id = $1 AND completed_on BETWEEN $2 AND $3
-         GROUP BY completed_on ORDER BY completed_on`,
-        [userId, firstDay, today]
       )
     ]);
 
@@ -140,12 +95,8 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
       hydrationGoalMl: settings.rows[0]?.hydration_goal_ml ?? 2000,
       localImportAvailable: settings.rows[0]?.local_imported_at == null,
       hydration: hydration.rows,
-      journal: journal.rows,
       habits: habits.rows,
-      sleep: sleep.rows,
-      study: study.rows,
-      focusSessions: focusSessions.rows,
-      habitCompletions: habitCompletions.rows
+      sleep: sleep.rows
     });
   });
 
@@ -170,7 +121,7 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
 
     const userId = req.auth.user.id;
     const today = isDate(data?.today) ? data.today : new Date().toISOString().slice(0, 10);
-    const counts = { hydration: 0, journal: 0, habits: 0, sleep: 0, study: 0, focusSessions: 0 };
+    const counts = { hydration: 0, habits: 0, sleep: 0 };
     const result = await transaction(pool, async (client) => {
       const settings = await client.query(
         'SELECT local_imported_at FROM user_settings WHERE user_id = $1 FOR UPDATE',
@@ -191,13 +142,6 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
           [userId, Number(item.amount), legacyDate(item.date, today)]
         );
         counts.hydration += 1;
-      }
-      for (const item of payload.journal || []) {
-        await client.query(
-          'INSERT INTO journal_entries (user_id, title, body, entry_date) VALUES ($1, $2, $3, $4)',
-          [userId, item.title || '', item.body, legacyDate(item.date, today)]
-        );
-        counts.journal += 1;
       }
       for (const item of payload.habits || []) {
         const inserted = await client.query(
@@ -222,20 +166,6 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
           [userId, item.bed, item.wake, Number(item.quality), legacyDate(item.date, today)]
         );
         counts.sleep += 1;
-      }
-      for (const item of payload.study || []) {
-        await client.query(
-          'INSERT INTO study_sessions (user_id, subject, day, study_time) VALUES ($1, $2, $3, $4)',
-          [userId, item.subject.trim(), item.day, item.time || '']
-        );
-        counts.study += 1;
-      }
-      for (const item of payload.focusSessions || []) {
-        await client.query(
-          'INSERT INTO focus_sessions (user_id, duration_minutes, completed_at) VALUES ($1, $2, COALESCE($3::timestamptz, NOW()))',
-          [userId, Number(item.minutes), item.createdAt || null]
-        );
-        counts.focusSessions += 1;
       }
       return { alreadyImported: false };
     });
@@ -262,21 +192,9 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
       );
       return res.status(201).json(result.rows[0]);
     }
-    if (collection === 'journal') {
-      const { title = '', body: entryBody, date } = body;
-      if (!validText(title, 100, true) || !validText(entryBody, 5000) || (date !== undefined && !isDate(date))) {
-        return res.status(400).json({ error: 'INVALID_JOURNAL', message: 'Informe um texto de até 5.000 caracteres.' });
-      }
-      const result = await pool.query(
-        `INSERT INTO journal_entries (user_id, title, body, entry_date) VALUES ($1, $2, $3, COALESCE($4::date, CURRENT_DATE))
-         RETURNING id, title, body, entry_date AS date`,
-        [userId, title.trim(), entryBody.trim(), date || null]
-      );
-      return res.status(201).json(result.rows[0]);
-    }
     if (collection === 'habits') {
       if (!validText(body.label, 100)) {
-        return res.status(400).json({ error: 'INVALID_HABIT', message: 'Informe um nome de hábito de até 100 caracteres.' });
+        return res.status(400).json({ error: 'INVALID_HABIT', message: 'Informe um nome de meta de até 100 caracteres.' });
       }
       const result = await pool.query(
         'INSERT INTO habits (user_id, label) VALUES ($1, $2) RETURNING id, label, FALSE AS done',
@@ -296,65 +214,40 @@ function createWellnessRouter({ pool, requireAuth, requireCsrf }) {
       );
       return res.status(201).json(result.rows[0]);
     }
-    if (collection === 'study') {
-      const { subject, day, time = '' } = body;
-      if (!validText(subject, 200) || !WEEKDAYS.has(day) || (time !== '' && !TIME_PATTERN.test(time))) {
-        return res.status(400).json({ error: 'INVALID_STUDY', message: 'Informe uma atividade, dia e horário válidos.' });
-      }
-      const result = await pool.query(
-        'INSERT INTO study_sessions (user_id, subject, day, study_time) VALUES ($1, $2, $3, $4) RETURNING id, subject, day, study_time AS time',
-        [userId, subject.trim(), day, time]
-      );
-      return res.status(201).json(result.rows[0]);
-    }
     return res.status(404).json({ error: 'RESOURCE_NOT_FOUND', message: 'Recurso não encontrado.' });
   });
 
-  router.patch('/journal/:id', requireCsrf, async (req, res) => {
-    const { title = '', body, date } = req.body || {};
-    if (!/^\d+$/.test(req.params.id) || !validText(title, 100, true) || !validText(body, 5000) || !isDate(date)) {
-      return res.status(400).json({ error: 'INVALID_JOURNAL', message: 'Confira o título, texto e data do registro.' });
-    }
-    const result = await pool.query(
-      `UPDATE journal_entries SET title = $1, body = $2, entry_date = $3, updated_at = NOW()
-       WHERE id = $4 AND user_id = $5 RETURNING id, title, body, entry_date AS date`,
-      [title.trim(), body.trim(), date, req.params.id, req.auth.user.id]
-    );
-    if (result.rowCount === 0) return res.status(404).json({ error: 'ENTRY_NOT_FOUND', message: 'Registro não encontrado.' });
-    return res.json(result.rows[0]);
-  });
-
   router.put('/habits/:id/completion', requireCsrf, async (req, res) => {
-    const completedOn = req.body?.date || new Date().toISOString().slice(0, 10);
-    if (!/^\d+$/.test(req.params.id) || typeof req.body?.done !== 'boolean' || !isDate(completedOn)) {
-      return res.status(400).json({ error: 'INVALID_COMPLETION', message: 'A conclusão precisa ser verdadeira ou falsa.' });
+    const { done, date } = req.body || {};
+    if (!/^\d+$/.test(req.params.id) || typeof done !== 'boolean' || (date !== undefined && !isDate(date))) {
+      return res.status(400).json({ error: 'INVALID_COMPLETION', message: 'Informe uma conclusão válida para a meta.' });
     }
-    const existing = await pool.query(
+    const habit = await pool.query(
       'SELECT id FROM habits WHERE id = $1 AND user_id = $2',
       [req.params.id, req.auth.user.id]
     );
-    if (existing.rowCount === 0) return res.status(404).json({ error: 'HABIT_NOT_FOUND', message: 'Hábito não encontrado.' });
-    if (req.body.done) {
+    if (habit.rowCount === 0) {
+      return res.status(404).json({ error: 'HABIT_NOT_FOUND', message: 'Meta não encontrada.' });
+    }
+    if (done) {
       await pool.query(
-        'INSERT INTO habit_completions (user_id, habit_id, completed_on) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
-        [req.auth.user.id, req.params.id, completedOn]
+        'INSERT INTO habit_completions (user_id, habit_id, completed_on) VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE)) ON CONFLICT DO NOTHING',
+        [req.auth.user.id, req.params.id, date || null]
       );
     } else {
       await pool.query(
-        'DELETE FROM habit_completions WHERE user_id = $1 AND habit_id = $2 AND completed_on = $3',
-        [req.auth.user.id, req.params.id, completedOn]
+        'DELETE FROM habit_completions WHERE user_id = $1 AND habit_id = $2 AND completed_on = COALESCE($3::date, CURRENT_DATE)',
+        [req.auth.user.id, req.params.id, date || null]
       );
     }
-    return res.json({ id: req.params.id, done: req.body.done });
+    return res.json({ id: req.params.id, done });
   });
 
   router.delete('/:collection/:id', requireCsrf, async (req, res) => {
     const tables = {
       hydration: 'hydration_records',
-      journal: 'journal_entries',
       habits: 'habits',
-      sleep: 'sleep_records',
-      study: 'study_sessions'
+      sleep: 'sleep_records'
     };
     const table = tables[req.params.collection];
     if (!table || !/^\d+$/.test(req.params.id)) {

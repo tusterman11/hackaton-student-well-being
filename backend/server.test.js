@@ -62,9 +62,14 @@ test('configured demo account signs in without email and contains only synthetic
       headers: { cookie: session.cookie }
     })).json();
     assert.equal(wellness.hydration.length, 2);
-    assert.equal(wellness.journal[0].body, 'Este texto e fictício e foi criado para a apresentação do EntrePausas.');
-    assert.equal(wellness.habits.length, 1);
     assert.equal(wellness.sleep.length, 1);
+    for (const collection of ['journal', 'study', 'focusSessions']) {
+      assert.equal(Object.hasOwn(wellness, collection), false);
+    }
+    for (const table of ['journal_entries', 'habits', 'study_sessions', 'focus_sessions']) {
+      const archivedRows = await fixture.pool.query(`SELECT COUNT(*)::INTEGER AS count FROM ${table} WHERE user_id = $1`, [demo.id]);
+      assert.equal(archivedRows.rows[0].count, 0);
+    }
 
     const disabledApp = createApp({
       pool: fixture.pool,
@@ -162,6 +167,28 @@ test('email accounts, private records, and local data import are scoped per user
 
     const passwordA = await createVerifiedUser(fixture, 'student-a@example.test');
     const sessionA = await login(fixture, 'student-a@example.test', passwordA);
+    const userA = await fixture.pool.query('SELECT id FROM users WHERE email = $1', ['student-a@example.test']);
+    const databaseToday = new Date().toISOString().slice(0, 10);
+    await fixture.pool.query(
+      'INSERT INTO journal_entries (user_id, title, body) VALUES ($1, $2, $3)',
+      [userA.rows[0].id, 'Arquivo antigo', 'Este texto deve permanecer arquivado.']
+    );
+    const archivedHabit = await fixture.pool.query(
+      'INSERT INTO habits (user_id, label) VALUES ($1, $2) RETURNING id',
+      [userA.rows[0].id, 'Hábito antigo']
+    );
+    await fixture.pool.query(
+      'INSERT INTO habit_completions (user_id, habit_id, completed_on) VALUES ($1, $2, $3)',
+      [userA.rows[0].id, archivedHabit.rows[0].id, databaseToday]
+    );
+    await fixture.pool.query(
+      'INSERT INTO study_sessions (user_id, subject, day) VALUES ($1, $2, $3)',
+      [userA.rows[0].id, 'Estudo antigo', 'Segunda-feira']
+    );
+    await fixture.pool.query(
+      'INSERT INTO focus_sessions (user_id, duration_minutes) VALUES ($1, $2)',
+      [userA.rows[0].id, 25]
+    );
 
     assert.equal((await fetch(`${fixture.baseUrl}/api/checkins`)).status, 401);
     assert.equal((await post(fixture.baseUrl, '/api/checkins', { mood: 2, energy: 3 }, { cookie: sessionA.cookie })).status, 403);
@@ -187,21 +214,18 @@ test('email accounts, private records, and local data import are scoped per user
       data: {
         hydrationGoalMl: 2250,
         hydration: [{ amount: 300, time: '10:30', date: '2026-11-25T10:00:00.000Z' }],
-        journal: [{ title: 'Hoje', body: 'Um registro local', date: '25/11/2026' }],
-        habits: [{ label: 'Beber água', done: true, completedDates: ['2026-11-24', '2026-11-25'] }],
+        journal: [{ title: 'Hoje', body: 'Não deve ser importado', date: '25/11/2026' }],
+        habits: [{ label: 'Meta local', done: true, completedDates: ['2026-11-24', '2026-11-25'] }],
         sleep: [{ bed: '23:00', wake: '07:00', quality: 4, date: '25/11/2026' }],
-        study: [{ subject: 'Matemática', day: 'Quarta-feira', time: '14:00' }],
+        study: [{ subject: 'Não deve ser importado', day: 'Quarta-feira', time: '14:00' }],
         focusSessions: [{ minutes: 25, createdAt: '2026-11-25T18:00:00.000Z' }]
       }
     }, sessionA);
     assert.equal(imported.status, 201);
     assert.deepEqual((await imported.json()).imported, {
       hydration: 1,
-      journal: 1,
       habits: 1,
-      sleep: 1,
-      study: 1,
-      focusSessions: 1
+      sleep: 1
     });
     assert.equal((await post(fixture.baseUrl, '/api/wellness/import-local', { data: {} }, sessionA)).status, 409);
 
@@ -211,11 +235,32 @@ test('email accounts, private records, and local data import are scoped per user
     assert.equal(wellnessA.hydrationGoalMl, 2250);
     assert.equal(wellnessA.hydration[0].amount, 300);
     assert.equal(String(wellnessA.hydration[0].date).slice(0, 10), '2026-11-25');
-    assert.equal(wellnessA.journal[0].body, 'Um registro local');
-    assert.equal(wellnessA.habits[0].done, true);
     assert.equal(wellnessA.sleep[0].quality, 4);
-    assert.equal(wellnessA.study[0].subject, 'Matemática');
-    assert.equal(wellnessA.focusSessions[0].minutes, 25);
+    assert.ok(wellnessA.habits.some((habit) => habit.label === 'Hábito antigo'));
+    assert.ok(wellnessA.habits.some((habit) => habit.label === 'Meta local'));
+    for (const collection of ['journal', 'study', 'focusSessions']) {
+      assert.equal(Object.hasOwn(wellnessA, collection), false);
+    }
+    const archivedJournal = await fixture.pool.query(
+      'SELECT body FROM journal_entries WHERE user_id = $1',
+      [userA.rows[0].id]
+    );
+    const archivedHabits = await fixture.pool.query(
+      'SELECT label FROM habits WHERE user_id = $1',
+      [userA.rows[0].id]
+    );
+    const archivedStudies = await fixture.pool.query(
+      'SELECT subject FROM study_sessions WHERE user_id = $1',
+      [userA.rows[0].id]
+    );
+    const archivedFocus = await fixture.pool.query(
+      'SELECT duration_minutes FROM focus_sessions WHERE user_id = $1',
+      [userA.rows[0].id]
+    );
+    assert.deepEqual(archivedJournal.rows.map((row) => row.body), ['Este texto deve permanecer arquivado.']);
+    assert.deepEqual(archivedHabits.rows.map((row) => row.label).sort(), ['Hábito antigo', 'Meta local'].sort());
+    assert.deepEqual(archivedStudies.rows.map((row) => row.subject), ['Estudo antigo']);
+    assert.deepEqual(archivedFocus.rows.map((row) => row.duration_minutes), [25]);
 
     const passwordB = await createVerifiedUser(fixture, 'student-b@example.test');
     const sessionB = await login(fixture, 'student-b@example.test', passwordB);
@@ -228,15 +273,36 @@ test('email accounts, private records, and local data import are scoped per user
     assert.equal(historyB.checkins.length, 0);
     assert.equal(historyB.pauses.length, 0);
     assert.equal(wellnessB.hydration.length, 0);
+    assert.equal(wellnessB.habits.length, 0);
 
-    const deleteOtherUsersRecord = await fetch(
-      `${fixture.baseUrl}/api/wellness/journal/${wellnessA.journal[0].id}`,
-      {
-        method: 'DELETE',
-        headers: { cookie: sessionB.cookie, 'x-csrf-token': sessionB.csrfToken }
-      }
+    for (const collection of ['journal', 'study']) {
+      assert.equal((await post(`${fixture.baseUrl}`, `/api/wellness/${collection}`, {}, sessionB)).status, 404);
+    }
+
+    const newHabitResponse = await post(fixture.baseUrl, '/api/wellness/habits', { label: 'Alongar' }, sessionB);
+    assert.equal(newHabitResponse.status, 201);
+    const newHabit = await newHabitResponse.json();
+    assert.equal(newHabit.label, 'Alongar');
+    const completion = await fetch(`${fixture.baseUrl}/api/wellness/habits/${newHabit.id}/completion`, {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionB.cookie,
+        'x-csrf-token': sessionB.csrfToken
+      },
+      body: JSON.stringify({ done: true, date: databaseToday })
+    });
+    assert.equal(completion.status, 200);
+    assert.deepEqual(await completion.json(), { id: String(newHabit.id), done: true });
+
+    const savedCompletion = await fixture.pool.query(
+      'SELECT completed_on FROM habit_completions WHERE user_id = $1 AND habit_id = $2 AND completed_on = $3',
+      [sessionB.user.id, newHabit.id, databaseToday]
     );
-    assert.equal(deleteOtherUsersRecord.status, 404);
+    assert.equal(savedCompletion.rowCount, 1);
+
+    const invalidHabit = await post(fixture.baseUrl, '/api/wellness/habits', { label: '   ' }, sessionB);
+    assert.equal(invalidHabit.status, 400);
   } finally {
     await fixture.close();
   }

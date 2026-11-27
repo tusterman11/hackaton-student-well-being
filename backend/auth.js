@@ -69,31 +69,8 @@ async function seedDemoData(client, userId) {
     [userId]
   );
   await client.query(
-    `INSERT INTO journal_entries (user_id, title, body)
-     VALUES ($1, 'Registro demonstrativo', 'Este texto e fictício e foi criado para a apresentação do EntrePausas.')`,
-    [userId]
-  );
-  const habit = await client.query(
-    "INSERT INTO habits (user_id, label) VALUES ($1, 'Fazer uma pausa curta') RETURNING id",
-    [userId]
-  );
-  await client.query(
-    'INSERT INTO habit_completions (user_id, habit_id, completed_on) VALUES ($1, $2, CURRENT_DATE)',
-    [userId, habit.rows[0].id]
-  );
-  await client.query(
     `INSERT INTO sleep_records (user_id, bed_time, wake_time, quality, sleep_date)
      VALUES ($1, '23:00', '07:00', 4, CURRENT_DATE - 1)`,
-    [userId]
-  );
-  await client.query(
-    `INSERT INTO study_sessions (user_id, subject, day, study_time)
-     VALUES ($1, 'Estudo demonstrativo', 'Quarta-feira', '14:00')`,
-    [userId]
-  );
-  await client.query(
-    `INSERT INTO focus_sessions (user_id, duration_minutes, completed_at)
-     VALUES ($1, 25, NOW() - INTERVAL '1 day')`,
     [userId]
   );
 }

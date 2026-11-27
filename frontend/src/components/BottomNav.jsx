@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import {
-  BookOpen, CalendarDays, Droplets, Heart, Home, MessageCircle,
-  Moon, Sun, NotebookPen, Sprout, Target, Bed, Menu, X, LogOut
+  CalendarDays, Droplets, Heart, Home, MessageCircle,
+  Moon, Sun, Sprout, Bed, Menu, X, LogOut, Target
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Início', icon: Home },
   { id: 'breaks', label: 'Pausas', icon: Sprout },
   { id: 'garden', label: 'Semana', icon: CalendarDays },
-  { id: 'hydration', label: 'Água', icon: Droplets },
-  { id: 'journal', label: 'Diário', icon: NotebookPen },
   { id: 'habits', label: 'Metas', icon: Target },
+  { id: 'hydration', label: 'Água', icon: Droplets },
   { id: 'sleep', label: 'Sono', icon: Bed },
-  { id: 'study', label: 'Estudos', icon: BookOpen },
   { id: 'chat', label: 'Conversa', icon: MessageCircle },
   { id: 'support', label: 'Apoio', icon: Heart },
 ];

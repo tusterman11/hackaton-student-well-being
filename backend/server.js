@@ -20,7 +20,7 @@ Se a pessoa disser que está se sentindo mal, responda com empatia e sugira conv
 const URGENT_SUPPORT_REPLY = 'Sinto muito que você esteja passando por isso. Você não precisa enfrentar isso sozinho. Procure agora um adulto de confiança ou alguém que esteja perto de você e conte o que está acontecendo. Para conversar e receber apoio emocional, ligue 188 (CVV). Se houver perigo imediato ou risco de alguém se machucar, ligue 192 (SAMU) ou vá a um pronto atendimento. Você está com alguém de confiança agora?';
 
 async function getWeeklyRoutineSummary(pool, userId) {
-  const [checkins, pauses, hydration, sleep, habits, focus] = await Promise.all([
+  const [checkins, pauses, hydration, sleep] = await Promise.all([
     pool.query(
       `SELECT COUNT(*)::INTEGER AS count, ROUND(AVG(mood), 1) AS mood, ROUND(AVG(energy), 1) AS energy
        FROM checkins WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '7 days'`,
@@ -43,30 +43,16 @@ async function getWeeklyRoutineSummary(pool, userId) {
        FROM sleep_records WHERE user_id = $1 AND sleep_date >= CURRENT_DATE - 6`,
       [userId]
     ),
-    pool.query(
-      `SELECT COUNT(*)::INTEGER AS count, COUNT(DISTINCT completed_on)::INTEGER AS days
-       FROM habit_completions WHERE user_id = $1 AND completed_on >= CURRENT_DATE - 6`,
-      [userId]
-    ),
-    pool.query(
-      `SELECT COUNT(*)::INTEGER AS count, COALESCE(SUM(duration_minutes), 0)::INTEGER AS minutes
-       FROM focus_sessions WHERE user_id = $1 AND completed_at >= NOW() - INTERVAL '7 days'`,
-      [userId]
-    )
   ]);
   const c = checkins.rows[0];
   const p = pauses.rows[0];
   const w = hydration.rows[0];
   const s = sleep.rows[0];
-  const h = habits.rows[0];
-  const f = focus.rows[0];
   return [
     `check-ins: ${c.count}; médias registradas de humor ${c.mood ?? 'sem dados'}/5 e energia ${c.energy ?? 'sem dados'}/5`,
     `pausas registradas: ${p.count} (alongamentos: ${p.stretch}, caminhadas: ${p.walk})`,
     `água: ${w.ml} ml no total em ${w.days} dia(s)`,
-    `sono: ${s.count} registro(s), qualidade média ${s.quality ?? 'sem dados'}/5`,
-    `hábitos: ${h.count} conclusão(ões) em ${h.days} dia(s)`,
-    `foco/estudo: ${f.count} sessão(ões), ${f.minutes} minuto(s)`
+    `sono: ${s.count} registro(s), qualidade média ${s.quality ?? 'sem dados'}/5`
   ].join('; ');
 }
 
