@@ -6,7 +6,7 @@ const { generateText, isConfigured } = require('./gemini');
 const { getTip, SUPPORT_MAX_MOOD } = require('./tips');
 const { createPool, migrateDatabase } = require('./database');
 const { createMailer } = require('./email');
-const { createAuth } = require('./auth');
+const { createAuth, ensureDemoAccount } = require('./auth');
 const { createWellnessRouter } = require('./wellness');
 
 const CHAT_SYSTEM_PROMPT = `Você é Interlude, a assistente virtual de bem-estar do EntrePausas, um app para estudantes no Brasil. Você não é psicóloga, médica, terapeuta ou serviço de emergência e nunca deve se apresentar como profissional. Quando perguntarem seu nome, diga que é Interlude.
@@ -23,7 +23,8 @@ function createApp({
   pool,
   mailer = createMailer(),
   appBaseUrl = process.env.APP_BASE_URL,
-  isProduction = process.env.NODE_ENV === 'production'
+  isProduction = process.env.NODE_ENV === 'production',
+  demoAccountEnabled = process.env.DEMO_ACCOUNT_ENABLED === 'true'
 } = {}) {
   if (!pool) throw new Error('A PostgreSQL pool must be provided to createApp.');
   const app = express();
@@ -56,7 +57,7 @@ function createApp({
     return next();
   });
 
-  const auth = createAuth({ pool, mailer, appBaseUrl, isProduction });
+  const auth = createAuth({ pool, mailer, appBaseUrl, isProduction, demoAccountEnabled });
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 10,
@@ -274,6 +275,7 @@ if (require.main === module) {
   (async () => {
     const pool = createPool();
     await migrateDatabase(pool);
+    await ensureDemoAccount(pool);
     const app = createApp({ pool });
     const port = Number(process.env.PORT) || 3000;
     app.listen(port, '0.0.0.0', () => console.log(`EntrePausas API listening on port ${port}`));

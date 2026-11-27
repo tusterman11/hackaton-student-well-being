@@ -163,7 +163,8 @@ Deployment has not been performed. To publish using a Render Web Service:
 2. Set `NODE_ENV=production`, `APP_BASE_URL`, and `FRONTEND_ORIGIN` to the same public HTTPS origin as the service.
 3. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. Set `GEMINI_API_KEY` only if AI chat should be enabled.
 4. Use build command `npm --prefix backend ci --omit=dev && npm --prefix frontend ci --include=dev && npm --prefix frontend run build` and start command `npm --prefix backend start`. Render provides `PORT`; the PostgreSQL migration runs on startup.
-5. Test email verification and password recovery with a real address before sharing the service. Never commit credentials.
+5. For a temporary demo account without email, set `DEMO_ACCOUNT_ENABLED=true`, `DEMO_EMAIL=demo@entrepausas.test`, and `DEMO_PASSWORD` to a 12-128 character password. The server creates this account with synthetic records and blocks demo access when the variable is set back to `false`.
+6. Never commit credentials or use real personal data in the demo account.
 
 The front end and API must remain on the same domain for cookie sessions to work. A live PostgreSQL/SMTP test and deployment are still pending.
 

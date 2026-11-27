@@ -52,6 +52,131 @@ function validPassword(value) {
     && !/[\u0000-\u001f\u007f]/.test(value);
 }
 
+async function seedDemoData(client, userId) {
+  await client.query(
+    `INSERT INTO checkins (user_id, mood, energy, note, created_at)
+     VALUES ($1, 4, 3, 'Registro demonstrativo', NOW() - INTERVAL '1 day'),
+            ($1, 3, 4, 'Dados fictícios para a apresentação', NOW() - INTERVAL '2 days')`,
+    [userId]
+  );
+  await client.query(
+    `INSERT INTO pauses (user_id, type, created_at)
+     VALUES ($1, 'water', NOW()), ($1, 'stretch', NOW() - INTERVAL '1 day')`,
+    [userId]
+  );
+  await client.query(
+    'INSERT INTO hydration_records (user_id, amount_ml) VALUES ($1, 300), ($1, 450)',
+    [userId]
+  );
+  await client.query(
+    `INSERT INTO journal_entries (user_id, title, body)
+     VALUES ($1, 'Registro demonstrativo', 'Este texto e fictício e foi criado para a apresentação do EntrePausas.')`,
+    [userId]
+  );
+  const habit = await client.query(
+    "INSERT INTO habits (user_id, label) VALUES ($1, 'Fazer uma pausa curta') RETURNING id",
+    [userId]
+  );
+  await client.query(
+    'INSERT INTO habit_completions (user_id, habit_id, completed_on) VALUES ($1, $2, CURRENT_DATE)',
+    [userId, habit.rows[0].id]
+  );
+  await client.query(
+    `INSERT INTO sleep_records (user_id, bed_time, wake_time, quality, sleep_date)
+     VALUES ($1, '23:00', '07:00', 4, CURRENT_DATE - 1)`,
+    [userId]
+  );
+  await client.query(
+    `INSERT INTO study_sessions (user_id, subject, day, study_time)
+     VALUES ($1, 'Estudo demonstrativo', 'Quarta-feira', '14:00')`,
+    [userId]
+  );
+  await client.query(
+    `INSERT INTO focus_sessions (user_id, duration_minutes, completed_at)
+     VALUES ($1, 25, NOW() - INTERVAL '1 day')`,
+    [userId]
+  );
+}
+
+async function ensureDemoAccount(pool, env = process.env) {
+  if (env.DEMO_ACCOUNT_ENABLED !== 'true') return null;
+  const email = normalizeEmail(env.DEMO_EMAIL);
+  const password = env.DEMO_PASSWORD;
+  if (!email || !validPassword(password)) {
+    const error = new Error('A demo account requires a valid DEMO_EMAIL and a password of at least 12 characters.');
+    error.code = 'DEMO_ACCOUNT_CONFIG_INVALID';
+    throw error;
+  }
+
+  const passwordHash = await hashPassword(password);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    let existing = await client.query(
+      'SELECT id, is_demo FROM users WHERE email = $1 FOR UPDATE',
+      [email]
+    );
+    let userId;
+    let created = false;
+
+    if (existing.rowCount > 0) {
+      if (!existing.rows[0].is_demo) {
+        const error = new Error('The configured demo email is already used by a regular account.');
+        error.code = 'DEMO_EMAIL_IN_USE';
+        throw error;
+      }
+      userId = existing.rows[0].id;
+      await client.query(
+        'UPDATE users SET password_hash = $1, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = $2',
+        [passwordHash, userId]
+      );
+      await client.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
+      await client.query(
+        'INSERT INTO user_settings (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING',
+        [userId]
+      );
+    } else {
+      const inserted = await client.query(
+        `INSERT INTO users (id, email, password_hash, email_verified_at, is_demo)
+         VALUES ($1, $2, $3, NOW(), TRUE)
+         ON CONFLICT (email) DO NOTHING
+         RETURNING id`,
+        [randomUUID(), email, passwordHash]
+      );
+      if (inserted.rowCount === 0) {
+        existing = await client.query(
+          'SELECT id, is_demo FROM users WHERE email = $1 FOR UPDATE',
+          [email]
+        );
+        if (!existing.rows[0]?.is_demo) {
+          const error = new Error('The configured demo email is already used by a regular account.');
+          error.code = 'DEMO_EMAIL_IN_USE';
+          throw error;
+        }
+        userId = existing.rows[0].id;
+        await client.query(
+          'UPDATE users SET password_hash = $1, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = $2',
+          [passwordHash, userId]
+        );
+        await client.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
+      } else {
+        userId = inserted.rows[0].id;
+        created = true;
+        await client.query('INSERT INTO user_settings (user_id) VALUES ($1)', [userId]);
+        await seedDemoData(client, userId);
+      }
+    }
+
+    await client.query('COMMIT');
+    return { id: userId, email, created };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 function readCookie(req, name) {
   const cookieHeader = req.headers.cookie || '';
   for (const part of cookieHeader.split(';')) {
@@ -77,8 +202,9 @@ function getClientUrl(appBaseUrl, tokenParam, token) {
   return url.toString();
 }
 
-function createAuth({ pool, mailer, appBaseUrl, isProduction = false }) {
+function createAuth({ pool, mailer, appBaseUrl, isProduction = false, demoAccountEnabled = false }) {
   const router = Router();
+  const demoVisibilityFilter = demoAccountEnabled ? '' : ' AND u.is_demo = FALSE';
 
   const requireAuth = async (req, res, next) => {
     const token = readCookie(req, SESSION_COOKIE);
@@ -91,7 +217,7 @@ function createAuth({ pool, mailer, appBaseUrl, isProduction = false }) {
       const result = await pool.query(
         `SELECT s.token_hash, s.csrf_token, u.id, u.email
          FROM auth_sessions s JOIN users u ON u.id = s.user_id
-         WHERE s.token_hash = $1 AND s.expires_at > NOW() AND u.email_verified_at IS NOT NULL`,
+         WHERE s.token_hash = $1 AND s.expires_at > NOW() AND u.email_verified_at IS NOT NULL${demoVisibilityFilter}`,
         [tokenHash]
       );
       if (result.rowCount === 0) {
@@ -160,7 +286,7 @@ function createAuth({ pool, mailer, appBaseUrl, isProduction = false }) {
     const result = await pool.query(
       `SELECT s.token_hash, s.csrf_token, u.id, u.email
        FROM auth_sessions s JOIN users u ON u.id = s.user_id
-       WHERE s.token_hash = $1 AND s.expires_at > NOW() AND u.email_verified_at IS NOT NULL`,
+       WHERE s.token_hash = $1 AND s.expires_at > NOW() AND u.email_verified_at IS NOT NULL${demoVisibilityFilter}`,
       [hashToken(token)]
     );
     if (result.rowCount === 0) {
@@ -289,9 +415,12 @@ function createAuth({ pool, mailer, appBaseUrl, isProduction = false }) {
     if (!email || password.length > 128) {
       return res.status(400).json({ error: 'INVALID_CREDENTIALS', message: 'E-mail ou senha inválidos.' });
     }
-    const result = await pool.query('SELECT id, email, password_hash, email_verified_at FROM users WHERE email = $1', [email]);
+    const result = await pool.query(
+      'SELECT id, email, password_hash, email_verified_at, is_demo FROM users WHERE email = $1',
+      [email]
+    );
     const user = result.rows[0];
-    if (!user) {
+    if (!user || (user.is_demo && !demoAccountEnabled)) {
       await scrypt(password, Buffer.alloc(16), 64, { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 });
       return res.status(401).json({ error: 'LOGIN_FAILED', message: 'E-mail ou senha inválidos.' });
     }
@@ -376,6 +505,7 @@ function createAuth({ pool, mailer, appBaseUrl, isProduction = false }) {
 
 module.exports = {
   createAuth,
+  ensureDemoAccount,
   hashPassword,
   normalizeEmail,
   validPassword,

@@ -4,8 +4,9 @@ const { URL, URLSearchParams } = require('node:url');
 const { newDb } = require('pg-mem');
 const { createApp } = require('./server');
 const { migrateDatabase } = require('./database');
+const { ensureDemoAccount } = require('./auth');
 
-async function createFixture() {
+async function createFixture({ demoAccountEnabled = false } = {}) {
   const memory = newDb();
   const { Pool } = memory.adapters.createPg();
   const pool = new Pool();
@@ -19,7 +20,8 @@ async function createFixture() {
     pool,
     mailer,
     appBaseUrl: 'http://localhost:5173',
-    isProduction: false
+    isProduction: false,
+    demoAccountEnabled
   });
   const server = app.listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
@@ -27,6 +29,7 @@ async function createFixture() {
   return {
     baseUrl,
     pool,
+    mailer,
     sentEmails,
     close: async () => {
       await new Promise((resolve) => server.close(resolve));
@@ -34,6 +37,83 @@ async function createFixture() {
     }
   };
 }
+
+test('configured demo account signs in without email and contains only synthetic wellness records', async () => {
+  const fixture = await createFixture({ demoAccountEnabled: true });
+  try {
+    const email = 'demo@entrepausas.test';
+    const password = 'demo-presentation-password-2026';
+    const demo = await ensureDemoAccount(fixture.pool, {
+      DEMO_ACCOUNT_ENABLED: 'true',
+      DEMO_EMAIL: email,
+      DEMO_PASSWORD: password
+    });
+
+    assert.equal(demo.created, true);
+    assert.equal(fixture.sentEmails.length, 0);
+    const session = await login(fixture, email, password);
+    const wellness = await (await fetch(`${fixture.baseUrl}/api/wellness`, {
+      headers: { cookie: session.cookie }
+    })).json();
+    assert.equal(wellness.hydration.length, 2);
+    assert.equal(wellness.journal[0].body, 'Este texto e fictício e foi criado para a apresentação do EntrePausas.');
+    assert.equal(wellness.habits.length, 1);
+    assert.equal(wellness.sleep.length, 1);
+
+    const disabledApp = createApp({
+      pool: fixture.pool,
+      mailer: fixture.mailer,
+      appBaseUrl: 'http://localhost:5173',
+      isProduction: false,
+      demoAccountEnabled: false
+    });
+    const disabledServer = disabledApp.listen(0, '127.0.0.1');
+    await new Promise((resolve) => disabledServer.once('listening', resolve));
+    try {
+      const disabledBaseUrl = `http://127.0.0.1:${disabledServer.address().port}`;
+      const me = await fetch(`${disabledBaseUrl}/api/auth/me`, {
+        headers: { cookie: session.cookie }
+      });
+      assert.deepEqual(await me.json(), { user: null, csrfToken: null });
+      assert.equal((await fetch(`${disabledBaseUrl}/api/wellness`, {
+        headers: { cookie: session.cookie }
+      })).status, 401);
+    } finally {
+      await new Promise((resolve) => disabledServer.close(resolve));
+    }
+
+    const repeated = await ensureDemoAccount(fixture.pool, {
+      DEMO_ACCOUNT_ENABLED: 'true',
+      DEMO_EMAIL: email,
+      DEMO_PASSWORD: password
+    });
+    assert.equal(repeated.created, false);
+    assert.equal((await fetch(`${fixture.baseUrl}/api/wellness`, {
+      headers: { cookie: session.cookie }
+    })).status, 401);
+  } finally {
+    await fixture.close();
+  }
+});
+
+test('demo account setup never takes over a regular account', async () => {
+  const fixture = await createFixture();
+  try {
+    const email = 'student@example.test';
+    const password = await createVerifiedUser(fixture, email);
+    await assert.rejects(
+      ensureDemoAccount(fixture.pool, {
+        DEMO_ACCOUNT_ENABLED: 'true',
+        DEMO_EMAIL: email,
+        DEMO_PASSWORD: 'demo-presentation-password-2026'
+      }),
+      { code: 'DEMO_EMAIL_IN_USE' }
+    );
+    assert.equal((await post(fixture.baseUrl, '/api/auth/login', { email, password })).status, 200);
+  } finally {
+    await fixture.close();
+  }
+});
 
 function post(baseUrl, route, body, session) {
   const headers = { 'content-type': 'application/json' };

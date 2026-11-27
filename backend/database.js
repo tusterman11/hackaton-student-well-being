@@ -136,6 +136,11 @@ async function migrateDatabase(pool) {
       }
       await client.query('INSERT INTO schema_migrations (version) VALUES (1)');
     }
+    const demoColumn = await client.query('SELECT version FROM schema_migrations WHERE version = 2');
+    if (demoColumn.rowCount === 0) {
+      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT FALSE');
+      await client.query('INSERT INTO schema_migrations (version) VALUES (2)');
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
