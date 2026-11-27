@@ -9,6 +9,8 @@ import { GentleReminder } from './components/GentleReminder';
 import { PersonalViews } from './components/PersonalViews';
 import { AuthView } from './components/AuthView';
 import {
+  clearChatHistory,
+  fetchChatHistory,
   fetchWeeklyHistory,
   fetchWellnessData,
   getCurrentSession,
@@ -173,15 +175,17 @@ export default function App() {
     })), [history.pauses]);
 
   async function loadAccountData() {
-    const [nextHistory, nextWellness] = await Promise.all([
+    const [nextHistory, nextWellness, nextChat] = await Promise.all([
       fetchWeeklyHistory(),
-      fetchWellnessData()
+      fetchWellnessData(),
+      fetchChatHistory()
     ]);
     setHistory(nextHistory);
     setWellnessData(nextWellness);
     const checkin = nextHistory.checkins.find((item) => isToday(item.created_at)) || null;
     setTodayCheckin(checkin);
     setDailyNote(checkin?.note || '');
+    setChatMessages(nextChat.length > 0 ? nextChat : [WELCOME_CHAT_MESSAGE]);
 
     if (nextWellness.localImportAvailable) {
       const local = readLocalRecords();
@@ -311,9 +315,6 @@ export default function App() {
   }
 
   async function handleSendChatMessage(message) {
-    const historyMessages = chatMessages
-      .slice(-10)
-      .map(({ role, content }) => ({ role, content }));
     const userMessage = { id: `user-${Date.now()}`, role: 'user', content: message };
 
     setIsChatSending(true);
@@ -321,16 +322,22 @@ export default function App() {
     try {
       const response = await sendChatMessage({
         message,
-        history: historyMessages,
         mood: todayCheckin?.mood,
         energy: todayCheckin?.energy
       });
-      setChatMessages((current) => [...current, {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: response.reply,
-        supportLevel: response.supportLevel
-      }]);
+      if (response.messages) {
+        setChatMessages((current) => [
+          ...current.filter((item) => item.id !== userMessage.id),
+          ...response.messages
+        ]);
+      } else {
+        setChatMessages((current) => [...current, {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: response.reply,
+          supportLevel: response.supportLevel
+        }]);
+      }
     } catch (error) {
       setChatMessages((current) => [...current, {
         id: `error-${Date.now()}`,
@@ -340,6 +347,15 @@ export default function App() {
       }]);
     } finally {
       setIsChatSending(false);
+    }
+  }
+
+  async function handleClearChatHistory() {
+    try {
+      await clearChatHistory();
+      setChatMessages([WELCOME_CHAT_MESSAGE]);
+    } catch (error) {
+      setDataError(error.message);
     }
   }
 
@@ -394,6 +410,7 @@ export default function App() {
           messages={chatMessages}
           isSending={isChatSending}
           onSendMessage={handleSendChatMessage}
+          onClearHistory={handleClearChatHistory}
           onNavigate={setActiveTab}
         />
       )}

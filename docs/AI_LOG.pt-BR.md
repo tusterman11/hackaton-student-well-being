@@ -164,6 +164,23 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** A pessoa solicitou ajustes sucessivos de responsividade, expansão/recolhimento do menu, destaque de hover, bordas quadradas do cabeçalho inicial, tema escuro, cor verde do botão móvel e contraste do texto. A implementação foi refinada conforme esse feedback. A compilação do front não foi confirmada nesta conversa porque o processo ficou sem saída e precisou ser interrompido.
 - **Status:** Adaptado
 
+### 018: Documentação alinhada ao projeto funcional
+- **Data:** 26/11/2026
+- **Quem:** GitHub Copilot no VS Code
+- **Ferramenta:** Copilot SDK
+- **Prompt / objetivo:** Atualizar a documentação do projeto para refletir a aplicação implementada e registrar claramente o workflow de CI funcional.
+- **O que a IA gerou:** Atualizou os READMEs do projeto em inglês e português, criou READMEs na raiz, atualizou o README do front-end e corrigiu nas decisões o status da implementação, a quantidade de testes, as rotas da API e as seções de CI/CD.
+- **O que a equipe revisou / alterou:** O código foi verificado localmente antes da atualização: 8 testes do back-end e 5 do front-end passam, ambos os linters passam e ambos os builds passam. A equipe deve manter a chave do Gemini e o status do provedor ao vivo como informações específicas do ambiente, nunca como segredo versionado.
+- **Status:** Adaptado
+
+### 019: PostgreSQL por conta, conversa persistente e atualização da documentação
+- **Data:** 27/11/2026
+- **Quem:** Matheus Epifanio de Souza (Presentation Lead)
+- **Ferramenta:** OpenAI Codex (assistente de programação)
+- **Prompt / objetivo:** Perguntou como funcionariam o cadastro aberto e a persistência no Render, pediu que a Interlude mantivesse o histórico e usasse os dados semanais da conta, solicitou trazer somente `docs/` da `main` e, depois, alinhar a documentação às versões atuais de Node/Vite e registrar mudanças que ainda não estavam documentadas.
+- **O que a IA gerou:** Adicionou uma migração PostgreSQL para mensagens de chat por conta, rotas para carregar e apagar o histórico da conta autenticada, persistência das conversas no servidor e um resumo compacto dos últimos sete dias (check-ins, pausas, água, sono, hábitos e foco) enviado ao Gemini. O texto do Diário fica fora do contexto enviado ao Gemini. A tela restaura as mensagens salvas, oferece apagar o histórico e informa quais dados são enviados. Atualizou os READMEs e as decisões bilíngues para descrever contas, PostgreSQL, SMTP, configuração no Render e as versões de Node/Vite do projeto. Documentou o SMTP do Gmail como alternativa ao Brevo, o bloqueio de portas SMTP no Render Free, a alternativa SMTP pela porta 2525 e APIs HTTPS. Incluiu um exemplo de Mailjet para Render Free com variáveis SMTP e validação do remetente.
+- **O que a equipe revisou / alterou:** A pessoa confirmou que Node 20.12.2 deve ser mantido e que o Vite precisa continuar na linha compatível Vite 5. A pasta `docs/` foi sincronizada com o commit buscado da `main` e depois corrigida para refletir esta branch. O SMTP pela porta 2525 não foi testado. Nenhum teste ou envio real por SMTP/Gemini foi verificado nesta atualização; ainda falta configurar credenciais reais no Render.
+- **Status:** Adaptado; verificação local e em produção pendente
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_

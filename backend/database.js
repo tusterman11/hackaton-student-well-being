@@ -141,6 +141,19 @@ async function migrateDatabase(pool) {
       await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT FALSE');
       await client.query('INSERT INTO schema_migrations (version) VALUES (2)');
     }
+    const chatHistory = await client.query('SELECT version FROM schema_migrations WHERE version = 3');
+    if (chatHistory.rowCount === 0) {
+      await client.query(`CREATE TABLE IF NOT EXISTS chat_messages (
+        id BIGSERIAL PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+        content TEXT NOT NULL CHECK (length(content) BETWEEN 1 AND 16000),
+        support_level TEXT NOT NULL DEFAULT 'none' CHECK (support_level IN ('none', 'suggested', 'urgent')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`);
+      await client.query('CREATE INDEX IF NOT EXISTS chat_messages_user_id_idx ON chat_messages(user_id, id DESC)');
+      await client.query('INSERT INTO schema_migrations (version) VALUES (3)');
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

@@ -164,6 +164,23 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** The user gave several rounds of feedback on responsiveness, sidebar expansion/collapse, hover highlighting, square home-header corners, dark mode, the mobile menu's green color, and dark-text contrast. The implementation was refined to match. The front-end build was not confirmed in this conversation because the process produced no output and had to be stopped.
 - **Status:** Adapted
 
+### 018: Documentation aligned with the working project
+- **Date:** 2026-11-26
+- **Who:** GitHub Copilot in VS Code
+- **Tool:** Copilot SDK
+- **Prompt / purpose:** Update project documentation to match the implemented application and explicitly document the working CI workflow.
+- **What the AI generated:** Updated the English and Portuguese project READMEs, added root READMEs, updated the front-end README, and corrected the implementation status, test counts, API routes, and CI/CD sections in the documentation.
+- **What the team reviewed / changed:** The code was verified locally before the documentation update: 8 back-end tests and 5 front-end tests pass, both linters pass, and both builds pass. The team should keep the Gemini key and live-provider status as environment-specific information rather than a committed secret.
+- **Status:** Adapted
+
+### 019: Account-based PostgreSQL, persistent chat, and documentation refresh
+- **Date:** 2026-11-27
+- **Who:** Matheus Epifanio de Souza (Presentation Lead)
+- **Tool:** OpenAI Codex (coding assistant)
+- **Prompt / purpose:** Asked how public sign-up and Render persistence should work, requested that Interlude retain chat history and use the account's weekly routine data, asked to bring only `docs/` from `main`, and then asked to align the docs with the active Node/Vite versions and record undocumented changes.
+- **What the AI generated:** Added a PostgreSQL migration for per-account chat messages, endpoints to load and clear the signed-in account's history, server-side turn persistence, and a compact seven-day summary of check-ins, pauses, hydration, sleep, habits, and focus for Gemini. Diary text is excluded from the Gemini context. The chat UI restores saved messages, exposes a clear-history action, and explains the data sent to Gemini. Updated the bilingual README and decisions documents with the account/PostgreSQL architecture, SMTP setup, Render configuration, and locked Node/Vite versions. Documented Gmail SMTP as an alternative to Brevo, the Render Free SMTP port block, SMTP on alternate port 2525, and HTTPS email APIs. Added a Mailjet SMTP example for Render Free, including its SMTP variables and sender-verification requirement.
+- **What the team reviewed / changed:** The user clarified that Node 20.12.2 must be retained and that Vite must remain on the compatible Vite 5 line. Docs were synchronized from the fetched `main` commit before being corrected for this branch. Render Free blocks ports 25, 465, and 587; a provider's SMTP on 2525 may work, but it was not tested. No tests or live SMTP/Gemini verification were run during this update; the Render deployment still needs real credentials.
+- **Status:** Adapted; local and production verification pending
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_

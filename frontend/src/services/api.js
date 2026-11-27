@@ -132,3 +132,11 @@ export async function importLocalData(data, skip = false) {
 export async function sendChatMessage(payload) {
   return request('/chat', { method: 'POST', body: payload });
 }
+
+export async function fetchChatHistory() {
+  return request('/chat/history');
+}
+
+export async function clearChatHistory() {
+  return request('/chat/history', { method: 'DELETE', body: {} });
+}

@@ -4,15 +4,18 @@
 
 Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e indicar o que foi decidido, as alternativas consideradas e o motivo da escolha.
 
-## Status da implementação
+## Status da implementação — 27/11/2026 (`feat/entrepausas-postgres-auth`)
 
-- **Contas:** Cadastro por e-mail com confirmação; a senha é definida após abrir o link, evitando ativar uma senha escolhida por outra pessoa antes da confirmação. Há login, logout, recuperação de senha, cookie `HttpOnly`, proteção CSRF e limite de tentativas.
-- **Persistência:** Check-ins, pausas e dados de água, diário, metas, sono e estudos são associados à conta em PostgreSQL. Rotas de leitura e gravação validam a sessão e o proprietário dos registros.
-- **Importação local:** O app solicita consentimento antes de importar dados de `localStorage` e só remove a cópia local após sucesso. Datas antigas incompletas são tratadas de forma explícita; registros anônimos do SQLite legado não são associados automaticamente.
-- **Privacidade:** O histórico do chat não é persistido pelo app, mas as mensagens são enviadas ao Gemini quando configurado. Evite compartilhar dados identificáveis.
-- **Deploy:** Ainda não foi feito. PostgreSQL e SMTP reais precisam ser configurados; o front e a API devem compartilhar a mesma origem HTTPS para a sessão por cookie.
-- **Testes:** Há suítes `node --test` no back-end e Vitest/Testing Library no front-end. Não há workflow ativo do GitHub Actions.
-
+- **Contas:** Cadastro aberto por e-mail, confirmação do endereço, login com senha, logout e recuperação de senha estão implementados. Sessões usam cookies seguros, proteção CSRF e limites de tentativas. É necessário SMTP para enviar links; o app aceita qualquer provedor SMTP autenticado.
+- **Envio de e-mail no Render:** O Render Free bloqueia as portas SMTP de saída 25, 465 e 587. O SMTP do Gmail precisa ser usado localmente ou em um serviço Render pago. Um provedor que aceite a porta 2525 pode funcionar com o mailer atual; uma API HTTPS também é opção, mas exige integração.
+- **Persistência:** O PostgreSQL guarda check-ins, pausas, água, diário, hábitos, sono, estudos, foco, configurações e mensagens de chat, sempre associados à conta autenticada. As migrações do banco rodam quando o servidor inicia. As rotas de dados verificam a conta dona dos registros.
+- **Importação local:** A primeira sessão da conta pode importar dados compatíveis do navegador, após consentimento. A cópia local só é removida depois da importação bem-sucedida. Registros anônimos do antigo SQLite não são associados automaticamente a uma conta.
+- **Conta demo:** Uma conta compartilhada opcional é controlada por `DEMO_ACCOUNT_ENABLED`, `DEMO_EMAIL` e `DEMO_PASSWORD`. Use apenas dados fictícios e desative-a quando não precisar oferecer uma demonstração compartilhada.
+- **Chat e Gemini:** O servidor salva as conversas por conta e restaura até as 100 mensagens mais recentes na interface. O Gemini recebe o contexto recente da conversa e um resumo compacto de dados numéricos da rotina dos últimos sete dias; o texto do Diário não é enviado. A pessoa pode apagar o histórico. A chave Gemini fica somente no servidor.
+- **Versões do Node e Vite:** Mantenha Node `20.12.2`, definido em `.nvmrc`. As versões declaradas do front são Vite `^5.4.10` (lockfile `5.4.21`) e Vitest `^2.1.9` (lockfile `2.1.9`); não atualize esses pacotes separadamente do requisito de compatibilidade com Node.
+- **Interface:** A barra lateral do desktop expande ao passar o mouse; no celular, a navegação usa um botão de menu compacto. A preferência do tema claro/escuro fica salva no navegador. Em desenvolvimento, `localhost:3000` redireciona ao Vite em `localhost:5173`; em produção, o Express serve `frontend/dist`.
+- **Apoio e lembretes:** Os links de apoio e o controle para abrir o lembrete manualmente estão implementados. O lembrete automático após 45 a 60 minutos ainda não está implementado. A assistente não é profissional de saúde nem serviço de emergência.
+- **CI:** `.github/workflows/ci.yml` instala dependências, executa lint, testes e build nos dois pacotes em pull requests e pushes para `main`. Esta atualização não afirma que os testes foram executados localmente agora.
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
   1. **Check-in diário:** Uma pergunta simples de humor e energia por dia (escala de 1 a 5 com linguagem cuidadosa) + nota opcional, sem notas ou comparações.
@@ -37,18 +40,11 @@ Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e 
 ## 25/11/2026 — Suíte Vitest do Front-end e Compatibilidade com Node 20
 - **Decisão:** Usar Vitest com Testing Library e jsdom para testes de integração focados no front-end e manter apenas os comportamentos essenciais do MVP na suíte inicial.
 - **Alternativas consideradas:** Continuar usando Jest, criar snapshots amplos de componentes e adicionar uma suíte browser end-to-end ao mesmo tempo.
-- **Justificativa:** Vitest se integra ao Vite e não exige Jest como executor. A suíte cobre navegação, check-ins, fluxo de contas, importação de dados locais, pausas e erros no chat. O projeto usa atualmente Vite 5.4.21 e Vitest 2.1.9 para manter compatibilidade com o Node 20.12.2.
+- **Justificativa:** Vitest se integra ao Vite e não exige Jest como executor. A primeira suíte cobre navegação, check-ins normais e de sofrimento, registro de pausas e falhas no chat. Vitest 3.2.4 e jsdom 26.1.0 foram usados por serem compatíveis com o Node 20.12.2 dos computadores do laboratório; as versões serão revistas antes de atualizar Node ou Vite.
 
-## 26/11/2026 — Contas, PostgreSQL e sincronização entre dispositivos
-- **Decisão:** Substituir a persistência de dispositivo por contas com e-mail verificado e PostgreSQL, para que registros pessoais possam acompanhar a pessoa entre dispositivos. O acesso exige sessão autenticada e os dados permanecem privados por usuário.
-- **Alternativas consideradas:** Manter `localStorage`/SQLite por dispositivo ou usar armazenamento local sem login.
-- **Justificativa:** SQLite local não sincroniza entre computadores. PostgreSQL hospedado permite sincronização; a importação dos dados do navegador exige consentimento e os registros anônimos do SQLite antigo não são atribuídos automaticamente.
-- **Operação:** O deploy no Render depende de configurar PostgreSQL, SMTP e segredos de ambiente. Ainda não foi publicado nem testado com serviços reais.
-
-## 24/11/2026 — Banco de Dados (`better-sqlite3`), Privacidade e Identificador Anônimo por Dispositivo (decisão substituída)
-- **Decisão histórica:** Utilizar **SQLite via `better-sqlite3` com SQL puro** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
+## 24/11/2026 — Banco de Dados (`better-sqlite3`), Privacidade e Identificador Anônimo por Dispositivo
+- **Decisão:** Utilizar **SQLite via `better-sqlite3` com SQL puro** e identificar cada pessoa por um **ID anônimo gerado por dispositivo** salvo no navegador, em vez de criar cadastro com senha.
 - **Alternativas consideradas:** Prisma ORM; cadastro com e-mail e senha (JWT); login social OAuth; PostgreSQL em nuvem.
-- **Status:** Decisão substituída em 26/11/2026 por PostgreSQL e contas verificadas; registros anônimos do SQLite antigo não são atribuídos automaticamente a uma conta.
 - **Justificativa:** O `better-sqlite3` com SQL puro evita problemas de migração de ORM, dispensa configuração de servidor e executa de forma síncrona com alta estabilidade no CI. O identificador anônimo por dispositivo evita o atrito do login e foi escolhido para separar o histórico de cada pessoa. Ele ainda não está associado aos registros no servidor; consulte o status da implementação acima.
 
 ## 24/11/2026 — Regras de Segurança da IA e Estratégia de Fallback

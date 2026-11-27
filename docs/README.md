@@ -31,29 +31,33 @@ Students facing intense study routines, deadlines, and project weeks often negle
 - **Quick Daily Check-in:** Simple mood and energy rating with welcoming, non-judgmental wording.
 - **Micro-Breaks & Habit Log:** One-click logging for small actions (drinking water, stretching, taking a 5-minute break).
 - **AI Companion Chat:** A conversation on the “Conversa” tab, handled by the back-end through the Google Gemini API with a fixed, supportive system prompt. It offers optional small breaks, does not diagnose, and points users to human support when appropriate.
-- **Private 7-Day History:** Account-scoped view of recent check-ins and breaks without comparative scores.
+- **Private 7-Day History:** Per-account view of recent check-ins and breaks without comparative scores.
 - **Gentle On-Screen Reminder:** Non-intrusive prompt encouraging a short pause during study sessions.
 - **Professional Support Section:** A dedicated screen with real support channels (e.g., CVV - 188, SAMU 192, and campus student support), accessible from the main navigation.
 
 ## Current implementation status
 
-- Account registration requires email verification; users set their password after opening the verification link. Login and password reset use `HttpOnly` session cookies, CSRF protection, and rate limits.
-- Check-ins, breaks, hydration, journal entries, goals, sleep, and study schedules are associated with the signed-in account and stored in PostgreSQL. Reads and changes are scoped to the authenticated user.
-- After sign-in, users can consent to importing legacy `localStorage` entries. Local copies are removed only after a successful import; entries without a reliable date are assigned today's date. Anonymous check-ins and breaks from the old SQLite database are not automatically attributed to an account.
-- The chat calls Gemini through `POST /api/chat` when `GEMINI_API_KEY` is configured. Messages are sent to Gemini for replies, but the app does not persist conversation history. Avoid sharing identifying details.
-- SMTP is required for registration and password recovery. PostgreSQL and SMTP still need to be configured in the runtime environment; **the app has not been deployed to Render**.
-- In production, the app serves the built front end and API on the same origin, which is required by the current session-cookie setup.
-- The support screen and its contact links are implemented. The assistant is not a therapist or emergency service.
+- **Accounts:** Open email registration, email verification, password login, logout, and password reset are implemented. Registration and password reset require working SMTP settings. Each account is scoped by its authenticated user ID.
+- **PostgreSQL persistence:** Check-ins, breaks, water, journal, habits, sleep, study, focus, and settings are stored in PostgreSQL. The server applies schema migrations at startup. The `DATABASE_URL` must point to the persistent Render PostgreSQL service in production.
+- **Local data import:** On first sign-in, the app offers to import supported browser `localStorage` records into the account. The local copy is removed only after a successful import. Legacy anonymous SQLite check-ins and breaks cannot be assigned to an account automatically.
+- **Chat:** `POST /api/chat` uses Gemini when `GEMINI_API_KEY` is configured. Per-account conversation history is stored in PostgreSQL and the latest messages are restored after signing in. Users can delete their conversation. Gemini receives the current message, recent chat context, and a short seven-day summary of routine metrics; diary text is excluded.
+- **Privacy:** The Gemini key stays on the server. The chat screen explains what is stored and what summary is sent to Gemini. Users should avoid including identifying details in chat or diary entries.
+- **Demo account:** `DEMO_ACCOUNT_ENABLED=true` enables one shared demonstration account. It is for fictional presentation data only; normal sign-up is open and does not require an allowlist. Disable the demo account for public use if it is no longer needed.
+- **Local development:** The back end redirects `http://localhost:3000` to the Vite front end at `http://localhost:5173`; Vite proxies `/api` to the back end. In production, Express serves `frontend/dist`.
+- **Support and reminders:** Support links are implemented. The reminder can be opened manually; an automatic 45–60 minute timer is not implemented. The assistant is not a health professional or emergency service.
 
 ## Stack
 
 - **Front-end:** React + Vite (JavaScript, HTML, and CSS)
 - **Back-end:** Node.js + Express (JavaScript)
-- **Database:** PostgreSQL via `pg` (parameterized SQL and startup migration)
-- **AI Integration:** The back end uses Google's Gemini API through Node's built-in `fetch` for chat and tips. The API key is read from the server environment.
-- **Email:** SMTP via Nodemailer for account verification and password recovery.
-- **Tests:** `node --test` for the back end and Vitest/Testing Library for the front end.
-- **CI:** No GitHub Actions workflow is present in the current feature branch.
+- **Database:** PostgreSQL via `pg` (plain SQL and startup migrations)
+- **Authentication and email:** Account sessions are protected by `HttpOnly` cookies and CSRF checks. Nodemailer sends verification and password-reset messages using any SMTP provider.
+- **AI Integration:** The back end calls Google's Gemini API. The API key is read from the server environment.
+- **Runtime:** Node.js `20.12.2` (root `.nvmrc`; backend engine requires `>=20.12.0`)
+- **Front-end tooling:** Vite `^5.4.10` (lockfile resolves `5.4.21`), Vitest `^2.1.9` (lockfile resolves `2.1.9`), React `18.3.1`, and jsdom `26.1.0`.
+- **Tests and CI:** The backend uses `node --test`; the frontend uses Vitest and Testing Library. `.github/workflows/ci.yml` runs lint, tests, and builds for both packages on pull requests and pushes to `main`.
+- **Tests:** The back end has a `node --test` script and eight tests. The front end has Vitest, Testing Library and five integration tests.
+- **CI:** `.github/workflows/ci.yml` runs lint, tests and builds for both the back end and front end on pull requests and pushes to `main`.
 
 ## Folder structure
 
@@ -63,11 +67,9 @@ Students facing intense study routines, deadlines, and project weeks often negle
 ├── .nvmrc
 ├── backend/
 │   ├── .env.example
-│   ├── auth.js
-│   ├── database.js
-│   ├── email.js
+│   ├── eslint.config.js
 │   ├── package.json
-│   ├── wellness.js
+│   ├── package-lock.json
 │   ├── server.js
 │   └── server.test.js
 ├── docs/
@@ -98,15 +100,12 @@ Students facing intense study routines, deadlines, and project weeks often negle
 │   │   │   ├── GardenView.jsx
 │   │   │   ├── GentleReminder.jsx
 │   │   │   ├── HomeView.jsx
-│   │   │   ├── AuthView.jsx
-│   │   │   ├── PersonalViews.jsx
 │   │   │   └── SupportView.jsx
 │   │   ├── services/
 │   │   │   └── api.js
 │   │   ├── styles/
 │   │   │   └── theme.css
 │   │   ├── utils/
-│   │   │   ├── appStorage.js
 │   │   │   └── deviceId.js
 │   │   ├── App.css
 │   │   ├── App.jsx
@@ -119,54 +118,67 @@ Students facing intense study routines, deadlines, and project weeks often negle
 
 ### Prerequisites
 
-- Node.js 20.12.2 (see `.nvmrc`)
-- npm (v10 or higher)
-- Local PostgreSQL or an accessible `DATABASE_URL`
-- SMTP credentials to test registration and password recovery
-- Gemini API key is optional and only needed to enable AI replies
+- Node.js `20.12.2` (use the version in `.nvmrc`)
+- npm compatible with Node.js 20.12.2
+- PostgreSQL and a `DATABASE_URL`
+- SMTP credentials to enable email registration and password reset
+- Gemini API key for AI replies (optional for the rest of the app)
 
 ### Back-end
 
-In PowerShell:
-
-```powershell
+```bash
 cd backend
-Copy-Item .env.example .env
-# Edit .env: DATABASE_URL and SMTP credentials are required for accounts.
+cp .env.example .env
+# Set DATABASE_URL, APP_BASE_URL, FRONTEND_ORIGIN and SMTP values in .env.
+# Add GEMINI_API_KEY only if you want to enable AI replies.
 npm ci
 npm run dev
 ```
 
-The server applies the PostgreSQL schema migration on startup. `GEMINI_API_KEY` can remain empty if the AI feature is not needed.
+The server applies PostgreSQL migrations at startup. For local development, use a local PostgreSQL database and set `APP_BASE_URL` and `FRONTEND_ORIGIN` to `http://localhost:5173`.
 
 ### Front-end
 
-In a second terminal:
-
-```powershell
+```bash
 cd frontend
 npm ci
 npm run dev
 ```
 
-Vite proxies `/api` requests to the server at `localhost:3000`.
+Open `http://localhost:5173`. The Vite development server forwards `/api` requests to `localhost:3000`.
 
 ## CI/CD
 
-The current branch has no GitHub Actions workflow. Run `npm test`, `npm run lint`, and `npm run build` in both `backend/` and `frontend/` for local checks.
+The repository has a working GitHub Actions workflow at [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). It runs on pull requests and pushes to `main`, with separate back-end and front-end jobs that install with `npm ci`, lint, test, and build.
 
-## Deploy
+The workflow uses Node 20 and runs each package's lint, test, and build scripts. The project's local Node version is pinned separately in `.nvmrc` to `20.12.2`.
 
-Deployment has not been performed. To publish using a Render Web Service:
+## Deploy on Render
 
-1. Create a Render PostgreSQL database and set the service's `DATABASE_URL` to its internal connection URL.
-2. Set `NODE_ENV=production`, `APP_BASE_URL`, and `FRONTEND_ORIGIN` to the same public HTTPS origin as the service.
-3. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. Set `GEMINI_API_KEY` only if AI chat should be enabled.
-4. Use build command `npm --prefix backend ci --omit=dev && npm --prefix frontend ci --include=dev && npm --prefix frontend run build` and start command `npm --prefix backend start`. Render provides `PORT`; the PostgreSQL migration runs on startup.
-5. For a temporary demo account without email, set `DEMO_ACCOUNT_ENABLED=true`, `DEMO_EMAIL=demo@entrepausas.test`, and `DEMO_PASSWORD` to a 12-128 character password. The server creates this account with synthetic records and blocks demo access when the variable is set back to `false`.
-6. Never commit credentials or use real personal data in the demo account.
+Use one Node web service to run the back end and serve the built front end, plus a Render PostgreSQL database. Set the web service build command to `npm --prefix backend ci --omit=dev && npm --prefix frontend ci --include=dev && npm --prefix frontend run build` and the start command to `npm --prefix backend start`. Configure `NODE_ENV=production`, `DATABASE_URL`, `APP_BASE_URL` and `FRONTEND_ORIGIN` using the public HTTPS URL of the service, plus the Gemini and SMTP variables if those features are enabled. Set `SMTP_FROM` to a sender address accepted by the chosen provider. Keep `DEMO_ACCOUNT_ENABLED=false` for normal public use unless a shared demo login is intentionally offered. Add secrets in Render's Environment settings; do not commit them.
 
-The front end and API must remain on the same domain for cookie sessions to work. A live PostgreSQL/SMTP test and deployment are still pending.
+The app accepts any authenticated SMTP service; Brevo is not required. Gmail SMTP uses `smtp.gmail.com`, port `587`, `SMTP_SECURE=false`, the full Gmail address as `SMTP_USER`, and a Google App Password as `SMTP_PASS`. Google requires 2-Step Verification for app passwords, and some managed or protected accounts cannot create them. Use a dedicated sender mailbox and never put its normal sign-in password in Render. **Render Free web services block outbound SMTP ports 25, 465, and 587**, so Gmail SMTP works locally or on a paid Render web service, but not on Render Free. Some providers also support SMTP on port `2525`; for example, Mailgun documents that port. Render's current block list does not include `2525`, so a provider that supports it may work with the existing SMTP mailer, subject to provider account/domain verification and a connectivity check. An email provider's HTTPS API on port `443` is another option, but the current mailer would need an API integration for it.
+
+## Email setup on Render Free
+
+### Mailjet SMTP example
+
+Mailjet documents SMTP host `in-v3.mailjet.com` and supports port `2525`. Create an account, validate the sender address or domain, then find the SMTP API key and secret under Account settings → SMTP and SEND API settings. In the Render web service's Environment settings, add:
+
+```env
+SMTP_HOST=in-v3.mailjet.com
+SMTP_PORT=2525
+SMTP_SECURE=false
+SMTP_USER=your-mailjet-api-key
+SMTP_PASS=your-mailjet-secret-key
+SMTP_FROM="EntrePausas <verified-sender@example.com>"
+```
+
+Save and deploy the service, then test registration using an email address you can access. Do not commit the credentials. Mailjet currently lists a free plan with 6,000 messages per month and a 200-per-day limit; check its current pricing and account requirements before relying on those limits.
+
+- **Mailjet SMTP setup:** [SMTP relay configuration](https://dev.mailjet.com/docs/smtp-relay/configuration)
+- **Render environment settings:** [Environment variables and secrets](https://render.com/docs/configure-environment-variables)
+- **Mailjet plan details:** [Pricing](https://www.mailjet.com/pricing/)
 
 ## Links
 

@@ -4,14 +4,18 @@
 
 Record the team's important decisions here. Each entry should be short and state what was decided, the alternatives considered and the reason for the choice.
 
-## Current implementation status
+## Implementation status — 27/11/2026 (`feat/entrepausas-postgres-auth`)
 
-- **Accounts:** Email registration with verification; the user sets a password after opening the link, preventing someone else's pre-verification password from being activated. Login, logout, password recovery, `HttpOnly` cookies, CSRF protection, and rate limits are implemented.
-- **Persistence:** Check-ins, breaks, hydration, journal entries, goals, sleep, and study schedules are associated with an account in PostgreSQL. Read and write routes validate the session and record ownership.
-- **Local import:** The app asks for consent before importing `localStorage` data and removes local copies only after success. Incomplete legacy dates are handled explicitly; anonymous records from the old SQLite database are not automatically assigned to an account.
-- **Privacy:** Chat history is not persisted by the app, but messages are sent to Gemini when configured. Avoid sharing identifying information.
-- **Deployment:** Not performed yet. Real PostgreSQL and SMTP services still need configuration; the front end and API must use the same HTTPS origin for cookie sessions.
-- **Tests:** `node --test` and Vitest/Testing Library suites are available. No GitHub Actions workflow is active.
+- **Accounts:** Open email registration, email verification, password login, logout, and password reset are implemented. Sessions use secure cookies, CSRF checks, and rate limits. SMTP is required to deliver verification and reset links; the app supports any authenticated SMTP provider.
+- **Render email delivery:** Render Free blocks outbound SMTP ports 25, 465, and 587. Gmail SMTP therefore needs a local or paid Render service. A provider that supports port 2525 may work with the current SMTP mailer; an HTTPS email API is another option but needs an integration.
+- **Persistence:** PostgreSQL stores account-scoped check-ins, pauses, hydration, journal, habits, sleep, study, focus, settings, and chat messages. Database migrations run when the server starts. Every user data route is scoped to the authenticated account.
+- **Local import:** The first account session can import supported browser storage after consent. Local records are cleared only after a successful import. Anonymous records from the former SQLite database are not automatically linked to an account.
+- **Demo account:** An optional shared demo account is controlled by `DEMO_ACCOUNT_ENABLED`, `DEMO_EMAIL`, and `DEMO_PASSWORD`. It must contain synthetic data and should be disabled when a shared demo is unnecessary.
+- **Chat and Gemini:** The server stores conversation turns per account and restores up to the latest 100 in the interface. Gemini receives the latest conversation context and a compact seven-day summary of numeric routine data, not journal text. Users can delete chat history. The Gemini key stays server-side.
+- **Node and Vite versions:** Keep Node at `20.12.2` from `.nvmrc`. Front-end declarations are Vite `^5.4.10` (lockfile `5.4.21`) and Vitest `^2.1.9` (lockfile `2.1.9`); do not upgrade these independently of the Node compatibility requirement.
+- **Interface:** The desktop sidebar expands on hover and the mobile layout uses a compact menu button. The light/dark theme preference is stored in the browser. During development, `localhost:3000` redirects to Vite at `localhost:5173`; production serves `frontend/dist` from Express.
+- **Support and reminders:** Support links and a manual reminder control are implemented. The automatic 45–60 minute reminder is not implemented. The assistant is not a professional or emergency service.
+- **CI:** `.github/workflows/ci.yml` runs install, lint, tests, and builds for both packages on pull requests and pushes to `main`. This entry does not claim a fresh local test run.
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
@@ -37,18 +41,11 @@ Record the team's important decisions here. Each entry should be short and state
 ## 25/11/2026 — Front-End Vitest Suite and Node 20 Compatibility
 - **Decision:** Use Vitest with Testing Library and jsdom for focused front-end integration tests, and keep only the MVP-critical behaviors in the initial suite.
 - **Alternatives considered:** Continuing to use Jest, adding broad component snapshots, and adding an end-to-end browser suite at the same time.
-- **Rationale:** Vitest integrates with Vite and Jest is not needed as the runner. The suite covers navigation, check-ins, account flows, local-data import, breaks, and chat errors. The project currently uses Vite 5.4.21 and Vitest 2.1.9 to remain compatible with Node 20.12.2.
+- **Rationale:** Vitest integrates with Vite and Jest is not needed as the runner. The first suite covers navigation, successful and distressed check-ins, break registration and chat failures. Vitest 3.2.4 and jsdom 26.1.0 are used because they are compatible with the lab environment's Node 20.12.2; package versions will be reviewed before upgrading Node or Vite.
 
-## 26/11/2026 — Accounts, PostgreSQL, and cross-device sync
-- **Decision:** Replace device-only persistence with verified email accounts and PostgreSQL so personal records can follow the user between devices. Access requires an authenticated session and records remain private per user.
-- **Alternatives considered:** Keep per-device `localStorage`/SQLite or use local storage without sign-in.
-- **Rationale:** Local SQLite does not sync across computers. Hosted PostgreSQL enables synchronization; importing browser data requires consent, and anonymous rows from the legacy SQLite database are not automatically assigned to an account.
-- **Operations:** Render deployment depends on configuring PostgreSQL, SMTP, and environment secrets. It has not been published or tested against real services yet.
-
-## 24/11/2026 — Database (`better-sqlite3`), Privacy, and Anonymous Device ID (superseded)
+## 24/11/2026 — Database (`better-sqlite3`), Privacy, and Anonymous Device ID
 - **Decision:** Use **SQLite via `better-sqlite3` with plain SQL** and identify users via an **anonymous per-device ID** stored in the browser, rather than full user accounts.
 - **Alternatives considered:** Prisma ORM; email/password authentication with JWT; OAuth social login; PostgreSQL on cloud servers.
-- **Status:** Superseded on 26/11/2026 by PostgreSQL and verified accounts; anonymous rows from the legacy SQLite database are not automatically assigned to an account.
 - **Rationale:** `better-sqlite3` with plain SQL avoids ORM migration issues, requires zero server setup, and executes synchronously with high reliability in CI. An anonymous per-device ID avoids login friction and is intended to scope each user's history. The ID is not yet connected to server-side records; see the implementation status above.
 
 ## 24/11/2026 — AI Safety Rules and Fallback Strategy
