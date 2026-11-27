@@ -258,7 +258,16 @@ describe('App', () => {
     render(<App />);
 
     await user.type(await screen.findByLabelText('E-mail'), 'new@example.test');
-    await user.type(screen.getByLabelText('Senha'), 'a-long-test-password-2026');
+    const passwordInput = screen.getByLabelText('Senha');
+    expect(passwordInput).toHaveAttribute('type', 'password');
+
+    await user.type(passwordInput, 'a-long-test-password-2026');
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar senha' }));
+    expect(passwordInput).toHaveAttribute('type', 'text');
+
+    await user.click(screen.getByRole('button', { name: 'Ocultar senha' }));
+    expect(passwordInput).toHaveAttribute('type', 'password');
     await user.click(screen.getByRole('button', { name: 'Entre na sua conta' }));
 
     expect(await screen.findByRole('heading', { name: 'Como está o seu céu hoje?' })).toBeInTheDocument();

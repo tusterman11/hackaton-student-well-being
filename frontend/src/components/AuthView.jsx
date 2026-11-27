@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Leaf, Moon, Sun } from 'lucide-react';
+import { Eye, EyeOff, Leaf, Moon, Sun } from 'lucide-react';
 import {
   confirmPasswordReset,
   loginAccount,
@@ -13,6 +13,7 @@ export function AuthView({ onAuthenticated, isDarkMode, onToggleTheme, startupEr
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [confirmation, setConfirmation] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [verificationToken, setVerificationToken] = useState('');
@@ -153,20 +154,33 @@ export function AuthView({ onAuthenticated, isDarkMode, onToggleTheme, startupEr
             </label>
           )}
           {mode !== 'forgot' && mode !== 'register' && (
-            <label htmlFor="account-password">
-              {mode === 'reset' ? 'Nova senha' : 'Senha'}
-              <input
-                id="account-password"
-                type="password"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                minLength={mode === 'login' ? undefined : 12}
-                maxLength={128}
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
+            <div className="auth-password-group">
+              <label htmlFor="account-password">{mode === 'reset' ? 'Nova senha' : 'Senha'}</label>
+              <div className="auth-password-input">
+                <input
+                  id="account-password"
+                  type={mode === 'login' && isPasswordVisible ? 'text' : 'password'}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  minLength={mode === 'login' ? undefined : 12}
+                  maxLength={128}
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                {mode === 'login' && (
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    aria-label={isPasswordVisible ? 'Ocultar senha' : 'Mostrar senha'}
+                    aria-pressed={isPasswordVisible}
+                    onClick={() => setIsPasswordVisible((visible) => !visible)}
+                  >
+                    {isPasswordVisible ? <EyeOff size={19} /> : <Eye size={19} />}
+                  </button>
+                )}
+              </div>
               {mode !== 'login' && <small className="muted">Use de 12 a 128 caracteres.</small>}
-            </label>
+            </div>
           )}
           {(mode === 'reset' || mode === 'verify') && (
             <label htmlFor="account-password-confirm">
