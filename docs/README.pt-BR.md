@@ -32,8 +32,8 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 - **Registro de Micro-Pausas e Hábitos:** Registro em um clique para pequenas ações (beber água, alongar, fazer uma pausa de 5 minutos).
 - **Conversa com IA:** Chat na aba “Conversa”, atendido pelo back-end via API do Google Gemini com um prompt fixo e acolhedor. A IA sugere pausas opcionais, não faz diagnósticos e indica apoio humano quando necessário.
 - **Histórico Privado de 7 Dias:** Visualização por conta dos check-ins e pausas recentes, sem pontuações comparativas.
-- **Lembrete Gentil na Tela:** Aviso discreto incentivando uma pausa curta durante sessões de estudo.
-- **Seção de Apoio Profissional:** Tela dedicada com canais reais de apoio (como CVV - 188, SAMU 192 e acolhimento estudantil do campus), acessível pela navegação principal.
+- **Lembrete Gentil Manual na Tela:** Um aviso discreto pode ser aberto pela tela inicial; ele não aparece automaticamente.
+- **Seção de Recursos de Apoio:** Tela dedicada com recursos reais (CVV 188, SAMU 192 e acolhimento estudantil do campus). Os links telefônicos `tel:` dependem de uma ação da pessoa e do aplicativo de chamadas disponível no dispositivo; não fazem ligações automaticamente.
 
 ## Status atual da implementação
 
@@ -44,7 +44,8 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 - **Privacidade:** A chave do Gemini fica no servidor. A tela da conversa informa o que é salvo e qual resumo é enviado ao Gemini. Evite incluir dados que identifiquem alguém no chat ou no Diário.
 - **Conta demo:** `DEMO_ACCOUNT_ENABLED=true` habilita uma conta demonstrativa compartilhada. Use somente dados fictícios; o cadastro normal é aberto e não exige lista de autorização. Desative a conta demo para uso público se ela não for mais necessária.
 - **Desenvolvimento local:** A raiz do back-end redireciona `http://localhost:3000` para o Vite em `http://localhost:5173`; o Vite encaminha `/api` ao back-end. Em produção, o Express serve `frontend/dist`.
-- **Apoio e lembretes:** A tela e os links de apoio estão implementados. O lembrete pode ser aberto manualmente; o temporizador automático de 45 a 60 minutos ainda não foi implementado. A assistente não é profissional de saúde nem serviço de emergência.
+- **Apoio e lembretes:** Os links para CVV 188 e SAMU 192 usam `tel:` e só iniciam o fluxo de chamada após uma ação da pessoa. A chamada depende de um aplicativo compatível no dispositivo; o app não liga nem aciona serviços de emergência automaticamente. O lembrete pode ser aberto manualmente; o temporizador automático de 45 a 60 minutos ainda não foi implementado. A assistente não é profissional de saúde nem serviço de emergência.
+- **Verificação de serviços externos:** O envio real por SMTP, uma chamada ao Gemini com chave válida e a implantação de produção no Render/PostgreSQL ainda precisam ser verificados com credenciais e ambiente reais.
 
 ## Stack
 
@@ -56,8 +57,8 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 - **Runtime:** Node.js `20.12.2` (definido em `.nvmrc`; o back-end exige `>=20.12.0`)
 - **Ferramentas do front-end:** Vite `^5.4.10` (lockfile resolve `5.4.21`), Vitest `^2.1.9` (lockfile resolve `2.1.9`), React `18.3.1` e jsdom `26.1.0`.
 - **Testes e CI:** O back-end usa `node --test`; o front-end usa Vitest e Testing Library. `.github/workflows/ci.yml` executa lint, testes e builds dos dois pacotes em pull requests e pushes para `main`.
-- **Testes:** O back-end tem script `node --test` e oito testes. O front-end tem Vitest, Testing Library e cinco testes de integração.
-- **CI:** `.github/workflows/ci.yml` executa lint, testes e builds do back-end e do front-end em pull requests e pushes na `main`.
+- **Última verificação local (27/11/2026):** Back-end: 11/11 testes, lint e build passaram. Front-end: 12/12 testes, lint e build passaram após instalar pelo lockfile com `npm ci`.
+- **CI:** `.github/workflows/ci.yml` executa lint, testes e builds dos dois pacotes em pull requests e pushes na `main`.
 
 ## Estrutura de pastas
 

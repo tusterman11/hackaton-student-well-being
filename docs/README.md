@@ -32,8 +32,8 @@ Students facing intense study routines, deadlines, and project weeks often negle
 - **Micro-Breaks & Habit Log:** One-click logging for small actions (drinking water, stretching, taking a 5-minute break).
 - **AI Companion Chat:** A conversation on the “Conversa” tab, handled by the back-end through the Google Gemini API with a fixed, supportive system prompt. It offers optional small breaks, does not diagnose, and points users to human support when appropriate.
 - **Private 7-Day History:** Per-account view of recent check-ins and breaks without comparative scores.
-- **Gentle On-Screen Reminder:** Non-intrusive prompt encouraging a short pause during study sessions.
-- **Professional Support Section:** A dedicated screen with real support channels (e.g., CVV - 188, SAMU 192, and campus student support), accessible from the main navigation.
+- **Manual Gentle On-Screen Reminder:** A non-intrusive prompt can be opened from the home screen; it does not appear automatically.
+- **Professional Support Section:** A dedicated screen with real support resources (CVV 188, SAMU 192, and campus student support). The phone links are user-initiated `tel:` links; they open the device's call handler when available and do not place calls automatically.
 
 ## Current implementation status
 
@@ -44,7 +44,8 @@ Students facing intense study routines, deadlines, and project weeks often negle
 - **Privacy:** The Gemini key stays on the server. The chat screen explains what is stored and what summary is sent to Gemini. Users should avoid including identifying details in chat or diary entries.
 - **Demo account:** `DEMO_ACCOUNT_ENABLED=true` enables one shared demonstration account. It is for fictional presentation data only; normal sign-up is open and does not require an allowlist. Disable the demo account for public use if it is no longer needed.
 - **Local development:** The back end redirects `http://localhost:3000` to the Vite front end at `http://localhost:5173`; Vite proxies `/api` to the back end. In production, Express serves `frontend/dist`.
-- **Support and reminders:** Support links are implemented. The reminder can be opened manually; an automatic 45–60 minute timer is not implemented. The assistant is not a health professional or emergency service.
+- **Support and reminders:** The CVV 188 and SAMU 192 links are implemented as user-initiated `tel:` links. Actual calling depends on a device call handler; the app does not automatically call or dispatch emergency services. The reminder can be opened manually; an automatic 45–60 minute timer is not implemented. The assistant is not a health professional or emergency service.
+- **External service verification:** Real SMTP delivery, a live Gemini request with a valid key, and the production Render/PostgreSQL deployment still require environment-specific verification.
 
 ## Stack
 
@@ -56,22 +57,32 @@ Students facing intense study routines, deadlines, and project weeks often negle
 - **Runtime:** Node.js `20.12.2` (root `.nvmrc`; backend engine requires `>=20.12.0`)
 - **Front-end tooling:** Vite `^5.4.10` (lockfile resolves `5.4.21`), Vitest `^2.1.9` (lockfile resolves `2.1.9`), React `18.3.1`, and jsdom `26.1.0`.
 - **Tests and CI:** The backend uses `node --test`; the frontend uses Vitest and Testing Library. `.github/workflows/ci.yml` runs lint, tests, and builds for both packages on pull requests and pushes to `main`.
-- **Tests:** The back end has a `node --test` script and eight tests. The front end has Vitest, Testing Library and five integration tests.
-- **CI:** `.github/workflows/ci.yml` runs lint, tests and builds for both the back end and front end on pull requests and pushes to `main`.
+- **Latest local verification (27/11/2026):** Backend 11/11 tests, lint, and build passed; frontend 12/12 tests, lint, and build passed after installing from its lockfile with `npm ci`.
 
 ## Folder structure
 
 ```text
 /
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── .gitignore
 ├── .nvmrc
 ├── backend/
 │   ├── .env.example
+│   ├── auth.js
+│   ├── database.js
+│   ├── email.js
 │   ├── eslint.config.js
+│   ├── gemini.js
+│   ├── gemini.test.js
 │   ├── package.json
 │   ├── package-lock.json
 │   ├── server.js
-│   └── server.test.js
+│   ├── server.test.js
+│   ├── tips.js
+│   ├── tips.test.js
+│   └── wellness.js
 ├── docs/
 │   ├── AI_LOG.md
 │   ├── AI_LOG.pt-BR.md
@@ -94,21 +105,27 @@ Students facing intense study routines, deadlines, and project weeks often negle
 │   │   ├── assets/
 │   │   │   └── react.svg
 │   │   ├── components/
+│   │   │   ├── AuthView.jsx
 │   │   │   ├── BottomNav.jsx
 │   │   │   ├── BreaksView.jsx
 │   │   │   ├── ChatView.jsx
 │   │   │   ├── GardenView.jsx
 │   │   │   ├── GentleReminder.jsx
 │   │   │   ├── HomeView.jsx
+│   │   │   ├── PersonalViews.jsx
 │   │   │   └── SupportView.jsx
 │   │   ├── services/
 │   │   │   └── api.js
 │   │   ├── styles/
 │   │   │   └── theme.css
+│   │   ├── test/
+│   │   │   └── setup.js
 │   │   ├── utils/
+│   │   │   ├── appStorage.js
 │   │   │   └── deviceId.js
 │   │   ├── App.css
 │   │   ├── App.jsx
+│   │   ├── App.test.jsx
 │   │   ├── index.css
 │   │   └── main.jsx
 │   └── vite.config.js

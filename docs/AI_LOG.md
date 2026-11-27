@@ -181,6 +181,16 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the AI generated:** Added a PostgreSQL migration for per-account chat messages, endpoints to load and clear the signed-in account's history, server-side turn persistence, and a compact seven-day summary of check-ins, pauses, hydration, sleep, habits, and focus for Gemini. Diary text is excluded from the Gemini context. The chat UI restores saved messages, exposes a clear-history action, and explains the data sent to Gemini. Updated the bilingual README and decisions documents with the account/PostgreSQL architecture, SMTP setup, Render configuration, and locked Node/Vite versions. Documented Gmail SMTP as an alternative to Brevo, the Render Free SMTP port block, SMTP on alternate port 2525, and HTTPS email APIs. Added a Mailjet SMTP example for Render Free, including its SMTP variables and sender-verification requirement.
 - **What the team reviewed / changed:** The user clarified that Node 20.12.2 must be retained and that Vite must remain on the compatible Vite 5 line. Docs were synchronized from the fetched `main` commit before being corrected for this branch. Render Free blocks ports 25, 465, and 587; a provider's SMTP on 2525 may work, but it was not tested. No tests or live SMTP/Gemini verification were run during this update; the Render deployment still needs real credentials.
 - **Status:** Adapted; local and production verification pending
+
+### 020: Documentation status and support-call behavior
+- **Date:** 2026-11-27
+- **Who:** Project maintainer
+- **Tool:** Copilot SDK in VS Code
+- **Prompt / purpose:** Asked to review and update the project documentation, including clarifying whether the SAMU 192 and CVV 188 features actually place calls.
+- **What the AI generated:** Updated bilingual project/decision documentation and the front-end README to reflect the PostgreSQL account architecture, current test counts, manual-only reminder, and the behavior of support phone links. The CVV and SAMU links are `tel:` links that require a user action and a compatible device call handler; the app does not automatically call or dispatch emergency services.
+- **What the team reviewed / changed:** Confirmed the behavior against `SupportView.jsx` and `ChatView.jsx`. A clean frontend `npm ci` restored the Vite version in the lockfile (5.4.21); the frontend build and tests passed, as did backend tests, lint, and build. SMTP delivery, live Gemini requests, and production deployment remain unverified.
+- **Status:** Adapted
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_

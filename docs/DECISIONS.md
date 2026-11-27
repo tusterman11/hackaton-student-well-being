@@ -14,8 +14,10 @@ Record the team's important decisions here. Each entry should be short and state
 - **Chat and Gemini:** The server stores conversation turns per account and restores up to the latest 100 in the interface. Gemini receives the latest conversation context and a compact seven-day summary of numeric routine data, not journal text. Users can delete chat history. The Gemini key stays server-side.
 - **Node and Vite versions:** Keep Node at `20.12.2` from `.nvmrc`. Front-end declarations are Vite `^5.4.10` (lockfile `5.4.21`) and Vitest `^2.1.9` (lockfile `2.1.9`); do not upgrade these independently of the Node compatibility requirement.
 - **Interface:** The desktop sidebar expands on hover and the mobile layout uses a compact menu button. The light/dark theme preference is stored in the browser. During development, `localhost:3000` redirects to Vite at `localhost:5173`; production serves `frontend/dist` from Express.
-- **Support and reminders:** Support links and a manual reminder control are implemented. The automatic 45–60 minute reminder is not implemented. The assistant is not a professional or emergency service.
-- **CI:** `.github/workflows/ci.yml` runs install, lint, tests, and builds for both packages on pull requests and pushes to `main`. This entry does not claim a fresh local test run.
+- **Support and reminders:** CVV 188 and SAMU 192 are user-initiated `tel:` links; calling depends on a compatible device handler. The app does not place calls or dispatch emergency services automatically. The reminder is manual; the automatic 45–60 minute timer is not implemented. The assistant is not a professional or emergency service.
+- **CI and local verification:** `.github/workflows/ci.yml` runs install, lint, tests, and builds for both packages on pull requests and pushes to `main`. On 27/11/2026, backend tests (11/11), lint, and build passed; frontend tests (12/12), lint, and build passed.
+
+Historical entries below record decisions and assumptions at the time; the implementation status above is the current source of truth where they differ.
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
@@ -64,8 +66,8 @@ The answers below are intended behavior and acceptance criteria; use the impleme
 2. **What does the interface do if the person indicates more intense distress?**
    - Free-form AI text generation is skipped; the UI immediately highlights the Support Resources card (CVV 188, SAMU 192, and Senac campus support) without attempting to counsel the user.
 3. **Who can view the check-in history, and how is this data protected?**
-   - Only the user on their own device. Records are isolated by an anonymous per-device UUID in SQLite, with no public feeds, usernames, or sensitive medical data stored.
+   - Authenticated account routes scope records to the signed-in user's ID in PostgreSQL. There are no public feeds. The older SQLite/device-ID design below is historical and is no longer the active architecture.
 4. **How is the AI's tone reviewed by the team before the demo?**
-   - All 4 members test sample prompts and review generated outputs before Saturday's freeze, logging prompt adjustments and rejected outputs in `AI_LOG.md`.
+   - A team review of live AI outputs and tone is still pending; record the review and any prompt changes in `AI_LOG.md` before presenting.
 5. **How does the product make its limits explicit at all times?**
-   - A permanent disclaimer banner in the UI and inside the Support Resources section states: *"This app supports daily breaks and habits. It is not therapy, medical advice, or an emergency service."*
+   - Limits are stated in the Support and chat screens; the app does not currently show a permanent banner on every screen. The text explains that the app is not therapy, medical advice, or an emergency service.
