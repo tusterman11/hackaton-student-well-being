@@ -15,4 +15,6 @@ test('without an API key it falls back to a hand-written tip', async () => {
   assert.strictEqual(result.showSupport, false);
   assert.strictEqual(result.source, 'fallback');
   assert.ok(result.tip.length > 0);
+  assert.ok(result.tip.length <= 250);
+  assert.match(result.tip, /^(Que tal|Talvez|Se estiver|Se fizer sentido)/);
 });
