@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  CalendarDays, Droplets, Heart, Home, MessageCircle,
+  BookOpen, CalendarDays, Droplets, Heart, Home, MessageCircle,
   Moon, Sun, Sprout, Bed, Menu, X, LogOut, Target
 } from 'lucide-react';
 
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { id: 'home', label: 'Início', icon: Home },
   { id: 'breaks', label: 'Pausas', icon: Sprout },
   { id: 'garden', label: 'Semana', icon: CalendarDays },
+  { id: 'study', label: 'Estudos', icon: BookOpen },
   { id: 'habits', label: 'Metas', icon: Target },
   { id: 'hydration', label: 'Água', icon: Droplets },
   { id: 'sleep', label: 'Sono', icon: Bed },

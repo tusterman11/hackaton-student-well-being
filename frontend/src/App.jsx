@@ -5,6 +5,7 @@ import { BreaksView } from './components/BreaksView';
 import { GardenView } from './components/GardenView';
 import { SupportView } from './components/SupportView';
 import { ChatView } from './components/ChatView';
+import { StudyView } from './components/StudyView';
 import { GentleReminder } from './components/GentleReminder';
 import { PersonalViews } from './components/PersonalViews';
 import { AuthView } from './components/AuthView';
@@ -392,6 +393,7 @@ export default function App() {
       )}
       {activeTab === 'breaks' && <BreaksView todayBreaks={todayBreaks} onAddBreak={handleAddBreak} />}
       {activeTab === 'garden' && <GardenView history={history} wellnessData={wellnessData} />}
+      {activeTab === 'study' && <StudyView />}
       {activeTab === 'support' && <SupportView />}
       {['hydration', 'sleep'].includes(activeTab) && (
         <PersonalViews

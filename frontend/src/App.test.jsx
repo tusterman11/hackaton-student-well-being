@@ -58,7 +58,10 @@ describe('App', () => {
     const nav = await screen.findByRole('navigation', { name: 'Navegação principal' });
     expect(within(nav).queryByRole('button', { name: 'Diário' })).not.toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: 'Metas' })).toBeInTheDocument();
-    expect(within(nav).queryByRole('button', { name: 'Estudos' })).not.toBeInTheDocument();
+    expect(within(nav).getByRole('button', { name: 'Estudos' })).toBeInTheDocument();
+
+    await user.click(within(nav).getByRole('button', { name: 'Estudos' }));
+    expect(screen.getByRole('heading', { name: 'Rotina de estudos' })).toBeInTheDocument();
 
     await user.click(within(nav).getByRole('button', { name: 'Metas' }));
     expect(screen.getByRole('heading', { name: 'Metas e hábitos' })).toBeInTheDocument();
