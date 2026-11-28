@@ -200,10 +200,19 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** A equipe confirmou a branch `feat/entrepausas-postgres-auth` e pediu que as alterações fossem enviadas ao GitHub. O commit `a6b9c82` foi criado e enviado. Lint e build do front-end passaram. A suíte de testes não pôde ser executada porque o `jsdom` local estava na versão 29.1.1, enquanto o projeto requer a linha 26 (`^26.1.0`); a execução falhou ao carregar uma dependência CommonJS/ESM.
 - **Status:** Adaptado; autenticação preservada; testes pendentes após corrigir as dependências locais
 
+### 022: Refinamento dos prompts da Interlude e das dicas do check-in
+- **Data:** 27/11/2026
+- **Quem:** Responsável pelo projeto
+- **Ferramenta:** Copilot SDK no VS Code
+- **Prompt / objetivo:** Perguntamos se o system prompt da Interlude atende ao briefing do MVP de bem-estar estudantil e pedimos instruções mais claras para dicas alinhadas ao check-in, linguagem gentil, pausas curtas no campus e encaminhamento para apoio real sem conduzir atendimento.
+- **O que a IA gerou:** Revisou o prompt da conversa para explicitar o papel da assistente, o uso factual do check-in e do resumo semanal, respostas breves, uma sugestão opcional de pausa, limites não clínicos e encaminhamento para apoio. Refinou também o prompt das dicas do check-in e os textos alternativos para evitar ordens e várias tarefas na mesma sugestão. Humor baixo continua encaminhando para recursos de apoio sem gerar dica livre.
+- **O que a equipe revisou / alterou:** Conferiu o comportamento com os caminhos de humor baixo e apoio urgente do servidor. A anotação livre do check-in não é enviada ao gerador de dicas. A equipe ainda precisa revisar respostas reais do Gemini antes da apresentação; não foi feita uma chamada ao Gemini nesta mudança.
+- **Status:** Adaptado; revisão humana das respostas geradas pendente
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_
 
 - A primeira sugestão de stack da IA assumia versões de ferramentas mais novas do que as máquinas do laboratório suportam. As mensagens de erro reais (CLI do Prisma, verificação de versão do Node) mostraram isso.
 - Um comando que a IA deu para o Prisma era de uma versão desatualizada, então comandos vindos da IA devem ser conferidos com a documentação atual e com a nossa versão real do Node.
-- A equipe ainda não revisou o tom e a segurança das dicas geradas por IA; essa revisão precisa de uma entrada própria antes da demo.
+- Os prompts e o tom dos textos alternativos foram refinados na entrada 021; a equipe ainda precisa testar respostas reais e revisá-las antes da demo.

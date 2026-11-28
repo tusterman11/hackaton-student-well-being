@@ -200,10 +200,19 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** The team confirmed the `feat/entrepausas-postgres-auth` branch and requested that the changes be sent to GitHub. Commit `a6b9c82` was created and pushed. Front-end lint and build passed. The test suite could not run because local `jsdom` was version 29.1.1 while the project requires version 26 (`^26.1.0`); execution failed while loading a CommonJS/ESM dependency.
 - **Status:** Adapted; authentication preserved; tests pending correction of local dependencies
 
+### 022: Refining Interlude's prompts and check-in tips
+- **Date:** 2026-11-27
+- **Who:** Project maintainer
+- **Tool:** Copilot SDK in VS Code
+- **Prompt / purpose:** Asked whether Interlude's system prompt meets the student well-being MVP brief and requested clearer guidance for check-in-based tips, gentle language, short campus breaks, and referral to real support without conducting care.
+- **What the AI generated:** Revised the chat system prompt to make its role, use of factual check-in/weekly context, brief response style, optional single pause suggestion, non-clinical limits, and support-routing guidance explicit. Refined the check-in tip prompt and fallback messages to avoid commands and stacked activities. Low mood still routes to support resources without generating a free-form tip.
+- **What the team reviewed / changed:** Confirmed the behavior against the server's low-mood and urgent-support paths. The free-text check-in note is not sent to the tip generator. The team still needs to review real Gemini outputs before the presentation; no live Gemini request was run for this change.
+- **Status:** Adapted; human review of generated responses pending
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_
 
 - The AI's first stack suggestion assumed newer tool versions than our lab machines support. Real error messages (Prisma CLI, Node version check) were what showed this.
 - A command the AI gave for Prisma was for an outdated version, so commands from AI must be checked against current documentation and our actual Node version.
-- The team has not yet reviewed the tone and safety of AI-generated tips; that review still needs its own entry before the demo.
+- Prompt and fallback language were refined in entry 021; the team still needs to test real responses and review generated outputs before the demo.
