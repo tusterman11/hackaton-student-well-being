@@ -1,7 +1,9 @@
-const STORAGE_KEY = 'pausa_anonymous_device_id';
+import { readAppStorage } from './appStorage';
+
+const STORAGE_KEY = 'entrepausas_anonymous_device_id';
 
 export function getDeviceId() {
-  let id = localStorage.getItem(STORAGE_KEY);
+  let id = readAppStorage(STORAGE_KEY);
   if (!id) {
     id = crypto.randomUUID
       ? crypto.randomUUID()

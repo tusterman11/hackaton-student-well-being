@@ -1,67 +1,48 @@
+import { useState } from 'react';
 import {
-  BookOpen,
-  CalendarDays,
-  Heart,
-  Home,
-  Menu,
-  MessageCircle,
-  Sprout,
-  X
+  BookOpen, CalendarDays, Droplets, Heart, Home, MessageCircle,
+  Moon, Sun, Sprout, Bed, Menu, X, LogOut, Target
 } from 'lucide-react';
 
-export function BottomNav({ activeTab, onChangeTab, isExpanded, onExpandedChange }) {
-  const navItems = [
-    { id: 'home', label: 'Início', icon: Home },
-    { id: 'breaks', label: 'Pausas', icon: Sprout },
-    { id: 'garden', label: 'Semana', icon: CalendarDays },
-    { id: 'study', label: 'Estudos', icon: BookOpen },
-    { id: 'chat', label: 'Conversa', icon: MessageCircle },
-    { id: 'support', label: 'Apoio', icon: Heart }
-  ];
+const NAV_ITEMS = [
+  { id: 'home', label: 'Início', icon: Home },
+  { id: 'breaks', label: 'Pausas', icon: Sprout },
+  { id: 'garden', label: 'Semana', icon: CalendarDays },
+  { id: 'study', label: 'Estudos', icon: BookOpen },
+  { id: 'habits', label: 'Metas', icon: Target },
+  { id: 'hydration', label: 'Água', icon: Droplets },
+  { id: 'sleep', label: 'Sono', icon: Bed },
+  { id: 'chat', label: 'Conversa', icon: MessageCircle },
+  { id: 'support', label: 'Apoio', icon: Heart },
+];
 
-  function renderNavItems() {
-    return navItems.map((item) => {
-      const Icon = item.icon;
-      const isActive = activeTab === item.id;
-      return (
-        <button
-          key={item.id}
-          type="button"
-          className={`app-navigation-item${isActive ? ' is-active' : ''}`}
-          onClick={() => {
-            onChangeTab(item.id);
-            if (window.matchMedia('(max-width: 899px)').matches) {
-              onExpandedChange(false);
-            }
-          }}
-          aria-current={isActive ? 'page' : undefined}
-        >
-          <Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
-          <span>{item.label}</span>
-        </button>
-      );
-    });
-  }
+export function BottomNav({ activeTab, onChangeTab, isDarkMode, onToggleTheme, userEmail, onLogout }) {
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <nav
-      className={`app-navigation${isExpanded ? ' is-expanded' : ''}`}
-      aria-label="Menu de navegação"
-    >
-      <button
-        type="button"
-        className="app-navigation-toggle"
-        onClick={() => onExpandedChange(!isExpanded)}
-        aria-label={isExpanded ? 'Fechar menu' : 'Abrir menu'}
-        aria-expanded={isExpanded}
-        aria-controls="app-navigation-menu"
+      <nav
+        className={`side-nav ${expanded ? 'is-expanded' : ''}`}
+        aria-label="Navegação principal"
+        onPointerEnter={(event) => { if (event.pointerType === 'mouse') setExpanded(true); }}
+        onPointerLeave={(event) => { if (event.pointerType === 'mouse') setExpanded(false); }}
       >
-        {isExpanded ? <X size={22} /> : <Menu size={22} />}
-      </button>
-
-      <div className="app-navigation-menu" id="app-navigation-menu">
-        {renderNavItems()}
-      </div>
-    </nav>
+        <button
+          className="nav-menu-button"
+          aria-label={expanded ? 'Recolher menu' : 'Expandir menu'}
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+        >{expanded ? <X size={20} /> : <Menu size={20} />}</button>
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          <button key={id} className={`nav-item ${activeTab === id ? 'active' : ''}`} type="button" aria-label={label} aria-current={activeTab === id ? 'page' : undefined} title={expanded ? undefined : label} onClick={() => { onChangeTab(id); setExpanded(false); }}>
+            <Icon size={19} strokeWidth={1.8} /><span>{label}</span>
+          </button>
+        ))}
+        <button className="nav-item account-logout" type="button" aria-label={`Sair da conta ${userEmail}`} title={expanded ? undefined : 'Sair'} onClick={onLogout}>
+          <LogOut size={19} strokeWidth={1.8} /><span>Sair · {userEmail}</span>
+        </button>
+        <button className="nav-item theme-toggle" type="button" aria-label={isDarkMode ? 'Ativar tema claro' : 'Ativar tema escuro'} aria-pressed={isDarkMode} title={isDarkMode ? 'Tema claro' : 'Tema escuro'} onClick={onToggleTheme}>
+          {isDarkMode ? <Sun size={19} /> : <Moon size={19} />}<span>{isDarkMode ? 'Tema claro' : 'Tema escuro'}</span>
+        </button>
+      </nav>
   );
 }

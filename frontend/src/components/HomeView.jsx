@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CloudRain,
   Cloud,
@@ -51,12 +51,38 @@ export function HomeView({
   const [mood, setMood] = useState(todayCheckin?.mood || 4);
   const [energy, setEnergy] = useState(todayCheckin?.energy || 3);
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [breakError, setBreakError] = useState('');
+
+  useEffect(() => {
+    if (!todayCheckin) return;
+    setMood(todayCheckin.mood);
+    setEnergy(todayCheckin.energy);
+  }, [todayCheckin]);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    await onSaveCheckin({ mood, energy, note });
-    setSavedFeedback(true);
-    setTimeout(() => setSavedFeedback(false), 2500);
+    setSaving(true);
+    setSaveError('');
+    try {
+      await onSaveCheckin({ mood, energy, note });
+      setSavedFeedback(true);
+      setTimeout(() => setSavedFeedback(false), 2500);
+    } catch (error) {
+      setSaveError(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addQuickBreak(type, label) {
+    setBreakError('');
+    try {
+      await onAddBreak(type, label);
+    } catch (error) {
+      setBreakError(error.message);
+    }
   }
 
   return (
@@ -75,7 +101,7 @@ export function HomeView({
           alignItems: 'center'
         }}>
           <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-            pausa · bem-estar no campus
+            EntrePausas · bem-estar no campus
           </span>
 
           <button
@@ -137,6 +163,7 @@ export function HomeView({
                   <button
                     key={item.value}
                     type="button"
+                    aria-pressed={selected}
                     onClick={() => setMood(item.value)}
                     style={{
                       display: 'flex',
@@ -192,6 +219,7 @@ export function HomeView({
                     type="button"
                     onClick={() => setEnergy(lvl)}
                     aria-label={`Energia ${lvl}`}
+                    aria-pressed={lvl <= energy}
                     style={{
                       flex: 1,
                       padding: '8px',
@@ -230,20 +258,21 @@ export function HomeView({
               placeholder="Quer registrar algo sobre como foi seu dia?"
               value={note}
               onChange={(e) => onNoteChange(e.target.value)}
-              maxLength={1000}
+              maxLength={500}
               rows={5}
               className="reflection-input"
               aria-describedby="daily-reflection-hint"
             />
             <div className="reflection-meta">
               <p id="daily-reflection-hint">
-                Para conversar com a Pausa Leve, abra a aba Conversa.
+                Para conversar com a Interlude, abra a aba Conversa.
               </p>
-              <span aria-live="polite">{note.length}/1000</span>
+              <span aria-live="polite">{note.length}/500</span>
             </div>
 
-            <button type="submit" className="btn-primary">
-              {savedFeedback
+            {saveError && <p className="form-error" role="alert">{saveError}</p>}
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Salvando…' : savedFeedback
                 ? 'Check-in guardado com carinho ✓'
                 : 'Salvar check-in de hoje'}
             </button>
@@ -295,7 +324,7 @@ export function HomeView({
               cursor: 'pointer'
             }}
           >
-            Conversar com a Pausa Leve
+            Conversar com a Interlude
           </button>
         </section>
 
@@ -334,7 +363,7 @@ export function HomeView({
           }}>
             <button
               type="button"
-              onClick={() => onAddBreak('water', 'Bebi água')}
+              onClick={() => addQuickBreak('water', 'Bebi água')}
               style={quickBtnStyle}
             >
               <Droplets size={18} color="#3b82f6" />
@@ -343,7 +372,7 @@ export function HomeView({
 
             <button
               type="button"
-              onClick={() => onAddBreak('stretch', 'Me alonguei')}
+              onClick={() => addQuickBreak('stretch', 'Me alonguei')}
               style={quickBtnStyle}
             >
               <Accessibility size={18} color="#4e7a65" />
@@ -352,13 +381,14 @@ export function HomeView({
 
             <button
               type="button"
-              onClick={() => onAddBreak('walk', 'Pausa curta')}
+              onClick={() => addQuickBreak('walk', 'Pausa curta')}
               style={quickBtnStyle}
             >
               <Footprints size={18} color="#f2994a" />
               <span>Pausa curta</span>
             </button>
           </div>
+          {breakError && <p className="form-error" role="alert">{breakError}</p>}
         </section>
 
         {/* Banner de Apoio */}

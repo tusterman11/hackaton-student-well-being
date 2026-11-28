@@ -7,6 +7,7 @@ module.exports = [
       globals: {
         require: 'readonly', module: 'writable', process: 'readonly',
         console: 'readonly', __dirname: 'readonly', fetch: 'readonly',
+        AbortSignal: 'readonly'
       },
     },
     rules: { 'no-unused-vars': 'error', 'no-undef': 'error' },

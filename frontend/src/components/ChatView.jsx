@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, Trash2 } from 'lucide-react';
 
-export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
+export function ChatView({ messages, isSending, onSendMessage, onClearHistory, onNavigate }) {
   const [draft, setDraft] = useState('');
   const messagesEndRef = useRef(null);
 
@@ -23,14 +23,37 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
         <div className="chat-title-row">
           <span className="chat-avatar" aria-hidden="true"><MessageCircle size={21} /></span>
           <div>
-            <h1>Conversa com a Pausa Leve</h1>
+            <h1>Conversa com a Interlude</h1>
             <p>Um espaço para falar do seu dia e pensar em pequenas pausas.</p>
           </div>
         </div>
+        {messages.some((message) => message.id !== 'welcome') && (
+          <button
+            type="button"
+            className="btn-secondary chat-clear-history"
+            disabled={isSending}
+            onClick={() => {
+              if (window.confirm('Apagar o histórico desta conversa desta conta?')) onClearHistory();
+            }}
+          >
+            <Trash2 size={16} /> Apagar conversa
+          </button>
+        )}
         <p className="chat-privacy-note">
-          Suas mensagens são enviadas ao servidor e à API do Claude para gerar respostas. Evite incluir nome completo, endereço ou outros dados pessoais.
+          Esta conversa fica salva na sua conta. Para responder, a Interlude usa as mensagens recentes e um resumo dos seus registros dos últimos 7 dias (humor, energia, água, pausas e sono), enviado ao Gemini. Evite incluir nome completo, endereço ou outros dados pessoais. Você pode apagar a conversa quando quiser.
         </p>
       </header>
+
+      <div className="chat-quick-actions">
+        <span className="eyebrow">Perguntas rápidas</span>
+        <div className="chat-quick-row">
+          {['Pode me guiar em uma respiração?', 'Como posso fazer uma pausa agora?', 'Quero falar sobre como foi meu dia.'].map((question) => (
+            <button type="button" key={question} disabled={isSending} onClick={() => onSendMessage(question)}>{question}</button>
+          ))}
+          <button type="button" onClick={() => onNavigate('breaks')}>Abrir pausas</button>
+          <button type="button" onClick={() => onNavigate('hydration')}>Registrar água</button>
+        </div>
+      </div>
 
       <section className="chat-messages" role="log" aria-label="Conversa" aria-live="polite">
         {messages.map((message) => (
@@ -52,7 +75,7 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
             )}
           </article>
         ))}
-        {isSending && <p className="chat-typing" role="status">A Pausa Leve está respondendo…</p>}
+        {isSending && <p className="chat-typing" role="status">A Interlude está respondendo…</p>}
         <div ref={messagesEndRef} />
       </section>
 
@@ -77,7 +100,7 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
       </form>
 
       <p className="chat-disclaimer">
-        A Pausa Leve não é profissional de saúde e não substitui atendimento médico ou psicológico. Em risco imediato, procure uma pessoa de confiança e um serviço de emergência.
+        O EntrePausas não é um serviço de saúde e não substitui atendimento médico ou psicológico. Em risco imediato, procure uma pessoa de confiança e um serviço de emergência.
       </p>
     </main>
   );
