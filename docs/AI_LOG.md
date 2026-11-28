@@ -191,6 +191,15 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** Confirmed the behavior against `SupportView.jsx` and `ChatView.jsx`. A clean frontend `npm ci` restored the Vite version in the lockfile (5.4.21); the frontend build and tests passed, as did backend tests, lint, and build. SMTP delivery, live Gemini requests, and production deployment remain unverified.
 - **Status:** Adapted
 
+### 021: Login password visibility toggle
+- **Date:** 2026-11-27
+- **Who:** João Queiros
+- **Tool:** Copilot SDK in VS Code
+- **Prompt / purpose:** Improve the login screen with a password hidden by default and a show/hide control without changing authentication. During visual iterations, the user requested several mascot variants based on references and ultimately asked to remove the mascot.
+- **What the AI generated:** Added eye icons to the existing password field, toggling its type between `password` and `text`. Authentication logic and calls were preserved. Added login-test assertions for hidden and revealed states. Temporary mascot versions were removed; the final screen has no mascot.
+- **What the team reviewed / changed:** The team confirmed the `feat/entrepausas-postgres-auth` branch and requested that the changes be sent to GitHub. Commit `a6b9c82` was created and pushed. Front-end lint and build passed. The test suite could not run because local `jsdom` was version 29.1.1 while the project requires version 26 (`^26.1.0`); execution failed while loading a CommonJS/ESM dependency.
+- **Status:** Adapted; authentication preserved; tests pending correction of local dependencies
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_

@@ -191,6 +191,15 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** Confirmou o comportamento em `SupportView.jsx` e `ChatView.jsx`. Um `npm ci` limpo no front-end restaurou a versão do Vite registrada no lockfile (5.4.21); build e testes do front passaram, assim como testes, lint e build do back-end. O envio SMTP, chamadas reais ao Gemini e implantação em produção ainda não foram verificados.
 - **Status:** Adaptado
 
+### 021: Alternância de visibilidade da senha na tela de login
+- **Data:** 27/11/2026
+- **Quem:** João Queiros
+- **Ferramenta:** Copilot SDK no VS Code
+- **Prompt / objetivo:** Melhorar a experiência da tela de login com senha oculta por padrão e um botão para revelar/ocultar, sem alterar a autenticação. Durante as iterações visuais, foram solicitadas diferentes versões de mascote com base em referências e, por fim, a remoção do mascote.
+- **O que a IA gerou:** Adicionou ícones de olho ao campo de senha existente, alternando entre os tipos `password` e `text`. A lógica e as chamadas de autenticação foram preservadas. Acrescentou uma verificação ao teste de login para os estados oculto e revelado. As versões temporárias do mascote foram removidas; a tela final não tem mascote.
+- **O que a equipe revisou / alterou:** A equipe confirmou a branch `feat/entrepausas-postgres-auth` e pediu que as alterações fossem enviadas ao GitHub. O commit `a6b9c82` foi criado e enviado. Lint e build do front-end passaram. A suíte de testes não pôde ser executada porque o `jsdom` local estava na versão 29.1.1, enquanto o projeto requer a linha 26 (`^26.1.0`); a execução falhou ao carregar uma dependência CommonJS/ESM.
+- **Status:** Adaptado; autenticação preservada; testes pendentes após corrigir as dependências locais
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_
