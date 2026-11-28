@@ -4,22 +4,21 @@
 
 Record the team's important decisions here. Each entry should be short and state what was decided, the alternatives considered and the reason for the choice.
 
-## Implementation status — 26/11/2026 (`feat/frontend-setup`)
+## Implementation status — 27/11/2026 (`feat/entrepausas-postgres-auth`)
 
-The decisions below describe the intended product; they are not a statement that every feature is complete. Current implementation:
+- **Accounts:** Open email registration, email verification, password login, logout, and password reset are implemented. Sessions use secure cookies, CSRF checks, and rate limits. SMTP is required to deliver verification and reset links; the app supports any authenticated SMTP provider.
+- **Render email delivery:** Render Free blocks outbound SMTP ports 25, 465, and 587. Gmail SMTP therefore needs a local or paid Render service. A provider that supports port 2525 may work with the current SMTP mailer; an HTTPS email API is another option but needs an integration.
+- **Presentation scope:** Journal and study planning remain removed from navigation, screens, and active routes. Habit goals are available again in the Goals tab, with daily completion and personal progress without rankings or pressure. The hydration goal remains on the Water tab.
+- **Persistence:** PostgreSQL stores account-scoped check-ins, pauses, habit goals, hydration, sleep, settings, and chat messages. Previously saved journal and study records remain archived in their existing tables and are neither deleted nor accessible through the app.
+- **Local import:** The first account session can import supported habit goals, hydration, and sleep records from browser storage after consent. Old journal and study copies are neither imported nor deleted; they remain archived in the browser.
+- **Demo account:** An optional shared demo account is controlled by `DEMO_ACCOUNT_ENABLED`, `DEMO_EMAIL`, and `DEMO_PASSWORD`. It must contain synthetic data and should be disabled when a shared demo is unnecessary.
+- **Chat and Gemini:** The server stores conversation turns per account and restores up to the latest 100 in the interface. Gemini receives the latest conversation context and a compact seven-day summary of check-ins, breaks, hydration, and sleep. Users can delete chat history. The Gemini key stays server-side.
+- **Node and Vite versions:** Keep Node at `20.12.2` from `.nvmrc`. Front-end declarations are Vite `^5.4.10` (lockfile `5.4.21`) and Vitest `^2.1.9` (lockfile `2.1.9`); do not upgrade these independently of the Node compatibility requirement.
+- **Interface:** The desktop sidebar expands on hover and the mobile layout uses a compact menu button. The light/dark theme preference is stored in the browser. During development, `localhost:3000` redirects to Vite at `localhost:5173`; production serves `frontend/dist` from Express.
+- **Support and reminders:** CVV 188 and SAMU 192 are user-initiated `tel:` links; calling depends on a compatible device handler. The app does not place calls or dispatch emergency services automatically. The reminder is manual; the automatic 45–60 minute timer is not implemented. The assistant is not a professional or emergency service.
+- **CI and local verification:** `.github/workflows/ci.yml` runs install, lint, tests, and builds for both packages on pull requests and pushes to `main`. On 27/11/2026, backend tests (11/11), lint, and build passed; frontend tests (13/13), lint, and build passed.
 
-- **Daily check-in:** The form is implemented in React and calls `POST /api/checkins`; the server validates and persists check-ins in SQLite. Once-per-day enforcement is not implemented.
-- **Break logging:** The buttons and list are implemented in the front end and call `POST /api/breaks`; the server persists pauses in SQLite.
-- **AI chat:** `POST /api/chat` calls Google Gemini through Node's built-in `fetch` when `GEMINI_API_KEY` is configured in `backend/.env`. The server prompt defines a supportive, non-clinical role; urgent risk phrases receive a fixed response with support contacts. The key is not committed, and a real live reply requires a valid key.
-- **Brand and assistant identity:** The product is named **EntrePausas** and its chat assistant introduces herself as **Interlude**. The name is used in the interface, page title, and Gemini system prompt.
-- **Interface:** The front end uses an expandable desktop sidebar and a compact floating menu on mobile. Light/dark themes are switchable and the preference is stored in the browser. Additional personal screens store their data in the browser only.
-- **Local development:** The back end redirects `localhost:3000` to Vite at `localhost:5173` during development; in production it serves `frontend/dist` with `NODE_ENV=production`.
-- **Gemini verification:** The last recorded live check, on 25/11/2026, returned `API key not valid`. The key was changed afterward; the current configuration still needs a live call to confirm it works.
-- **Weekly history:** `GardenView` currently renders mock data; it is not connected to saved check-ins or breaks.
-- **Gentle reminder:** The reminder can be opened with the “Test reminder” button. The planned 45–60 minute timer is not implemented.
-- **Support resources:** The support screen and contact links are implemented. The chat can show CVV 188 and SAMU 192 links for urgent risk; the assistant is not a professional or an emergency service.
-- **Storage and privacy:** The server creates SQLite `checkins` and `pauses` tables. The anonymous device ID is generated in the browser but is not yet connected to server records. Chat history remains in front-end memory and is sent to Gemini to generate replies; it is not stored in SQLite.
-- **Tests and CI:** The back end has 8 `node --test` tests. The front end has 5 Vitest integration tests covering navigation, check-in submission, low-mood support routing, break registration and chat error handling. `.github/workflows/ci.yml` is the working GitHub Actions pipeline for pull requests and pushes to `main`; it installs, lints, tests and builds both sides.
+Historical entries below record decisions and assumptions at the time; the implementation status above is the current source of truth where they differ.
 
 ## 24/11/2026 — MVP Scope Lock (6 Core Features)
 - **Decision:** Cut the MVP to the smallest end-to-end version of the 6 briefing requirements:
@@ -33,7 +32,7 @@ The decisions below describe the intended product; they are not a statement that
 - **Rationale:** Limiting to one check-in per day and minimal actions keeps the data model simple and ensures a complete, bug-free product before Sunday's 23:59 code freeze.
 
 ## 24/11/2026 — Explicit Exclusions (Out of Scope)
-- **Decision:** Explicitly exclude clinical diagnosis/therapy, comparative wellness scores/streaks, sensitive health data collection, public mood exposure, native mobile apps, social login, and all optional extras (breathing timer, weekly reflection, custom habits, silent mode) until the core MVP is tested.
+- **Decision:** Explicitly exclude clinical diagnosis/therapy, comparative wellness scores/streaks, sensitive health data collection, public mood exposure, native mobile apps, social login, and optional extras (breathing timer, weekly reflection, silent mode) until the core MVP is tested.
 - **Alternatives considered:** Including a 1-minute breathing timer and silent mode in the initial sprint.
 - **Rationale:** Avoiding scores and clinical claims respects ethical boundaries and prevents user anxiety. Cutting optional extras and external integrations protects the 5-day timeline (if extra time remains on Saturday, silent mode is the lowest-cost addition).
 
@@ -68,8 +67,8 @@ The answers below are intended behavior and acceptance criteria; use the impleme
 2. **What does the interface do if the person indicates more intense distress?**
    - Free-form AI text generation is skipped; the UI immediately highlights the Support Resources card (CVV 188, SAMU 192, and Senac campus support) without attempting to counsel the user.
 3. **Who can view the check-in history, and how is this data protected?**
-   - Only the user on their own device. Records are isolated by an anonymous per-device UUID in SQLite, with no public feeds, usernames, or sensitive medical data stored.
+   - Authenticated account routes scope records to the signed-in user's ID in PostgreSQL. There are no public feeds. The older SQLite/device-ID design below is historical and is no longer the active architecture.
 4. **How is the AI's tone reviewed by the team before the demo?**
-   - All 4 members test sample prompts and review generated outputs before Saturday's freeze, logging prompt adjustments and rejected outputs in `AI_LOG.md`.
+   - A team review of live AI outputs and tone is still pending; record the review and any prompt changes in `AI_LOG.md` before presenting.
 5. **How does the product make its limits explicit at all times?**
-   - A permanent disclaimer banner in the UI and inside the Support Resources section states: *"This app supports daily breaks and habits. It is not therapy, medical advice, or an emergency service."*
+   - Limits are stated in the Support and chat screens; the app does not currently show a permanent banner on every screen. The text explains that the app is not therapy, medical advice, or an emergency service.

@@ -29,33 +29,37 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 
 **O que o MVP cobre:**
 - **Check-in Diário Rápido:** Avaliação simples de humor e energia com linguagem acolhedora e sem julgamentos.
-- **Registro de Micro-Pausas e Hábitos:** Registro em um clique para pequenas ações (beber água, alongar, fazer uma pausa de 5 minutos).
+- **Registro de Micro-Pausas:** Registro em um clique para pequenas ações, como alongar ou fazer uma pausa curta.
 - **Conversa com IA:** Chat na aba “Conversa”, atendido pelo back-end via API do Google Gemini com um prompt fixo e acolhedor. A IA sugere pausas opcionais, não faz diagnósticos e indica apoio humano quando necessário.
-- **Histórico Privado de 7 Dias:** Visualização isolada por dispositivo dos check-ins e pausas recentes, sem pontuações comparativas.
-- **Lembrete Gentil na Tela:** Aviso discreto incentivando uma pausa curta durante sessões de estudo.
-- **Seção de Apoio Profissional:** Tela dedicada com canais reais de apoio (como CVV - 188, SAMU 192 e acolhimento estudantil do campus), acessível pela navegação principal.
+- **Histórico Privado de 7 Dias:** Visualização por conta dos check-ins e pausas recentes, sem pontuações comparativas.
+- **Lembrete Gentil Manual na Tela:** Um aviso discreto pode ser aberto pela tela inicial; ele não aparece automaticamente.
+- **Seção de Recursos de Apoio:** Tela dedicada com recursos reais (CVV 188, SAMU 192 e acolhimento estudantil do campus). Os links telefônicos `tel:` dependem de uma ação da pessoa e do aplicativo de chamadas disponível no dispositivo; não fazem ligações automaticamente.
 
 ## Status atual da implementação
 
-- As telas de check-in e pausas chamam `POST /api/checkins` e `POST /api/breaks`; os registros são persistidos pelo back-end no SQLite.
-- As rotas `GET` retornam registros dos últimos sete dias em `/api/checkins` e `/api/pauses` (`/api/breaks` também aceita consulta de pausas).
-- As telas de água, diário, metas, sono e estudos salvam seus registros somente no `localStorage` deste navegador.
-- O chat usa `POST /api/chat` e chama o Gemini quando `GEMINI_API_KEY` está configurada no back-end. A chave deve ficar em `backend/.env`, arquivo ignorado pelo Git; nunca coloque a chave no código do front nem a envie ao repositório.
-- As mensagens são enviadas ao Gemini quando o recurso está configurado. A interface pede que a pessoa não compartilhe dados de identificação.
-- Sem chave ou com falha no Gemini, chat e dicas de check-in usam respostas e dicas locais de fallback.
-- `GardenView` mostra o check-in e a quantidade de pausas da sessão atual com dados semanais de exemplo; ainda não é um gráfico conectado ao servidor.
-- O lembrete gentil é aberto pelo botão de teste. O disparo automático planejado após 45 a 60 minutos ainda não foi implementado.
-- A tela de apoio e os links de contato estão implementados. A IA não é terapeuta nem serviço de emergência.
-- O identificador anônimo está presente nos headers das requisições, mas ainda não separa registros no SQLite.
+- **Contas:** Cadastro aberto por e-mail, confirmação do endereço, login com senha, logout e recuperação de senha estão implementados. Cadastro e recuperação precisam de SMTP configurado. Cada conta é separada pelo identificador autenticado no servidor.
+- **Persistência no PostgreSQL:** Check-ins, pausas, metas/hábitos, água, sono e configurações ficam no PostgreSQL, sempre associados à conta. O servidor aplica as migrações ao iniciar. Registros antigos de Diário e Estudos permanecem arquivados no banco, mas não são exibidos, alterados ou incluídos na importação. Em produção, `DATABASE_URL` deve apontar para o PostgreSQL persistente do Render.
+- **Importação local:** No primeiro acesso à conta, o app oferece importar metas/hábitos, registros de água e sono compatíveis do `localStorage`. A cópia desses registros só é removida após a importação concluir. Dados antigos de Diário e Estudos não são importados nem apagados e ficam arquivados no navegador.
+- **Conversa:** `POST /api/chat` usa Gemini quando `GEMINI_API_KEY` está configurada. O histórico individual da conta é salvo no PostgreSQL e volta a aparecer após o login. A pessoa pode apagar a conversa. O Gemini recebe a mensagem atual, mensagens recentes e um resumo numérico dos últimos sete dias sobre check-ins, pausas, água e sono.
+- **Privacidade:** A chave do Gemini fica no servidor. A tela da conversa informa o que é salvo e qual resumo é enviado ao Gemini. Evite incluir dados que identifiquem alguém no chat.
+- **Conta demo:** `DEMO_ACCOUNT_ENABLED=true` habilita uma conta demonstrativa compartilhada. Use somente dados fictícios; o cadastro normal é aberto e não exige lista de autorização. Desative a conta demo para uso público se ela não for mais necessária.
+- **Desenvolvimento local:** A raiz do back-end redireciona `http://localhost:3000` para o Vite em `http://localhost:5173`; o Vite encaminha `/api` ao back-end. Em produção, o Express serve `frontend/dist`.
+- **Apoio e lembretes:** Os links para CVV 188 e SAMU 192 usam `tel:` e só iniciam o fluxo de chamada após uma ação da pessoa. A chamada depende de um aplicativo compatível no dispositivo; o app não liga nem aciona serviços de emergência automaticamente. O lembrete pode ser aberto manualmente; o temporizador automático de 45 a 60 minutos ainda não foi implementado. A assistente não é profissional de saúde nem serviço de emergência.
+- **Verificação de serviços externos:** O envio real por SMTP, uma chamada ao Gemini com chave válida e a implantação de produção no Render/PostgreSQL ainda precisam ser verificados com credenciais e ambiente reais.
+- **Escopo simplificado para apresentação:** Diário e Estudos continuam fora da interface e das rotas ativas. A aba Metas permite criar objetivos pessoais, registrar a conclusão diária e acompanhar o progresso sem rankings ou cobranças.
 
 ## Stack
 
 - **Front-end:** React + Vite (JavaScript, HTML e CSS)
 - **Back-end:** Node.js + Express (JavaScript)
-- **Banco de Dados:** SQLite via `better-sqlite3` (SQL puro)
-- **Integração com IA:** O back-end usa a API Gemini do Google por meio do `fetch` nativo do Node nas rotas de chat e dicas. A chave é lida pelo servidor a partir do ambiente.
-- **Testes:** O back-end tem script `node --test` e oito testes. O front-end tem Vitest, Testing Library e cinco testes de integração.
-- **CI:** `.github/workflows/ci.yml` executa lint, testes e builds do back-end e do front-end em pull requests e pushes na `main`.
+- **Banco de Dados:** PostgreSQL via `pg` (SQL puro e migrações na inicialização)
+- **Autenticação e e-mail:** Sessões por conta usam cookies `HttpOnly` e proteção CSRF. O Nodemailer envia confirmações e redefinições por qualquer servidor SMTP.
+- **Integração com IA:** O back-end chama a API Gemini do Google; a chave é lida do ambiente do servidor.
+- **Runtime:** Node.js `20.12.2` (definido em `.nvmrc`; o back-end exige `>=20.12.0`)
+- **Ferramentas do front-end:** Vite `^5.4.10` (lockfile resolve `5.4.21`), Vitest `^2.1.9` (lockfile resolve `2.1.9`), React `18.3.1` e jsdom `26.1.0`.
+- **Testes e CI:** O back-end usa `node --test`; o front-end usa Vitest e Testing Library. `.github/workflows/ci.yml` executa lint, testes e builds dos dois pacotes em pull requests e pushes para `main`.
+- **Última verificação local (27/11/2026):** Back-end: 11/11 testes, lint e build passaram. Front-end: 13/13 testes, lint e build passaram após instalar pelo lockfile com `npm ci`.
+- **CI:** `.github/workflows/ci.yml` executa lint, testes e builds dos dois pacotes em pull requests e pushes na `main`.
 
 ## Estrutura de pastas
 
@@ -116,43 +120,69 @@ Estudantes que enfrentam rotinas intensas de estudo, prazos e semanas de projeto
 
 ### Pré-requisitos
 
-- Node.js (v20 ou superior)
-- npm (v10 ou superior)
-- Chave da API Gemini configurada em `backend/.env` (veja `backend/.env.example`)
+- Node.js `20.12.2` (use a versão indicada em `.nvmrc`)
+- npm compatível com Node.js 20.12.2
+- PostgreSQL e uma `DATABASE_URL`
+- Credenciais SMTP para habilitar cadastro por e-mail e recuperação de senha
+- Chave Gemini para respostas de IA (opcional para o restante do app)
 
 ### Back-end
 
 ```bash
 cd backend
 cp .env.example .env
-# Adicione sua GEMINI_API_KEY dentro do arquivo .env
-npm install
+# Configure DATABASE_URL, APP_BASE_URL, FRONTEND_ORIGIN e SMTP no .env.
+# GEMINI_API_KEY é necessária apenas para habilitar respostas com IA.
+npm ci
 npm run dev
 ```
 
-*(Nota: O arquivo do banco SQLite e as tabelas são inicializados automaticamente via `better-sqlite3` ao iniciar o servidor.)*
+O servidor aplica as migrações do PostgreSQL ao iniciar. No desenvolvimento local, use um banco PostgreSQL local e defina `APP_BASE_URL` e `FRONTEND_ORIGIN` como `http://localhost:5173`.
 
 ### Front-end
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
+
+Abra `http://localhost:5173`. O servidor de desenvolvimento do Vite encaminha as requisições `/api` para `localhost:3000`.
 
 ## CI/CD
 
 O repositório tem um workflow funcional do GitHub Actions em [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). Ele roda em pull requests e pushes na `main`, com jobs separados para back-end e front-end: `npm ci`, lint, testes e build.
 
-Verificado localmente com Node 20.12.2:
-- Back-end: 8 testes aprovados; lint e build de sintaxe aprovados.
-- Front-end: 5 testes aprovados; lint e build Vite aprovados.
-
-O Vite 7.3.8 mostra um aviso de versão no ambiente local, pois prefere Node 20.19+ ou 22.12+, mesmo com o build concluído. O job de CI usa a linha principal do Node 20.
+O workflow usa Node 20 e executa os scripts de lint, teste e build dos dois pacotes. A versão local do Node está fixada separadamente em `.nvmrc` como `20.12.2`.
 
 ## Deploy
 
-Configurado para execução local durante a demonstração ao vivo (opções de deploy: Vercel para o front-end e Render/Railway para o back-end).
+### Deploy no Render
+
+Use um Node Web Service para executar o back-end e servir o front compilado, junto de um PostgreSQL do Render. Comando de build: `npm --prefix backend ci --omit=dev && npm --prefix frontend ci --include=dev && npm --prefix frontend run build`. Comando de início: `npm --prefix backend start`. Configure `NODE_ENV=production`, `DATABASE_URL`, `APP_BASE_URL` e `FRONTEND_ORIGIN` com a URL HTTPS pública do serviço, além das variáveis Gemini e SMTP se esses recursos estiverem habilitados. `SMTP_FROM` deve ser um remetente aceito pelo provedor. Para uso público normal, mantenha `DEMO_ACCOUNT_ENABLED=false`, a menos que queira oferecer um login demo compartilhado. Cadastre segredos em Environment no Render; não os coloque no Git.
+
+O app aceita qualquer serviço SMTP autenticado; não precisa usar Brevo. O SMTP do Gmail usa `smtp.gmail.com`, porta `587`, `SMTP_SECURE=false`, endereço Gmail completo em `SMTP_USER` e uma Senha de app do Google em `SMTP_PASS`. O Google exige a verificação em duas etapas para criar senhas de app, e algumas contas gerenciadas ou protegidas não permitem essa opção. Use uma caixa postal dedicada e nunca coloque a senha normal de login no Render. **Os serviços gratuitos do Render bloqueiam conexões SMTP de saída nas portas 25, 465 e 587**; por isso, o Gmail SMTP funciona localmente ou em um Web Service pago, mas não no Render Free. Alguns provedores também oferecem SMTP pela porta `2525`; por exemplo, a documentação do Mailgun lista essa porta. A lista atual de bloqueios do Render não inclui `2525`, então um provedor que aceite essa porta pode funcionar com o mailer existente, dependendo da verificação da conta/domínio e de um teste de conexão. Outra opção é usar a API HTTPS de um provedor pela porta `443`, mas o mailer atual precisaria de uma integração para essa API.
+
+## Configurar e-mail no Render Free
+
+### Exemplo com SMTP do Mailjet
+
+O Mailjet documenta o host SMTP `in-v3.mailjet.com` e aceita a porta `2525`. Crie uma conta, valide o endereço ou domínio remetente e procure a chave SMTP e o segredo em Account settings → SMTP and SEND API settings. Nas configurações Environment do Web Service no Render, adicione:
+
+```env
+SMTP_HOST=in-v3.mailjet.com
+SMTP_PORT=2525
+SMTP_SECURE=false
+SMTP_USER=sua-chave-api-mailjet
+SMTP_PASS=seu-segredo-mailjet
+SMTP_FROM="EntrePausas <remetente-verificado@example.com>"
+```
+
+Salve e faça o deploy do serviço; depois teste o cadastro usando um endereço de e-mail que você consiga acessar. Não versione essas credenciais. Atualmente o Mailjet informa um plano gratuito com 6.000 mensagens por mês e limite de 200 por dia; confira os limites e requisitos atuais da conta antes de depender deles.
+
+- **Configuração SMTP do Mailjet:** [SMTP relay configuration](https://dev.mailjet.com/docs/smtp-relay/configuration)
+- **Variáveis no Render:** [Environment variables and secrets](https://render.com/docs/configure-environment-variables)
+- **Plano do Mailjet:** [Preços](https://www.mailjet.com/pricing/)
 
 ## Links
 

@@ -29,47 +29,61 @@ Students facing intense study routines, deadlines, and project weeks often negle
 
 **What the MVP covers:**
 - **Quick Daily Check-in:** Simple mood and energy rating with welcoming, non-judgmental wording.
-- **Micro-Breaks & Habit Log:** One-click logging for small actions (drinking water, stretching, taking a 5-minute break).
+- **Micro-Break Log:** One-click logging for small actions such as stretching or taking a short break.
 - **AI Companion Chat:** A conversation on the “Conversa” tab, handled by the back-end through the Google Gemini API with a fixed, supportive system prompt. It offers optional small breaks, does not diagnose, and points users to human support when appropriate.
-- **Private 7-Day History:** Per-device isolated view of recent check-ins and breaks without comparative scores.
-- **Gentle On-Screen Reminder:** Non-intrusive prompt encouraging a short pause during study sessions.
-- **Professional Support Section:** A dedicated screen with real support channels (e.g., CVV - 188, SAMU 192, and campus student support), accessible from the main navigation.
+- **Private 7-Day History:** Per-account view of recent check-ins and breaks without comparative scores.
+- **Manual Gentle On-Screen Reminder:** A non-intrusive prompt can be opened from the home screen; it does not appear automatically.
+- **Professional Support Section:** A dedicated screen with real support resources (CVV 188, SAMU 192, and campus student support). The phone links are user-initiated `tel:` links; they open the device's call handler when available and do not place calls automatically.
 
 ## Current implementation status
 
-- The check-in and break screens call `POST /api/checkins` and `POST /api/breaks`; values are persisted in SQLite.
-- Check-in and pause `GET` routes return records from the latest seven days at `/api/checkins` and `/api/pauses` (`/api/breaks` is an alias for pauses).
-- The water, journal, goals, sleep, and study screens store their entries only in browser `localStorage`.
-- The chat uses `POST /api/chat`. It calls Gemini only when `GEMINI_API_KEY` is configured in the back end. The key belongs in `backend/.env`, which is ignored by Git; never put it in front-end code or commit it.
-- Chat messages are sent to Gemini when AI is configured. The interface asks users not to share identifying details.
-- If Gemini is absent or unavailable, chat and check-in tips use fixed fallback responses.
-- `GardenView` displays the current session's check-in and break count plus mock weekly values; it is not yet a server-backed weekly chart.
-- The gentle reminder is opened by the test button. The planned timed 45–60 minute trigger is not implemented.
-- The support screen and its contact links are implemented. The assistant is not a therapist or emergency service.
-- The anonymous browser device ID is present in API headers, but it is not currently used to scope SQLite records.
+- **Accounts:** Open email registration, email verification, password login, logout, and password reset are implemented. Registration and password reset require working SMTP settings. Each account is scoped by its authenticated user ID.
+- **PostgreSQL persistence:** Check-ins, breaks, habit goals, water, sleep, and settings are stored in PostgreSQL, scoped to each account. The server applies schema migrations at startup. Previously saved journal and study records remain archived in the database, but are no longer displayed, changed, or imported. The `DATABASE_URL` must point to the persistent Render PostgreSQL service in production.
+- **Local data import:** On first sign-in, the app offers to import supported habit goals, hydration, and sleep records from browser `localStorage`. Those local copies are removed only after a successful import. Old journal and study data are neither imported nor deleted; they remain archived in the browser.
+- **Chat:** `POST /api/chat` uses Gemini when `GEMINI_API_KEY` is configured. Per-account conversation history is stored in PostgreSQL and the latest messages are restored after signing in. Users can delete their conversation. Gemini receives the current message, recent chat context, and a short seven-day numeric summary of check-ins, breaks, hydration, and sleep.
+- **Privacy:** The Gemini key stays on the server. The chat screen explains what is stored and what summary is sent to Gemini. Users should avoid including identifying details in chat.
+- **Demo account:** `DEMO_ACCOUNT_ENABLED=true` enables one shared demonstration account. It is for fictional presentation data only; normal sign-up is open and does not require an allowlist. Disable the demo account for public use if it is no longer needed.
+- **Local development:** The back end redirects `http://localhost:3000` to the Vite front end at `http://localhost:5173`; Vite proxies `/api` to the back end. In production, Express serves `frontend/dist`.
+- **Support and reminders:** The CVV 188 and SAMU 192 links are implemented as user-initiated `tel:` links. Actual calling depends on a device call handler; the app does not automatically call or dispatch emergency services. The reminder can be opened manually; an automatic 45–60 minute timer is not implemented. The assistant is not a health professional or emergency service.
+- **External service verification:** Real SMTP delivery, a live Gemini request with a valid key, and the production Render/PostgreSQL deployment still require environment-specific verification.
+- **Presentation scope:** Journal and study planning remain outside the interface and active API routes. The Goals tab supports account-scoped personal goals, daily completion, and progress without rankings or pressure.
 
 ## Stack
 
 - **Front-end:** React + Vite (JavaScript, HTML, and CSS)
 - **Back-end:** Node.js + Express (JavaScript)
-- **Database:** SQLite via `better-sqlite3` (plain SQL)
-- **AI Integration:** The back end uses Google's Gemini API through Node's built-in `fetch` for chat and tips. The API key is read from the server environment.
-- **Tests:** The back end has a `node --test` script and eight tests. The front end has Vitest, Testing Library and five integration tests.
-- **CI:** `.github/workflows/ci.yml` runs lint, tests and builds for both the back end and front end on pull requests and pushes to `main`.
+- **Database:** PostgreSQL via `pg` (plain SQL and startup migrations)
+- **Authentication and email:** Account sessions are protected by `HttpOnly` cookies and CSRF checks. Nodemailer sends verification and password-reset messages using any SMTP provider.
+- **AI Integration:** The back end calls Google's Gemini API. The API key is read from the server environment.
+- **Runtime:** Node.js `20.12.2` (root `.nvmrc`; backend engine requires `>=20.12.0`)
+- **Front-end tooling:** Vite `^5.4.10` (lockfile resolves `5.4.21`), Vitest `^2.1.9` (lockfile resolves `2.1.9`), React `18.3.1`, and jsdom `26.1.0`.
+- **Tests and CI:** The backend uses `node --test`; the frontend uses Vitest and Testing Library. `.github/workflows/ci.yml` runs lint, tests, and builds for both packages on pull requests and pushes to `main`.
+- **Latest local verification (27/11/2026):** Backend 11/11 tests, lint, and build passed; frontend 13/13 tests, lint, and build passed after installing from its lockfile with `npm ci`.
 
 ## Folder structure
 
 ```text
 /
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── .gitignore
 ├── .nvmrc
 ├── backend/
 │   ├── .env.example
+│   ├── auth.js
+│   ├── database.js
+│   ├── email.js
 │   ├── eslint.config.js
+│   ├── gemini.js
+│   ├── gemini.test.js
 │   ├── package.json
 │   ├── package-lock.json
 │   ├── server.js
-│   └── server.test.js
+│   ├── server.test.js
+│   ├── tips.js
+│   ├── tips.test.js
+│   └── wellness.js
 ├── docs/
 │   ├── AI_LOG.md
 │   ├── AI_LOG.pt-BR.md
@@ -92,21 +106,27 @@ Students facing intense study routines, deadlines, and project weeks often negle
 │   │   ├── assets/
 │   │   │   └── react.svg
 │   │   ├── components/
+│   │   │   ├── AuthView.jsx
 │   │   │   ├── BottomNav.jsx
 │   │   │   ├── BreaksView.jsx
 │   │   │   ├── ChatView.jsx
 │   │   │   ├── GardenView.jsx
 │   │   │   ├── GentleReminder.jsx
 │   │   │   ├── HomeView.jsx
+│   │   │   ├── PersonalViews.jsx
 │   │   │   └── SupportView.jsx
 │   │   ├── services/
 │   │   │   └── api.js
 │   │   ├── styles/
 │   │   │   └── theme.css
+│   │   ├── test/
+│   │   │   └── setup.js
 │   │   ├── utils/
+│   │   │   ├── appStorage.js
 │   │   │   └── deviceId.js
 │   │   ├── App.css
 │   │   ├── App.jsx
+│   │   ├── App.test.jsx
 │   │   ├── index.css
 │   │   └── main.jsx
 │   └── vite.config.js
@@ -116,43 +136,67 @@ Students facing intense study routines, deadlines, and project weeks often negle
 
 ### Prerequisites
 
-- Node.js (v20 or higher)
-- npm (v10 or higher)
-- Gemini API key configured in `backend/.env` (see `backend/.env.example`)
+- Node.js `20.12.2` (use the version in `.nvmrc`)
+- npm compatible with Node.js 20.12.2
+- PostgreSQL and a `DATABASE_URL`
+- SMTP credentials to enable email registration and password reset
+- Gemini API key for AI replies (optional for the rest of the app)
 
 ### Back-end
 
 ```bash
 cd backend
 cp .env.example .env
-# Add your GEMINI_API_KEY inside .env
-npm install
+# Set DATABASE_URL, APP_BASE_URL, FRONTEND_ORIGIN and SMTP values in .env.
+# Add GEMINI_API_KEY only if you want to enable AI replies.
+npm ci
 npm run dev
 ```
 
-*(Note: The SQLite database file and tables are initialized automatically via `better-sqlite3` on server startup.)*
+The server applies PostgreSQL migrations at startup. For local development, use a local PostgreSQL database and set `APP_BASE_URL` and `FRONTEND_ORIGIN` to `http://localhost:5173`.
 
 ### Front-end
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
+
+Open `http://localhost:5173`. The Vite development server forwards `/api` requests to `localhost:3000`.
 
 ## CI/CD
 
 The repository has a working GitHub Actions workflow at [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). It runs on pull requests and pushes to `main`, with separate back-end and front-end jobs that install with `npm ci`, lint, test, and build.
 
-Verified locally on Node 20.12.2:
-- Back end: 8 tests passing; lint and syntax build passing.
-- Front end: 5 tests passing; lint and Vite build passing.
+The workflow uses Node 20 and runs each package's lint, test, and build scripts. The project's local Node version is pinned separately in `.nvmrc` to `20.12.2`.
 
-Vite 7.3.8 prints a Node-version warning in this local environment because it prefers Node 20.19+ or 22.12+, although the local build still completed. The CI job currently uses the major Node 20 line.
+## Deploy on Render
 
-## Deploy
+Use one Node web service to run the back end and serve the built front end, plus a Render PostgreSQL database. Set the web service build command to `npm --prefix backend ci --omit=dev && npm --prefix frontend ci --include=dev && npm --prefix frontend run build` and the start command to `npm --prefix backend start`. Configure `NODE_ENV=production`, `DATABASE_URL`, `APP_BASE_URL` and `FRONTEND_ORIGIN` using the public HTTPS URL of the service, plus the Gemini and SMTP variables if those features are enabled. Set `SMTP_FROM` to a sender address accepted by the chosen provider. Keep `DEMO_ACCOUNT_ENABLED=false` for normal public use unless a shared demo login is intentionally offered. Add secrets in Render's Environment settings; do not commit them.
 
-Configured for local execution during the live demonstration (optional deploy targets: Vercel for front-end and Render/Railway for back-end).
+The app accepts any authenticated SMTP service; Brevo is not required. Gmail SMTP uses `smtp.gmail.com`, port `587`, `SMTP_SECURE=false`, the full Gmail address as `SMTP_USER`, and a Google App Password as `SMTP_PASS`. Google requires 2-Step Verification for app passwords, and some managed or protected accounts cannot create them. Use a dedicated sender mailbox and never put its normal sign-in password in Render. **Render Free web services block outbound SMTP ports 25, 465, and 587**, so Gmail SMTP works locally or on a paid Render web service, but not on Render Free. Some providers also support SMTP on port `2525`; for example, Mailgun documents that port. Render's current block list does not include `2525`, so a provider that supports it may work with the existing SMTP mailer, subject to provider account/domain verification and a connectivity check. An email provider's HTTPS API on port `443` is another option, but the current mailer would need an API integration for it.
+
+## Email setup on Render Free
+
+### Mailjet SMTP example
+
+Mailjet documents SMTP host `in-v3.mailjet.com` and supports port `2525`. Create an account, validate the sender address or domain, then find the SMTP API key and secret under Account settings → SMTP and SEND API settings. In the Render web service's Environment settings, add:
+
+```env
+SMTP_HOST=in-v3.mailjet.com
+SMTP_PORT=2525
+SMTP_SECURE=false
+SMTP_USER=your-mailjet-api-key
+SMTP_PASS=your-mailjet-secret-key
+SMTP_FROM="EntrePausas <verified-sender@example.com>"
+```
+
+Save and deploy the service, then test registration using an email address you can access. Do not commit the credentials. Mailjet currently lists a free plan with 6,000 messages per month and a 200-per-day limit; check its current pricing and account requirements before relying on those limits.
+
+- **Mailjet SMTP setup:** [SMTP relay configuration](https://dev.mailjet.com/docs/smtp-relay/configuration)
+- **Render environment settings:** [Environment variables and secrets](https://render.com/docs/configure-environment-variables)
+- **Mailjet plan details:** [Pricing](https://www.mailjet.com/pricing/)
 
 ## Links
 

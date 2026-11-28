@@ -173,10 +173,46 @@ Todas as entradas abaixo são da mesma ferramenta e data, salvo indicação cont
 - **O que a equipe revisou / alterou:** O código foi verificado localmente antes da atualização: 8 testes do back-end e 5 do front-end passam, ambos os linters passam e ambos os builds passam. A equipe deve manter a chave do Gemini e o status do provedor ao vivo como informações específicas do ambiente, nunca como segredo versionado.
 - **Status:** Adaptado
 
+### 019: PostgreSQL por conta, conversa persistente e atualização da documentação
+- **Data:** 27/11/2026
+- **Quem:** Matheus Epifanio de Souza (Presentation Lead)
+- **Ferramenta:** OpenAI Codex (assistente de programação)
+- **Prompt / objetivo:** Perguntou como funcionariam o cadastro aberto e a persistência no Render, pediu que a Interlude mantivesse o histórico e usasse os dados semanais da conta, solicitou trazer somente `docs/` da `main` e, depois, alinhar a documentação às versões atuais de Node/Vite e registrar mudanças que ainda não estavam documentadas.
+- **O que a IA gerou:** Adicionou uma migração PostgreSQL para mensagens de chat por conta, rotas para carregar e apagar o histórico da conta autenticada, persistência das conversas no servidor e um resumo compacto dos últimos sete dias (check-ins, pausas, água, sono, hábitos e foco) enviado ao Gemini. O texto do Diário fica fora do contexto enviado ao Gemini. A tela restaura as mensagens salvas, oferece apagar o histórico e informa quais dados são enviados. Atualizou os READMEs e as decisões bilíngues para descrever contas, PostgreSQL, SMTP, configuração no Render e as versões de Node/Vite do projeto. Documentou o SMTP do Gmail como alternativa ao Brevo, o bloqueio de portas SMTP no Render Free, a alternativa SMTP pela porta 2525 e APIs HTTPS. Incluiu um exemplo de Mailjet para Render Free com variáveis SMTP e validação do remetente.
+- **O que a equipe revisou / alterou:** A pessoa confirmou que Node 20.12.2 deve ser mantido e que o Vite precisa continuar na linha compatível Vite 5. A pasta `docs/` foi sincronizada com o commit buscado da `main` e depois corrigida para refletir esta branch. O SMTP pela porta 2525 não foi testado. Nenhum teste ou envio real por SMTP/Gemini foi verificado nesta atualização; ainda falta configurar credenciais reais no Render.
+- **Status:** Adaptado; verificação local e em produção pendente
+
+### 020: Status da documentação e comportamento dos links de apoio
+- **Data:** 27/11/2026
+- **Quem:** Responsável pelo projeto
+- **Ferramenta:** Copilot SDK no VS Code
+- **Prompt / objetivo:** Pedimos para revisar e atualizar a documentação do projeto, incluindo esclarecer se os recursos do SAMU 192 e do CVV 188 realmente fazem ligações.
+- **O que a IA gerou:** Atualizou a documentação bilíngue do projeto e o README do front-end para refletir a arquitetura atual com PostgreSQL por conta, a quantidade atual de testes, o lembrete apenas manual e o comportamento dos links telefônicos. Os links do CVV e do SAMU usam `tel:`, exigem uma ação da pessoa e um aplicativo de chamadas compatível; o app não liga nem aciona serviços de emergência automaticamente.
+- **O que a equipe revisou / alterou:** Confirmou o comportamento em `SupportView.jsx` e `ChatView.jsx`. Um `npm ci` limpo no front-end restaurou a versão do Vite registrada no lockfile (5.4.21); build e testes do front passaram, assim como testes, lint e build do back-end. O envio SMTP, chamadas reais ao Gemini e implantação em produção ainda não foram verificados.
+- **Status:** Adaptado
+
+### 021: Alternância de visibilidade da senha na tela de login
+- **Data:** 27/11/2026
+- **Quem:** João Queiros
+- **Ferramenta:** Copilot SDK no VS Code
+- **Prompt / objetivo:** Melhorar a experiência da tela de login com senha oculta por padrão e um botão para revelar/ocultar, sem alterar a autenticação. Durante as iterações visuais, foram solicitadas diferentes versões de mascote com base em referências e, por fim, a remoção do mascote.
+- **O que a IA gerou:** Adicionou ícones de olho ao campo de senha existente, alternando entre os tipos `password` e `text`. A lógica e as chamadas de autenticação foram preservadas. Acrescentou uma verificação ao teste de login para os estados oculto e revelado. As versões temporárias do mascote foram removidas; a tela final não tem mascote.
+- **O que a equipe revisou / alterou:** A equipe confirmou a branch `feat/entrepausas-postgres-auth` e pediu que as alterações fossem enviadas ao GitHub. O commit `a6b9c82` foi criado e enviado. Lint e build do front-end passaram. A suíte de testes não pôde ser executada porque o `jsdom` local estava na versão 29.1.1, enquanto o projeto requer a linha 26 (`^26.1.0`); a execução falhou ao carregar uma dependência CommonJS/ESM.
+- **Status:** Adaptado; autenticação preservada; testes pendentes após corrigir as dependências locais
+
+### 022: Refinamento dos prompts da Interlude e das dicas do check-in
+- **Data:** 27/11/2026
+- **Quem:** Responsável pelo projeto
+- **Ferramenta:** Copilot SDK no VS Code
+- **Prompt / objetivo:** Perguntamos se o system prompt da Interlude atende ao briefing do MVP de bem-estar estudantil e pedimos instruções mais claras para dicas alinhadas ao check-in, linguagem gentil, pausas curtas no campus e encaminhamento para apoio real sem conduzir atendimento.
+- **O que a IA gerou:** Revisou o prompt da conversa para explicitar o papel da assistente, o uso factual do check-in e do resumo semanal, respostas breves, uma sugestão opcional de pausa, limites não clínicos e encaminhamento para apoio. Refinou também o prompt das dicas do check-in e os textos alternativos para evitar ordens e várias tarefas na mesma sugestão. Humor baixo continua encaminhando para recursos de apoio sem gerar dica livre.
+- **O que a equipe revisou / alterou:** Conferiu o comportamento com os caminhos de humor baixo e apoio urgente do servidor. A anotação livre do check-in não é enviada ao gerador de dicas. A equipe ainda precisa revisar respostas reais do Gemini antes da apresentação; não foi feita uma chamada ao Gemini nesta mudança.
+- **Status:** Adaptado; revisão humana das respostas geradas pendente
+
 ## Notas de revisão
 
 _Use esta seção para observações da equipe. Rascunho de observações da conversa até aqui, para a equipe confirmar ou editar:_
 
 - A primeira sugestão de stack da IA assumia versões de ferramentas mais novas do que as máquinas do laboratório suportam. As mensagens de erro reais (CLI do Prisma, verificação de versão do Node) mostraram isso.
 - Um comando que a IA deu para o Prisma era de uma versão desatualizada, então comandos vindos da IA devem ser conferidos com a documentação atual e com a nossa versão real do Node.
-- A equipe ainda não revisou o tom e a segurança das dicas geradas por IA; essa revisão precisa de uma entrada própria antes da demo.
+- Os prompts e o tom dos textos alternativos foram refinados na entrada 021; a equipe ainda precisa testar respostas reais e revisá-las antes da demo.

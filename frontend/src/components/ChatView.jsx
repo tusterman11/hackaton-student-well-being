@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, Trash2 } from 'lucide-react';
 
-export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
+export function ChatView({ messages, isSending, onSendMessage, onClearHistory, onNavigate }) {
   const [draft, setDraft] = useState('');
   const messagesEndRef = useRef(null);
 
@@ -27,8 +27,20 @@ export function ChatView({ messages, isSending, onSendMessage, onNavigate }) {
             <p>Um espaço para falar do seu dia e pensar em pequenas pausas.</p>
           </div>
         </div>
+        {messages.some((message) => message.id !== 'welcome') && (
+          <button
+            type="button"
+            className="btn-secondary chat-clear-history"
+            disabled={isSending}
+            onClick={() => {
+              if (window.confirm('Apagar o histórico desta conversa desta conta?')) onClearHistory();
+            }}
+          >
+            <Trash2 size={16} /> Apagar conversa
+          </button>
+        )}
         <p className="chat-privacy-note">
-          Suas mensagens são enviadas ao servidor e à API do Gemini para gerar respostas. Evite incluir nome completo, endereço ou outros dados pessoais.
+          Esta conversa fica salva na sua conta. Para responder, a Interlude usa as mensagens recentes e um resumo dos seus registros dos últimos 7 dias (humor, energia, água, pausas e sono), enviado ao Gemini. Evite incluir nome completo, endereço ou outros dados pessoais. Você pode apagar a conversa quando quiser.
         </p>
       </header>
 

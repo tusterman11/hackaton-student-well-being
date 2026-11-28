@@ -4,23 +4,21 @@
 
 Registre aqui as decisões importantes da equipe. Cada entrada deve ser curta e indicar o que foi decidido, as alternativas consideradas e o motivo da escolha.
 
-## Status da implementação — 26/11/2026 (`feat/frontend-setup`)
+## Status da implementação — 27/11/2026 (`feat/entrepausas-postgres-auth`)
 
-As decisões abaixo descrevem o produto pretendido; não significam que todos os recursos estejam concluídos. Situação do código atual:
+- **Contas:** Cadastro aberto por e-mail, confirmação do endereço, login com senha, logout e recuperação de senha estão implementados. Sessões usam cookies seguros, proteção CSRF e limites de tentativas. É necessário SMTP para enviar links; o app aceita qualquer provedor SMTP autenticado.
+- **Envio de e-mail no Render:** O Render Free bloqueia as portas SMTP de saída 25, 465 e 587. O SMTP do Gmail precisa ser usado localmente ou em um serviço Render pago. Um provedor que aceite a porta 2525 pode funcionar com o mailer atual; uma API HTTPS também é opção, mas exige integração.
+- **Escopo da apresentação:** Diário e Estudos foram removidos da navegação, das telas e das rotas ativas. Metas/hábitos voltaram à aba Metas, com conclusão diária e progresso pessoal; não há rankings nem cobranças. A meta de hidratação continua na aba Água.
+- **Persistência:** O PostgreSQL armazena check-ins, pausas, metas/hábitos, água, sono, configurações e mensagens de chat, sempre associados à conta autenticada. Registros antigos de Diário e Estudos permanecem arquivados nas tabelas existentes e não são apagados nem acessíveis pela aplicação.
+- **Importação local:** A primeira sessão da conta pode importar metas/hábitos e registros de água e sono compatíveis do navegador após consentimento. Cópias antigas de Diário e Estudos não são importadas nem apagadas; permanecem arquivadas no navegador.
+- **Conta demo:** Uma conta compartilhada opcional é controlada por `DEMO_ACCOUNT_ENABLED`, `DEMO_EMAIL` e `DEMO_PASSWORD`. Use apenas dados fictícios e desative-a quando não precisar oferecer uma demonstração compartilhada.
+- **Chat e Gemini:** O servidor salva as conversas por conta e restaura até as 100 mensagens mais recentes na interface. O Gemini recebe o contexto recente da conversa e um resumo compacto dos últimos sete dias com check-ins, pausas, água e sono. A pessoa pode apagar o histórico. A chave Gemini fica somente no servidor.
+- **Versões do Node e Vite:** Mantenha Node `20.12.2`, definido em `.nvmrc`. As versões declaradas do front são Vite `^5.4.10` (lockfile `5.4.21`) e Vitest `^2.1.9` (lockfile `2.1.9`); não atualize esses pacotes separadamente do requisito de compatibilidade com Node.
+- **Interface:** A barra lateral do desktop expande ao passar o mouse; no celular, a navegação usa um botão de menu compacto. A preferência do tema claro/escuro fica salva no navegador. Em desenvolvimento, `localhost:3000` redireciona ao Vite em `localhost:5173`; em produção, o Express serve `frontend/dist`.
+- **Apoio e lembretes:** CVV 188 e SAMU 192 são links `tel:` iniciados pela pessoa; a chamada depende de um aplicativo compatível no dispositivo. O app não faz ligações nem aciona serviços de emergência automaticamente. O lembrete é manual; o temporizador automático de 45 a 60 minutos não está implementado. A assistente não é profissional de saúde nem serviço de emergência.
+- **CI e verificação local:** `.github/workflows/ci.yml` instala dependências, executa lint, testes e build nos dois pacotes em pull requests e pushes para `main`. Em 27/11/2026, os testes do back-end (11/11), lint e build passaram; os testes do front-end (13/13), lint e build também passaram.
 
-- **Check-in diário:** O formulário está implementado em React e chama `POST /api/checkins`; o servidor valida e persiste os check-ins no SQLite. O limite de um check-in por dia ainda não foi implementado.
-- **Registro de pausas:** Os botões e a lista existem no front e chamam `POST /api/breaks`; o servidor persiste as pausas no SQLite.
-- **Chat com IA:** `POST /api/chat` chama o Google Gemini pelo `fetch` nativo do Node quando `GEMINI_API_KEY` está configurada em `backend/.env`. O prompt no servidor define um papel acolhedor e não clínico; frases de risco urgente recebem uma resposta fixa com contatos de apoio. A chave não é versionada, e uma resposta ao vivo exige uma chave válida.
-- **Marca e identidade da assistente:** O produto se chama **EntrePausas** e a assistente do chat se apresenta como **Interlude**. A identidade está aplicada na interface, no título da página e no prompt do Gemini.
-- **Interface:** O front usa navegação lateral expansível no desktop e um menu flutuante compacto no celular. O tema claro/escuro é alternável e a preferência fica salva no navegador. As telas pessoais adicionais guardam dados apenas neste navegador.
-- **Desenvolvimento local:** O back-end redireciona a raiz de `localhost:3000` para o Vite em `localhost:5173` durante o desenvolvimento; em produção, serve `frontend/dist` com `NODE_ENV=production`.
-- **Verificação do Gemini:** A última verificação ao vivo registrada, em 25/11/2026, retornou `API key not valid`. A chave foi alterada depois; a configuração atual ainda precisa ser confirmada com uma chamada ao vivo.
-- **Histórico semanal:** `GardenView` ainda exibe dados de exemplo; não consulta check-ins ou pausas salvos.
-- **Lembrete gentil:** É possível abrir o lembrete pelo botão “Testar lembrete”. O temporizador planejado de 45 a 60 minutos ainda não foi implementado.
-- **Recursos de apoio:** A tela de apoio e os links de contato estão implementados. O chat pode mostrar links do CVV 188 e SAMU 192 para risco urgente; a IA não é profissional nem serviço de emergência.
-- **Armazenamento e privacidade:** O servidor cria tabelas SQLite `checkins` e `pauses`. O ID anônimo é gerado no navegador, mas ainda não está associado aos registros do servidor. O histórico do chat fica na memória do front e é enviado ao Gemini para gerar respostas; não é salvo no SQLite.
-- **Testes e CI:** O back-end tem 8 testes com `node --test`. O front tem 5 testes de integração Vitest cobrindo navegação, envio do check-in, encaminhamento para apoio em humor baixo, registro de pausas e erros no chat. `.github/workflows/ci.yml` é o pipeline ativo do GitHub Actions para pull requests e pushes na `main`; ele instala, executa lint, testa e compila os dois lados.
-
+As entradas históricas abaixo registram decisões e pressupostos da época; quando houver divergência, o status da implementação acima descreve o estado atual.
 ## 24/11/2026 — Fechamento do Escopo do MVP (6 Itens Essenciais)
 - **Decisão:** Recortar o MVP no menor tamanho funcional ponta a ponta dos 6 requisitos do briefing:
   1. **Check-in diário:** Uma pergunta simples de humor e energia por dia (escala de 1 a 5 com linguagem cuidadosa) + nota opcional, sem notas ou comparações.
@@ -33,7 +31,7 @@ As decisões abaixo descrevem o produto pretendido; não significam que todos os
 - **Justificativa:** Limitar a um check-in por dia simplifica o histórico e garante um fluxo completo e sem bugs antes do congelamento no domingo às 23h59.
 
 ## 24/11/2026 — Exclusões Explícitas (Fora de Escopo)
-- **Decisão:** Deixar explicitamente de fora: diagnóstico ou terapia, pontuação de bem-estar ou comparação entre pessoas, coleta de dados sensíveis de saúde, exposição pública de humor, app nativo, login social e todos os extras opcionais (timer de respiração, reflexão semanal, lista personalizada de hábitos e modo silencioso) até que o MVP esteja pronto e testado.
+- **Decisão:** Deixar explicitamente de fora: diagnóstico ou terapia, pontuação de bem-estar ou comparação entre pessoas, coleta de dados sensíveis de saúde, exposição pública de humor, app nativo, login social e extras opcionais (timer de respiração, reflexão semanal e modo silencioso) até que o MVP esteja pronto e testado.
 - **Alternativas consideradas:** Incluir timer de respiração de 1 minuto e modo silencioso já na primeira sprint.
 - **Justificativa:** Evitar notas e promessas clínicas respeita os limites éticos do briefing e evita pressionar o estudante. Cortar extras protege o prazo de 5 dias (caso sobre tempo no sábado, o modo silencioso será a primeira adição por ter menor custo).
 
@@ -68,8 +66,8 @@ As respostas abaixo descrevem o comportamento desejado e os critérios de aceita
 2. **O que a interface faz se a pessoa indicar um mal-estar mais intenso?**
    - A geração de texto livre por IA é bloqueada e a interface destaca imediatamente o card de Recursos de Apoio (CVV 188, SAMU 192 e acolhimento do Senac), sem tentar conduzir um atendimento.
 3. **Quem pode ver o histórico de check-ins e como esses dados ficam protegidos?**
-   - Apenas a própria pessoa no seu dispositivo. Os registros ficam isolados por um UUID anônimo por dispositivo no SQLite, sem área pública, nomes ou dados clínicos sensíveis.
+   - As rotas autenticadas limitam os registros ao ID da conta conectada no PostgreSQL. Não há área pública. O desenho antigo com SQLite e ID por dispositivo, descrito abaixo, é histórico e não representa mais a arquitetura ativa.
 4. **Como o tom da IA é revisado pelo time antes da demo?**
-   - Todos os 4 integrantes testam diferentes cenários de check-in e revisam as respostas geradas antes do congelamento de sábado, registrando ajustes de prompt e textos rejeitados no `AI_LOG.md`.
+   - A revisão em equipe do tom e de respostas reais da IA ainda está pendente; registrar a revisão e eventuais ajustes de prompt no `AI_LOG.md` antes da apresentação.
 5. **Como o produto deixa explícito, o tempo todo, o limite do que ele é e do que ele não é?**
-   - Um aviso fixo na interface e dentro da seção de Recursos de Apoio informa continuamente: *"Este app apoia suas pausas e hábitos diários. Isto não é terapia, orientação médica nem atendimento de emergência."*
+   - Os limites aparecem nas telas de Apoio e Conversa; atualmente não há um aviso fixo em todas as telas. O texto informa que o app não é terapia, orientação médica nem serviço de emergência.

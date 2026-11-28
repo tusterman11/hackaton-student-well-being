@@ -1,23 +1,21 @@
 import { useState } from 'react';
 import {
-  BookOpen, CalendarDays, Droplets, Heart, Home, MessageCircle,
-  Moon, Sun, NotebookPen, Sprout, Target, Bed, Menu, X
+  CalendarDays, Droplets, Heart, Home, MessageCircle,
+  Moon, Sun, Sprout, Bed, Menu, X, LogOut, Target
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Início', icon: Home },
   { id: 'breaks', label: 'Pausas', icon: Sprout },
   { id: 'garden', label: 'Semana', icon: CalendarDays },
-  { id: 'hydration', label: 'Água', icon: Droplets },
-  { id: 'journal', label: 'Diário', icon: NotebookPen },
   { id: 'habits', label: 'Metas', icon: Target },
+  { id: 'hydration', label: 'Água', icon: Droplets },
   { id: 'sleep', label: 'Sono', icon: Bed },
-  { id: 'study', label: 'Estudos', icon: BookOpen },
   { id: 'chat', label: 'Conversa', icon: MessageCircle },
   { id: 'support', label: 'Apoio', icon: Heart },
 ];
 
-export function BottomNav({ activeTab, onChangeTab, isDarkMode, onToggleTheme }) {
+export function BottomNav({ activeTab, onChangeTab, isDarkMode, onToggleTheme, userEmail, onLogout }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -38,6 +36,9 @@ export function BottomNav({ activeTab, onChangeTab, isDarkMode, onToggleTheme })
             <Icon size={19} strokeWidth={1.8} /><span>{label}</span>
           </button>
         ))}
+        <button className="nav-item account-logout" type="button" aria-label={`Sair da conta ${userEmail}`} title={expanded ? undefined : 'Sair'} onClick={onLogout}>
+          <LogOut size={19} strokeWidth={1.8} /><span>Sair · {userEmail}</span>
+        </button>
         <button className="nav-item theme-toggle" type="button" aria-label={isDarkMode ? 'Ativar tema claro' : 'Ativar tema escuro'} aria-pressed={isDarkMode} title={isDarkMode ? 'Tema claro' : 'Tema escuro'} onClick={onToggleTheme}>
           {isDarkMode ? <Sun size={19} /> : <Moon size={19} />}<span>{isDarkMode ? 'Tema claro' : 'Tema escuro'}</span>
         </button>

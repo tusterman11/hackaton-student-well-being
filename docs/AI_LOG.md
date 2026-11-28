@@ -173,10 +173,46 @@ All entries below are from the same tool and date unless stated otherwise: Claud
 - **What the team reviewed / changed:** The code was verified locally before the documentation update: 8 back-end tests and 5 front-end tests pass, both linters pass, and both builds pass. The team should keep the Gemini key and live-provider status as environment-specific information rather than a committed secret.
 - **Status:** Adapted
 
+### 019: Account-based PostgreSQL, persistent chat, and documentation refresh
+- **Date:** 2026-11-27
+- **Who:** Matheus Epifanio de Souza (Presentation Lead)
+- **Tool:** OpenAI Codex (coding assistant)
+- **Prompt / purpose:** Asked how public sign-up and Render persistence should work, requested that Interlude retain chat history and use the account's weekly routine data, asked to bring only `docs/` from `main`, and then asked to align the docs with the active Node/Vite versions and record undocumented changes.
+- **What the AI generated:** Added a PostgreSQL migration for per-account chat messages, endpoints to load and clear the signed-in account's history, server-side turn persistence, and a compact seven-day summary of check-ins, pauses, hydration, sleep, habits, and focus for Gemini. Diary text is excluded from the Gemini context. The chat UI restores saved messages, exposes a clear-history action, and explains the data sent to Gemini. Updated the bilingual README and decisions documents with the account/PostgreSQL architecture, SMTP setup, Render configuration, and locked Node/Vite versions. Documented Gmail SMTP as an alternative to Brevo, the Render Free SMTP port block, SMTP on alternate port 2525, and HTTPS email APIs. Added a Mailjet SMTP example for Render Free, including its SMTP variables and sender-verification requirement.
+- **What the team reviewed / changed:** The user clarified that Node 20.12.2 must be retained and that Vite must remain on the compatible Vite 5 line. Docs were synchronized from the fetched `main` commit before being corrected for this branch. Render Free blocks ports 25, 465, and 587; a provider's SMTP on 2525 may work, but it was not tested. No tests or live SMTP/Gemini verification were run during this update; the Render deployment still needs real credentials.
+- **Status:** Adapted; local and production verification pending
+
+### 020: Documentation status and support-call behavior
+- **Date:** 2026-11-27
+- **Who:** Project maintainer
+- **Tool:** Copilot SDK in VS Code
+- **Prompt / purpose:** Asked to review and update the project documentation, including clarifying whether the SAMU 192 and CVV 188 features actually place calls.
+- **What the AI generated:** Updated bilingual project/decision documentation and the front-end README to reflect the PostgreSQL account architecture, current test counts, manual-only reminder, and the behavior of support phone links. The CVV and SAMU links are `tel:` links that require a user action and a compatible device call handler; the app does not automatically call or dispatch emergency services.
+- **What the team reviewed / changed:** Confirmed the behavior against `SupportView.jsx` and `ChatView.jsx`. A clean frontend `npm ci` restored the Vite version in the lockfile (5.4.21); the frontend build and tests passed, as did backend tests, lint, and build. SMTP delivery, live Gemini requests, and production deployment remain unverified.
+- **Status:** Adapted
+
+### 021: Login password visibility toggle
+- **Date:** 2026-11-27
+- **Who:** João Queiros
+- **Tool:** Copilot SDK in VS Code
+- **Prompt / purpose:** Improve the login screen with a password hidden by default and a show/hide control without changing authentication. During visual iterations, the user requested several mascot variants based on references and ultimately asked to remove the mascot.
+- **What the AI generated:** Added eye icons to the existing password field, toggling its type between `password` and `text`. Authentication logic and calls were preserved. Added login-test assertions for hidden and revealed states. Temporary mascot versions were removed; the final screen has no mascot.
+- **What the team reviewed / changed:** The team confirmed the `feat/entrepausas-postgres-auth` branch and requested that the changes be sent to GitHub. Commit `a6b9c82` was created and pushed. Front-end lint and build passed. The test suite could not run because local `jsdom` was version 29.1.1 while the project requires version 26 (`^26.1.0`); execution failed while loading a CommonJS/ESM dependency.
+- **Status:** Adapted; authentication preserved; tests pending correction of local dependencies
+
+### 022: Refining Interlude's prompts and check-in tips
+- **Date:** 2026-11-27
+- **Who:** Project maintainer
+- **Tool:** Copilot SDK in VS Code
+- **Prompt / purpose:** Asked whether Interlude's system prompt meets the student well-being MVP brief and requested clearer guidance for check-in-based tips, gentle language, short campus breaks, and referral to real support without conducting care.
+- **What the AI generated:** Revised the chat system prompt to make its role, use of factual check-in/weekly context, brief response style, optional single pause suggestion, non-clinical limits, and support-routing guidance explicit. Refined the check-in tip prompt and fallback messages to avoid commands and stacked activities. Low mood still routes to support resources without generating a free-form tip.
+- **What the team reviewed / changed:** Confirmed the behavior against the server's low-mood and urgent-support paths. The free-text check-in note is not sent to the tip generator. The team still needs to review real Gemini outputs before the presentation; no live Gemini request was run for this change.
+- **Status:** Adapted; human review of generated responses pending
+
 ## Review notes
 
 _Use this section for team-level observations. Draft observations from the conversation so far, to be confirmed or edited by the team:_
 
 - The AI's first stack suggestion assumed newer tool versions than our lab machines support. Real error messages (Prisma CLI, Node version check) were what showed this.
 - A command the AI gave for Prisma was for an outdated version, so commands from AI must be checked against current documentation and our actual Node version.
-- The team has not yet reviewed the tone and safety of AI-generated tips; that review still needs its own entry before the demo.
+- Prompt and fallback language were refined in entry 021; the team still needs to test real responses and review generated outputs before the demo.

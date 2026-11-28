@@ -1,81 +1,131 @@
-import { getDeviceId } from '../utils/deviceId';
-
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-const FALLBACK_TIPS = [
-  'Que tal olhar para longe por 20 segundos? Procure algo verde ou um pedaço de céu.',
-  'Solte os ombros por um instante e tome um copo de água devagar.',
-  'Que tal levantar por 2 minutos e alongar os braços antes de voltar para a tela?'
-];
+let csrfToken = null;
 
-function getHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'x-device-id': getDeviceId()
-  };
+async function request(path, { method = 'GET', body } = {}) {
+  const headers = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (!['GET', 'HEAD'].includes(method) && csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers,
+    credentials: 'same-origin',
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  if (response.status === 204) return null;
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401 && result.error !== 'LOGIN_FAILED' && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('entrepausas:session-expired'));
+    }
+    const error = new Error(result.message || 'Não foi possível concluir esta solicitação.');
+    error.code = result.error;
+    error.status = response.status;
+    throw error;
+  }
+  return result;
+}
+
+function setCsrfToken(value) {
+  csrfToken = value || null;
+}
+
+export async function getCurrentSession() {
+  const result = await request('/auth/me');
+  setCsrfToken(result.csrfToken);
+  return result;
+}
+
+export async function registerAccount(email) {
+  return request('/auth/register', { method: 'POST', body: { email } });
+}
+
+export async function verifyEmail(token, password) {
+  return request('/auth/verify-email', { method: 'POST', body: { token, password } });
+}
+
+export async function resendVerificationEmail(email) {
+  return request('/auth/resend-verification', { method: 'POST', body: { email } });
+}
+
+export async function loginAccount(email, password) {
+  const result = await request('/auth/login', { method: 'POST', body: { email, password } });
+  setCsrfToken(result.csrfToken);
+  return result;
+}
+
+export async function logoutAccount() {
+  const result = await request('/auth/logout', { method: 'POST', body: {} });
+  setCsrfToken(null);
+  return result;
+}
+
+export async function requestPasswordReset(email) {
+  return request('/auth/password-reset/request', { method: 'POST', body: { email } });
+}
+
+export async function confirmPasswordReset(token, password) {
+  return request('/auth/password-reset/confirm', {
+    method: 'POST',
+    body: { token, password }
+  });
 }
 
 export async function submitCheckin(payload) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/checkins`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error('API offline');
-    return await res.json();
-  } catch {
-    const isDistress = payload.mood <= 1;
-    const randomTip = FALLBACK_TIPS[Math.floor(Math.random() * FALLBACK_TIPS.length)];
-    return {
-      checkin: { ...payload, date: new Date().toISOString() },
-      tip: isDistress ? null : randomTip,
-      showSupportAlert: isDistress
-    };
-  }
+  return request('/checkins', { method: 'POST', body: payload });
 }
 
 export async function logBreak(type) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/breaks`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ type })
-    });
-    if (!res.ok) throw new Error('API offline');
-    return await res.json();
-  } catch {
-    return {
-      id: Date.now(),
-      type,
-      createdAt: new Date().toISOString()
-    };
-  }
+  return request('/breaks', { method: 'POST', body: { type } });
 }
 
 export async function fetchWeeklyHistory() {
-  try {
-    const res = await fetch(`${API_BASE_URL}/history`, {
-      headers: getHeaders()
-    });
-    if (!res.ok) throw new Error('API offline');
-    return await res.json();
-  } catch {
-    return null;
-  }
+  return request('/history');
+}
+
+export async function fetchWellnessData() {
+  return request('/wellness');
+}
+
+export async function createWellnessRecord(collection, payload) {
+  return request(`/wellness/${collection}`, { method: 'POST', body: payload });
+}
+
+export async function updateHydrationGoal(hydrationGoalMl) {
+  return request('/wellness/settings', {
+    method: 'PATCH',
+    body: { hydrationGoalMl }
+  });
+}
+
+export async function setHabitCompletion(id, done) {
+  return request(`/wellness/habits/${encodeURIComponent(id)}/completion`, {
+    method: 'PUT',
+    body: { done }
+  });
+}
+
+export async function deleteWellnessRecord(collection, id) {
+  return request(`/wellness/${collection}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+export async function importLocalData(data, skip = false) {
+  return request('/wellness/import-local', {
+    method: 'POST',
+    body: { data, skip }
+  });
 }
 
 export async function sendChatMessage(payload) {
-  const res = await fetch(`${API_BASE_URL}/chat`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(payload)
-  });
+  return request('/chat', { method: 'POST', body: payload });
+}
 
-  const result = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(result.message || 'Não foi possível enviar sua mensagem agora.');
-  }
+export async function fetchChatHistory() {
+  return request('/chat/history');
+}
 
-  return result;
+export async function clearChatHistory() {
+  return request('/chat/history', { method: 'DELETE', body: {} });
 }
